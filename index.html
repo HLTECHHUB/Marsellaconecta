@@ -378,10 +378,11 @@ nav {
 /* MODAL: PRODUCTS */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex; align-items: flex-end;
-  z-index: 200; opacity: 0; pointer-events: none;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500; opacity: 0; pointer-events: none;
   transition: opacity 0.3s;
+  backdrop-filter: blur(4px);
 }
 
 .modal-overlay.active {
@@ -390,16 +391,18 @@ nav {
 
 .modal-content {
   background: var(--surface);
-  width: 100%; max-width: 100%;
-  border-radius: 20px 20px 0 0;
+  width: 90%; max-width: 500px;
+  border-radius: var(--radius);
   max-height: 90vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes slideIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .modal-header {
