@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marsella Conecta — Portal de Negocios</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f9fafb;
+  color: #2d2622;
+}
+
+nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e2db;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(45, 38, 34, 0.04);
+}
+
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #c65d3b;
+}
+
+.nav-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-right a, .nav-right button {
+  text-decoration: none;
+  color: #2d2622;
+  background: none;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nav-right a:hover, .nav-right button:hover {
+  color: #c65d3b;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 32px;
+  color: #c65d3b;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e8e2db;
+}
+
+.tab-btn {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: #6b6560;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  color: #c65d3b;
+  border-bottom-color: #c65d3b;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(45, 38, 34, 0.04);
+  border: 1px solid #e8e2db;
+  display: none;
+}
+
+.card.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2d2622;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e8e2db;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #c65d3b;
+  box-shadow: 0 0 0 3px rgba(198, 93, 59, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn {
+  background: #c65d3b;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  transition: opacity 0.2s;
+  width: 100%;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: #d4a574;
+  margin-top: 12px;
+}
+
+.image-upload {
+  border: 2px dashed #e8e2db;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-upload:hover {
+  border-color: #c65d3b;
+  background: rgba(198, 93, 59, 0.05);
+}
+
+.image-upload input {
+  display: none;
+}
+
+.image-preview {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-top: 12px;
+}
+
+.products-list {
+  margin-top: 20px;
+}
+
+.product-card {
+  background: #faf7f2;
+  border: 1px solid #e8e2db;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.product-info h4 {
+  color: #2d2622;
+  margin-bottom: 4px;
+}
+
+.product-info p {
+  font-size: 0.9rem;
+  color: #6b6560;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-delete:hover {
+  opacity: 0.9;
+}
+
+.success {
+  background: #e8f5e9;
+  color: #1b6b4a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px;
+  color: #6b6560;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.login-prompt h2 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #c65d3b;
+}
+
+.login-prompt a {
+  display: inline-block;
+  background: #c65d3b;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.login-prompt a:hover {
+  opacity: 0.9;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🌶️ Marsella CONECTA — Negocio</div>
+  <div class="nav-right">
+    <a href="index.html">← Volver</a>
+    <button onclick="logoutBusiness()" style="color: #c65d3b; font-weight: 700;">Salir</button>
+  </div>
+</nav>
+
+<div class="container">
+  <h1 id="businessTitle">📊 Panel del Negocio</h1>
+  
+  <div id="loginPrompt" class="login-prompt" style="display: none;">
+    <h2>Acceso Restringido</h2>
+    <p>Solo los dueños de negocio pueden acceder a esta sección.</p>
+    <p>¿Eres dueño de un negocio? Contacta con el administrador.</p>
+    <a href="index.html">Volver al Directorio</a>
+  </div>
+
+  <div id="mainContent" style="display: none;">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('profile')">📋 Perfil del Negocio</button>
+      <button class="tab-btn" onclick="switchTab('products')">🛍️ Productos</button>
+      <button class="tab-btn" onclick="switchTab('schedule')">🕒 Horario</button>
+    </div>
+
+    <div id="successMessage" class="success" style="display: none;"></div>
+    <div id="errorMessage" class="error" style="display: none;"></div>
+
+    <!-- PROFILE TAB -->
+    <div id="profile" class="card active">
+      <h2 style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 20px; color: #c65d3b;">Información del Negocio</h2>
+      
+      <div class="form-group">
+        <label>Imagen del Negocio (Hero)</label>
+        <div class="image-upload" id="heroUpload">
+          <input type="file" id="heroInput" accept="image/*" onchange="previewImage('hero')">
+          <p>Arrastra o haz clic para cambiar la imagen</p>
+          <img id="heroPreview" class="image-preview" style="display: none;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre del Negocio</label>
+        <input type="text" id="nombre" placeholder="Ej: Pupusería La Abuela">
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="descripcion" placeholder="Describe tu negocio..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="tel" id="phone" placeholder="+503 XXXX XXXX">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp (opcional)</label>
+          <input type="tel" id="whatsapp" placeholder="+503 XXXX XXXX">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Barrio</label>
+          <input type="text" id="barrio" placeholder="Ej: Marsella Centro">
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="direccion" placeholder="Ej: Calle Principal #123">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Categoría Principal</label>
+        <select id="categoria">
+          <option value="">Selecciona una categoría</option>
+          <option value="Sodas/Refrescos">🥤 Sodas/Refrescos</option>
+          <option value="Bebidas Alcohólicas">🍺 Bebidas Alcohólicas</option>
+          <option value="Granos">🌾 Granos</option>
+          <option value="Lácteos">🧀 Lácteos</option>
+          <option value="Verduras">🥬 Verduras</option>
+          <option value="Frutas">🍎 Frutas</option>
+          <option value="Mascotas">🐾 Mascotas</option>
+          <option value="Servicios del Hogar - Instalación">🔧 Servicios del Hogar - Instalación</option>
+          <option value="Servicios del Hogar - Mantenimiento">🧹 Servicios del Hogar - Mantenimiento</option>
+          <option value="Otro">📌 Otro</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Imagen de Avatar</label>
+        <div class="image-upload" id="avatarUpload">
+          <input type="file" id="avatarInput" accept="image/*" onchange="previewImage('avatar')">
+          <p>Arrastra o haz clic para subir avatar</p>
+          <img id="avatarPreview" class="image-preview" style="display: none; width: 100px; height: 100px;">
+        </div>
+      </div>
+
+      <button class="btn" onclick="saveBusinessProfile()">💾 Guardar Cambios</button>
+    </div>
+
+    <!-- PRODUCTS TAB -->
+    <div id="products" class="card">
+      <h2 style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 20px; color: #c65d3b;">Gestión de Productos</h2>
+      
+      <h3 style="margin-bottom: 12px; font-weight: 600;">Agregar Nuevo Producto</h3>
+      
+      <div class="form-group">
+        <label>Nombre del Producto</label>
+        <input type="text" id="productName" placeholder="Ej: Pupusas de Queso">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Precio</label>
+          <input type="text" id="productPrice" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="productCategory">
+            <option value="">Selecciona...</option>
+            <option value="Sodas/Refrescos">🥤 Sodas/Refrescos</option>
+            <option value="Bebidas Alcohólicas">🍺 Bebidas Alcohólicas</option>
+            <option value="Granos">🌾 Granos</option>
+            <option value="Lácteos">🧀 Lácteos</option>
+            <option value="Verduras">🥬 Verduras</option>
+            <option value="Frutas">🍎 Frutas</option>
+            <option value="Mascotas">🐾 Mascotas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="productDescription" placeholder="Describe tu producto..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Imagen del Producto</label>
+        <div class="image-upload" id="productImageUpload">
+          <input type="file" id="productImageInput" accept="image/*" onchange="previewImage('product')">
+          <p>Arrastra o haz clic para subir imagen</p>
+          <img id="productImagePreview" class="image-preview" style="display: none;">
+        </div>
+      </div>
+
+      <button class="btn" onclick="addProduct()">➕ Agregar Producto</button>
+
+      <h3 style="margin-top: 32px; margin-bottom: 12px; font-weight: 600;">Tus Productos</h3>
+      <div id="productsList" class="products-list">
+        <p style="color: #6b6560; text-align: center;">Cargando productos...</p>
+      </div>
+    </div>
+
+    <!-- SCHEDULE TAB -->
+    <div id="schedule" class="card">
+      <h2 style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 20px; color: #c65d3b;">Horario de Atención</h2>
+      
+      <div class="form-group">
+        <label>Lunes</label>
+        <input type="text" id="lunes" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Martes</label>
+        <input type="text" id="martes" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Miércoles</label>
+        <input type="text" id="miercoles" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Jueves</label>
+        <input type="text" id="jueves" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Viernes</label>
+        <input type="text" id="viernes" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Sábado</label>
+        <input type="text" id="sabado" placeholder="Ej: 8:00 AM - 6:00 PM">
+      </div>
+
+      <div class="form-group">
+        <label>Domingo</label>
+        <input type="text" id="domingo" placeholder="Cerrado">
+      </div>
+
+      <button class="btn" onclick="saveSchedule()">💾 Guardar Horario</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+let currentBusinessId = null;
+let currentBusiness = null;
+
+// Check if user is logged in as business owner (placeholder for now)
+function checkBusinessAccess() {
+  // For now, we'll show a login prompt
+  // In production, you'd verify the user is a business owner
+  const loginPrompt = document.getElementById('loginPrompt');
+  const mainContent = document.getElementById('mainContent');
+  
+  // TODO: Implement proper business authentication
+  // Show login prompt for now
+  loginPrompt.style.display = 'block';
+  mainContent.style.display = 'none';
+}
+
+window.switchTab = function(tab) {
+  document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  document.getElementById(tab).classList.add('active');
+  event.target.classList.add('active');
+};
+
+window.previewImage = function(type) {
+  let input, preview;
+  
+  if (type === 'hero') {
+    input = document.getElementById('heroInput');
+    preview = document.getElementById('heroPreview');
+  } else if (type === 'avatar') {
+    input = document.getElementById('avatarInput');
+    preview = document.getElementById('avatarPreview');
+  } else if (type === 'product') {
+    input = document.getElementById('productImageInput');
+    preview = document.getElementById('productImagePreview');
+  }
+  
+  const file = input.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+window.saveBusinessProfile = async function() {
+  showMessage('Guardando perfil...', 'success');
+  // TODO: Save to Supabase
+};
+
+window.saveSchedule = async function() {
+  showMessage('Guardando horario...', 'success');
+  // TODO: Save to Supabase
+};
+
+window.addProduct = async function() {
+  showMessage('Producto agregado', 'success');
+  // TODO: Save to Supabase
+};
+
+window.logoutBusiness = function() {
+  window.location.href = 'index.html';
+};
+
+function showMessage(msg, type) {
+  const el = document.getElementById(type === 'error' ? 'errorMessage' : 'successMessage');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// Initialize
+checkBusinessAccess();
+</script>
+
+</body>
+</html>
