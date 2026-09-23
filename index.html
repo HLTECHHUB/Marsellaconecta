@@ -595,6 +595,23 @@ nav {
 .cart-empty-icon { font-size: 3rem; margin-bottom: 12px; }
 
 /* AUTH FORMS */
+.auth-tab {
+  flex: 1;
+  padding: 12px;
+  background: var(--surface-secondary);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+}
+
+.auth-tab.active {
+  background: var(--primary);
+  color: white;
+}
+
 .form-group {
   margin-bottom: 16px;
 }
@@ -717,8 +734,8 @@ nav {
         <button onclick="logoutUser()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Salir</button>
       </div>
       <div id="userNotLoggedIn" style="display: flex; gap: 8px;">
-        <button onclick="openLoginModal()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 600; font-size: 0.9rem;">Iniciar Sesión</button>
-        <button onclick="openRegisterModal()" class="btn-primary" style="padding: 6px 12px; font-size: 0.9rem;">Registrarse</button>
+        <button onclick="openLoginGateModal()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 600; font-size: 0.9rem;">Iniciar Sesión</button>
+        <button onclick="openLoginGateModal(); switchAuthTab('register')" class="btn-primary" style="padding: 6px 12px; font-size: 0.9rem;">Registrarse</button>
       </div>
     </div>
     
@@ -769,81 +786,76 @@ nav {
   </section>
 </main>
 
-<!-- REGISTRATION MODAL -->
-<div class="modal-overlay" id="registerModal">
-  <div class="modal-content" style="max-width: 450px;">
-    <div class="modal-header">
-      <div class="modal-title">Crear Cuenta</div>
-      <button class="modal-close" onclick="closeRegisterModal()">✕</button>
+<!-- LOGIN GATE MODAL (Combined Register + Login) -->
+<div class="modal-overlay" id="loginGateModal">
+  <div class="modal-content" style="max-width: 480px;">
+    <button class="modal-close" onclick="closeLoginGateModal()" style="position: absolute; top: 12px; right: 12px;">✕</button>
+    
+    <div class="modal-header" style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">🌶️</div>
+      <div class="modal-title">Marsella Conecta</div>
+      <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 8px;">Para contactar negocios, inicia sesión o crea una cuenta</p>
     </div>
+    
+    <!-- Tab Toggle -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+      <button onclick="switchAuthTab('login')" id="tabLoginBtn" class="auth-tab active">Iniciar Sesión</button>
+      <button onclick="switchAuthTab('register')" id="tabRegisterBtn" class="auth-tab">Crear Cuenta</button>
+    </div>
+    
     <div class="modal-body">
-      <form onsubmit="registerUser(event)">
-        <div class="form-group">
-          <label>Nombre Completo *</label>
-          <input type="text" id="regName" placeholder="Tu nombre completo" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Número WhatsApp *</label>
-          <input type="tel" id="regPhone" placeholder="71234567" required>
-          <small style="color: var(--text-muted);">Ej: 71234567 (sin +503)</small>
-        </div>
-        
-        <div class="form-group">
-          <label>Contraseña *</label>
-          <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Cuartier *</label>
-          <select id="regQuartier" required>
-            <option value="">Selecciona cuartier</option>
-            <option value="Marsella 1">Marsella 1</option>
-            <option value="Marsella 2">Marsella 2</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Dirección (Opcional)</label>
-          <input type="text" id="regAddress" placeholder="Tu dirección">
-        </div>
-        
-        <button type="submit" class="btn-submit">Crear Cuenta</button>
-      </form>
-      
-      <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-        <p style="font-size: 0.9rem; margin-bottom: 8px;">¿Ya tienes cuenta?</p>
-        <button onclick="switchToLogin()" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: underline;">Inicia sesión aquí</button>
+      <!-- LOGIN FORM -->
+      <div id="loginFormContainer" style="display: block;">
+        <form onsubmit="loginUser(event)">
+          <div class="form-group">
+            <label>Número WhatsApp *</label>
+            <input type="tel" id="loginPhone" placeholder="71234567" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Contraseña *</label>
+            <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
+          </div>
+          
+          <button type="submit" class="btn-submit">Iniciar Sesión</button>
+        </form>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- LOGIN MODAL -->
-<div class="modal-overlay" id="loginModal">
-  <div class="modal-content" style="max-width: 450px;">
-    <div class="modal-header">
-      <div class="modal-title">Iniciar Sesión</div>
-      <button class="modal-close" onclick="closeLoginModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="loginUser(event)">
-        <div class="form-group">
-          <label>Número WhatsApp *</label>
-          <input type="tel" id="loginPhone" placeholder="71234567" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Contraseña *</label>
-          <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
-        </div>
-        
-        <button type="submit" class="btn-submit">Iniciar Sesión</button>
-      </form>
       
-      <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-        <p style="font-size: 0.9rem; margin-bottom: 8px;">¿No tienes cuenta?</p>
-        <button onclick="switchToRegister()" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: underline;">Registrate aquí</button>
+      <!-- REGISTRATION FORM -->
+      <div id="registerFormContainer" style="display: none;">
+        <form onsubmit="registerUser(event)">
+          <div class="form-group">
+            <label>Nombre Completo *</label>
+            <input type="text" id="regName" placeholder="Tu nombre completo" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Número WhatsApp *</label>
+            <input type="tel" id="regPhone" placeholder="71234567" required>
+            <small style="color: var(--text-muted);">Ej: 71234567 (sin +503)</small>
+          </div>
+          
+          <div class="form-group">
+            <label>Contraseña *</label>
+            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Quartier *</label>
+            <select id="regQuartier" required>
+              <option value="">Selecciona tu Quartier</option>
+              <option value="Marsella 1">Marsella 1</option>
+              <option value="Marsella 2">Marsella 2</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Dirección (Opcional)</label>
+            <input type="text" id="regAddress" placeholder="Tu dirección">
+          </div>
+          
+          <button type="submit" class="btn-submit">Crear Cuenta</button>
+        </form>
       </div>
     </div>
   </div>
@@ -941,34 +953,6 @@ function updateUserMenuUI() {
 }
 
 // Open/Close Auth Modals
-function openRegisterModal() {
-  document.getElementById('registerModal').classList.add('active');
-}
-
-function closeRegisterModal() {
-  document.getElementById('registerModal').classList.remove('active');
-  document.getElementById('registerModal').querySelectorAll('input, select').forEach(el => el.value = '');
-}
-
-function openLoginModal() {
-  document.getElementById('loginModal').classList.add('active');
-}
-
-function closeLoginModal() {
-  document.getElementById('loginModal').classList.remove('active');
-  document.getElementById('loginModal').querySelectorAll('input').forEach(el => el.value = '');
-}
-
-function switchToLogin() {
-  closeRegisterModal();
-  openLoginModal();
-}
-
-function switchToRegister() {
-  closeLoginModal();
-  openRegisterModal();
-}
-
 // Simple hash function (NOT secure, only for MVP testing)
 function simpleHash(str) {
   let hash = 0;
@@ -1138,11 +1122,46 @@ async function trackEvent(eventType, businessId = null, searchQuery = null) {
 // Check if user is logged in (for contact buttons)
 function checkLogin() {
   if (!currentUser) {
-    alert('Por favor inicia sesión para contactar negocios.');
-    openLoginModal();
+    openLoginGateModal();
     return false;
   }
   return true;
+}
+
+// Login Gate Modal functions
+function openLoginGateModal() {
+  document.getElementById('loginGateModal').classList.add('active');
+}
+
+function closeLoginGateModal() {
+  document.getElementById('loginGateModal').classList.remove('active');
+  // Clear forms
+  document.getElementById('loginPhone').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('regName').value = '';
+  document.getElementById('regPhone').value = '';
+  document.getElementById('regPassword').value = '';
+  document.getElementById('regQuartier').value = '';
+  document.getElementById('regAddress').value = '';
+}
+
+function switchAuthTab(tab) {
+  const loginForm = document.getElementById('loginFormContainer');
+  const registerForm = document.getElementById('registerFormContainer');
+  const loginBtn = document.getElementById('tabLoginBtn');
+  const registerBtn = document.getElementById('tabRegisterBtn');
+  
+  if (tab === 'login') {
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    loginBtn.classList.add('active');
+    registerBtn.classList.remove('active');
+  } else {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    loginBtn.classList.remove('active');
+    registerBtn.classList.add('active');
+  }
 }
 
 // STATE
@@ -1486,12 +1505,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Search listeners attached');
   }
   
-  // Close modals on overlay click
-  document.getElementById('registerModal').addEventListener('click', function(e) {
-    if (e.target === this) closeRegisterModal();
-  });
-  document.getElementById('loginModal').addEventListener('click', function(e) {
-    if (e.target === this) closeLoginModal();
+  // Close modal on overlay click
+  document.getElementById('loginGateModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLoginGateModal();
   });
 });
 
@@ -1545,14 +1561,11 @@ window.closeProductsModal = closeProductsModal;
 window.registerUser = registerUser;
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
-window.openRegisterModal = openRegisterModal;
-window.closeRegisterModal = closeRegisterModal;
-window.openLoginModal = openLoginModal;
-window.closeLoginModal = closeLoginModal;
-window.switchToLogin = switchToLogin;
-window.switchToRegister = switchToRegister;
 window.checkLogin = checkLogin;
 window.trackEvent = trackEvent;
+window.openLoginGateModal = openLoginGateModal;
+window.closeLoginGateModal = closeLoginGateModal;
+window.switchAuthTab = switchAuthTab;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
