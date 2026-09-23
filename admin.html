@@ -481,19 +481,46 @@ async function adminLogin() {
   const phone = document.getElementById('loginPhone').value;
   const password = document.getElementById('loginPassword').value;
 
+  console.log('🔐 Login attempt:', phone);
+
+  if (!phone || !password) {
+    showError('Por favor completa teléfono y contraseña');
+    return;
+  }
+
   try {
+    if (!supabase) {
+      showError('Error: Supabase no inicializado. Verifica config.js');
+      console.error('Supabase not initialized');
+      return;
+    }
+
+    console.log('🔍 Searching for admin user...');
     const { data: users, error } = await supabase
       .from('users')
       .select('*')
-      .eq('phone_number', phone)
-      .eq('role', 'admin');
+      .eq('phone_number', phone);
 
-    if (error || !users || users.length === 0) {
-      showError('Credenciales inválidas');
+    if (error) {
+      console.error('Query error:', error);
+      showError('Error de base de datos: ' + error.message);
+      return;
+    }
+
+    console.log('Users found:', users?.length);
+
+    if (!users || users.length === 0) {
+      showError('Usuario no encontrado con ese teléfono');
       return;
     }
 
     const user = users[0];
+    console.log('User:', user.name, 'Role:', user.role);
+
+    if (user.role !== 'admin') {
+      showError('Este usuario no tiene permisos de administrador');
+      return;
+    }
     
     // Simple password check (in production, use bcrypt)
     function simpleHash(str) {
@@ -505,15 +532,20 @@ async function adminLogin() {
       return hash.toString();
     }
 
-    if (simpleHash(password) !== user.password_hash) {
-      showError('Credenciales inválidas');
+    const passwordHash = simpleHash(password);
+    console.log('Password hash match?', passwordHash === user.password_hash);
+
+    if (passwordHash !== user.password_hash) {
+      showError('Contraseña incorrecta');
       return;
     }
 
+    console.log('✅ Login successful!');
     currentAdmin = user;
     localStorage.setItem('marsella-admin', JSON.stringify(user));
     showAdminPanel();
   } catch (err) {
+    console.error('Login error:', err);
     showError('Error: ' + err.message);
   }
 }
@@ -828,12 +860,19 @@ function showSuccess(msg) {
 }
 
 // Initialize
+console.log('🚀 Admin.html initializing...');
+console.log('CONFIG loaded?', typeof CONFIG !== 'undefined');
+console.log('Supabase URL:', CONFIG?.supabaseUrl ? 'Yes' : 'No');
+
 const admin = localStorage.getItem('marsella-admin');
 if (admin) {
+  console.log('✅ Found cached admin session');
   currentAdmin = JSON.parse(admin);
   showAdminPanel();
 } else {
+  console.log('📝 No cached session, showing login');
   document.getElementById('loginContainer').style.display = 'block';
+  document.getElementById('adminPanel').style.display = 'none';
 }
 </script>
 
