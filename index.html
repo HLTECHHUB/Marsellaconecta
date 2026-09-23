@@ -986,27 +986,29 @@ function filterByCategory(cat) {
 }
 
 function executeSearch() {
-  if (allBusinesses.length === 0) return; // Don't run if data not loaded
-  
   const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
   const activeChip = document.querySelector('.filter-chip.active');
   const currentCategory = activeChip ? activeChip.textContent.trim() : 'Todos';
   
+  console.log('Search:', { query, category: currentCategory, businessCount: allBusinesses.length });
   applyFilters(currentCategory, query);
 }
 
 function applyFilters(category, searchQuery) {
-  if (!allBusinesses || allBusinesses.length === 0) return; // Safeguard
+  if (!allBusinesses) {
+    console.warn('No businesses loaded yet');
+    return;
+  }
   
-  let filtered = allBusinesses;
+  let filtered = [...allBusinesses];
   
   // Filter by category
-  if (category !== 'Todos') {
+  if (category && category !== 'Todos') {
     filtered = filtered.filter(b => b.categoria === category);
   }
   
   // Filter by search query (business name, description, barrio, or products)
-  if (searchQuery) {
+  if (searchQuery && searchQuery.length > 0) {
     filtered = filtered.filter(b => {
       const businessMatch = 
         (b.nombre || '').toLowerCase().includes(searchQuery) ||
@@ -1024,19 +1026,22 @@ function applyFilters(category, searchQuery) {
     });
   }
   
+  console.log('Filtered results:', filtered.length);
+  
   // Update both grids
   renderBusinessGrid('featuredGrid', filtered.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3));
   renderBusinessGrid('allBusinessesGrid', filtered);
 }
 
-// Wait for data to load before adding event listeners
-window.addEventListener('load', function() {
+// Attach search listeners as soon as possible
+document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('globalSearch');
   if (searchInput) {
     searchInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') executeSearch();
     });
     searchInput.addEventListener('input', executeSearch);
+    console.log('Search listeners attached');
   }
 });
 
