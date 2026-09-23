@@ -521,6 +521,7 @@ nav {
 .cart-header {
   padding: 20px; border-bottom: 1px solid var(--border);
   font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem;
+  position: relative;
 }
 
 .cart-items { flex: 1; overflow-y: auto; padding: 16px; }
@@ -725,8 +726,8 @@ nav {
     <div class="nav-logo">🌶️ MarsellaCONECTA</div>
     <ul class="nav-menu">
       <li><a href="#directorio">Directorio</a></li>
-      <li><a href="#planes">Planes</a></li>
-      <li><a href="#registrar">Registrar Negocio</a></li>
+      <li><a href="admin.html" style="color: #c65d3b; font-weight: 700;">👁️ Admin</a></li>
+      <li><a href="business.html" style="color: #c65d3b; font-weight: 700;">📊 Negocio</a></li>
     </ul>
   </div>
   <div class="nav-right">
@@ -881,9 +882,12 @@ nav {
 </div>
 
 
-<div class="cart-modal" id="cartModal">
+<div class="cart-modal" id="cartModal" onclick="if(event.target.id==='cartModal') closeCart()">
   <div class="cart-panel">
-    <div class="cart-header">Tu Carrito 🛒</div>
+    <div class="cart-header">
+      Tu Carrito 🛒
+      <button onclick="closeCart()" style="position: absolute; right: 12px; top: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">✕</button>
+    </div>
     <div class="cart-items" id="cartItems">
       <div class="cart-empty">
         <div class="cart-empty-icon">🛒</div>
@@ -1188,6 +1192,11 @@ function toggleCart() {
   const modal = document.getElementById('cartModal');
   modal.classList.toggle('active');
   renderCart();
+}
+
+function closeCart() {
+  const modal = document.getElementById('cartModal');
+  modal.classList.remove('active');
 }
 
 function closeProductsModal() {
