@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agregar Producto — Marsella Conecta</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0d67a7;
+    --success: #159957;
+    --error: #dc2626;
+    --bg: #f9fafb;
+    --surface: #ffffff;
+    --text: #101828;
+    --text-muted: #667085;
+    --border: #e5e7eb;
+    --radius: 12px;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: 'DM Sans', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    padding: 20px;
+  }
+  
+  .container { max-width: 680px; margin: 0 auto; }
+  
+  .header {
+    text-align: center; margin-bottom: 40px;
+  }
+  
+  .header h1 {
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+    margin-bottom: 8px;
+  }
+  
+  .header p { color: var(--text-muted); font-size: 1rem; }
+  
+  .form-section {
+    background: var(--surface); 
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px; margin-bottom: 20px;
+  }
+  
+  .section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem;
+    margin-bottom: 16px; color: var(--text);
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  label {
+    display: block; font-weight: 600; font-size: 0.9rem;
+    margin-bottom: 6px; color: var(--text);
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; transition: border-color 0.2s;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--primary);
+    background: #f0f7ff;
+  }
+  
+  textarea { resize: vertical; min-height: 100px; }
+  
+  .help-text {
+    font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;
+  }
+  
+  /* IMAGE UPLOAD */
+  .image-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .image-upload-area:hover {
+    border-color: var(--primary);
+    background: #f0f7ff;
+  }
+  
+  .image-upload-area.active {
+    border-color: var(--success);
+    background: #f0fdf4;
+  }
+  
+  .upload-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .upload-text { font-weight: 600; margin-bottom: 4px; }
+  .upload-subtext { color: var(--text-muted); font-size: 0.85rem; }
+  
+  .image-preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px; margin-top: 12px;
+  }
+  
+  .preview-item {
+    position: relative; border-radius: 8px; overflow: hidden;
+    background: var(--border);
+  }
+  
+  .preview-item img {
+    width: 100%; height: 100%; aspect-ratio: 1;
+    object-fit: cover; display: block;
+  }
+  
+  .preview-remove {
+    position: absolute; top: 4px; right: 4px;
+    background: var(--error); color: white;
+    border: none; width: 24px; height: 24px;
+    border-radius: 50%; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  
+  /* SPEC BOX */
+  .spec-box {
+    background: #f0fdf4; border: 1.5px solid var(--success);
+    border-radius: var(--radius); padding: 16px;
+    margin-top: 12px;
+  }
+  
+  .spec-box.error {
+    background: #fef2f2; border-color: var(--error);
+  }
+  
+  .spec-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+  .spec-detail { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+  .spec-detail strong { color: var(--text); }
+  
+  /* BUTTONS */
+  .button-group {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-top: 20px;
+  }
+  
+  button {
+    padding: 14px 20px; border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s; font-size: 0.95rem;
+  }
+  
+  .btn-primary {
+    background: var(--primary); color: white; grid-column: 1 / -1;
+  }
+  
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .btn-secondary {
+    background: var(--border); color: var(--text);
+  }
+  
+  .btn-secondary:hover { background: #d1d5db; }
+  
+  /* STEPS */
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 32px;
+  }
+  
+  .step {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 16px; text-align: center;
+  }
+  
+  .step.active { border-color: var(--primary); background: #f0f7ff; }
+  
+  .step-num {
+    font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
+    color: var(--primary); margin-bottom: 4px;
+  }
+  
+  .step-label { font-size: 0.8rem; font-weight: 600; }
+  
+  /* ALERTS */
+  .alert {
+    padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  
+  .alert.success {
+    background: #f0fdf4; border: 1px solid var(--success);
+    color: #166534;
+  }
+  
+  .alert.error {
+    background: #fef2f2; border: 1px solid var(--error);
+    color: #991b1b;
+  }
+  
+  .alert.info {
+    background: #f0f7ff; border: 1px solid var(--primary);
+    color: #1e3a8a;
+  }
+  
+  @media (max-width: 600px) {
+    .steps { grid-template-columns: 1fr; }
+    .button-group { grid-template-columns: 1fr; }
+    .form-section { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🛍️ Agregar Producto</h1>
+    <p>Completa los detalles de tu producto</p>
+  </div>
+  
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step1">
+      <div class="step-num">1</div>
+      <div class="step-label">Información</div>
+    </div>
+    <div class="step" id="step2">
+      <div class="step-num">2</div>
+      <div class="step-label">Imagen</div>
+    </div>
+    <div class="step" id="step3">
+      <div class="step-num">3</div>
+      <div class="step-label">Guardar</div>
+    </div>
+  </div>
+  
+  <!-- ALERTS -->
+  <div id="alertBox"></div>
+  
+  <!-- FORM -->
+  <form id="productForm">
+    <!-- SECTION 1: BASIC INFO -->
+    <div class="form-section" id="section1">
+      <div class="section-title">📋 Información del Producto</div>
+      
+      <div class="form-group">
+        <label>Nombre del Producto *</label>
+        <input type="text" id="productName" placeholder="Ej: Pupusas de Queso Fresco" required>
+        <div class="help-text">Sé descriptivo y específico</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Categoría *</label>
+        <select id="productCategory" required>
+          <option value="">Selecciona una categoría</option>
+          <option value="10">Sodas and Refreshments</option>
+          <option value="20">Alcoholic Drinks</option>
+          <option value="30">Grains</option>
+          <option value="40">Lactose</option>
+          <option value="50">Vegetables</option>
+          <option value="60">Fruits</option>
+          <option value="70">Pets</option>
+          <option value="80">Home Services - Installation</option>
+          <option value="90">Home Services - Maintenance</option>
+          <option value="100">Other</option>
+        </select>
+        <div class="help-text">Elige la categoría que mejor describe el producto</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="productDescription" placeholder="Describe lo que hace especial tu producto. Ingredientes, características, detalles..."></textarea>
+        <div class="help-text">Máximo 500 caracteres</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Precio (USD) *</label>
+        <input type="number" id="productPrice" placeholder="5.00" step="0.01" min="0" required>
+        <div class="help-text">Usa formato decimal: 5.50</div>
+      </div>
+      
+      <div class="form-group">
+        <label>¿En stock? *</label>
+        <select id="productStock" required>
+          <option value="true">✓ Disponible</option>
+          <option value="false">✗ Agotado</option>
+        </select>
+      </div>
+      
+      <button type="button" onclick="advanceToImageStep()" class="btn-primary">
+        Siguiente: Subir Imagen →
+      </button>
+    </div>
+    
+    <!-- SECTION 2: IMAGE -->
+    <div class="form-section" id="section2" style="display: none;">
+      <div class="section-title">📸 Foto del Producto</div>
+      <p class="help-text" style="margin-bottom: 16px;">
+        <strong>Tamaño ideal:</strong> 800×800px (cuadrado)<br>
+        <strong>Mínimo ancho:</strong> 400px<br>
+        <strong>Peso máximo:</strong> 2MB<br>
+        <strong>Formatos:</strong> JPG, PNG, WebP
+      </p>
+      
+      <div class="image-upload-area" onclick="document.getElementById('imageInput').click()">
+        <div class="upload-icon">📸</div>
+        <div class="upload-text">Haz clic para subir foto</div>
+        <div class="upload-subtext">o arrastra aquí</div>
+      </div>
+      
+      <input type="file" id="imageInput" accept="image/*" style="display: none;">
+      
+      <div id="imagePreview" style="display: none;">
+        <div class="spec-box" id="imageSpec">
+          <div class="spec-title">✓ Imagen lista para subir</div>
+          <div class="spec-detail" id="specDetail"></div>
+        </div>
+        <div class="image-preview-grid" id="previewGrid"></div>
+      </div>
+      
+      <div style="display: flex; gap: 12px; margin-top: 20px;">
+        <button type="button" onclick="backToBasicInfo()" class="btn-secondary">
+          ← Atrás
+        </button>
+        <button type="button" id="nextImageBtn" onclick="advanceToSaveStep()" class="btn-primary" style="display: none;">
+          Siguiente: Guardar →
+        </button>
+      </div>
+    </div>
+    
+    <!-- SECTION 3: SAVE -->
+    <div class="form-section" id="section3" style="display: none;">
+      <div class="section-title">✓ Guardar Producto</div>
+      
+      <div class="alert info">
+        <strong>📝 Resumen del Producto:</strong>
+        <div id="summary" style="margin-top: 8px;"></div>
+      </div>
+      
+      <p class="help-text" style="margin-bottom: 20px;">
+        Al hacer clic en "Guardar", tu producto aparecerá en Marsella Conecta en los próximos 5-10 minutos.
+      </p>
+      
+      <div style="display: flex; gap: 12px;">
+        <button type="button" onclick="backToImageStep()" class="btn-secondary">
+          ← Atrás
+        </button>
+        <button type="button" onclick="submitProduct()" id="submitBtn" class="btn-primary">
+          ✓ Guardar Producto
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://kydazssjktgsagayuupo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5ZGF6c3Nqa3Rnc2FnYXl1dXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NTg2NTYsImV4cCI6MjEwMDQzNDY1Nn0.YPXJ2cJjTcKZDPTo2o6Wkhs3-9CGZISujsPvAwKWpx4';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let resizedImageBlob = null;
+let businessId = null;
+let uploadedImageUrl = null;
+
+// Check if user is logged in and get their business
+async function loadBusinessInfo() {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    showAlert('error', 'Debes iniciar sesión primero');
+    return false;
+  }
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('auth_user_id', session.user.id)
+    .single();
+  
+  if (!profile) {
+    showAlert('error', 'Perfil no encontrado');
+    return false;
+  }
+  
+  // Get business associated with this profile
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('owner_profile_id', profile.id)
+    .single();
+  
+  if (!business) {
+    showAlert('error', 'No tienes un negocio registrado. Primero registra tu negocio.');
+    return false;
+  }
+  
+  businessId = business.id;
+  return true;
+}
+
+// IMAGE HANDLING
+async function resizeImage(file, targetWidth = 800, targetHeight = 800) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        
+        // Center crop
+        const sourceWidth = img.width;
+        const sourceHeight = img.height;
+        const sourceX = (sourceWidth - Math.min(sourceWidth, sourceHeight)) / 2;
+        const sourceY = (sourceHeight - Math.min(sourceWidth, sourceHeight)) / 2;
+        const sourceSize = Math.min(sourceWidth, sourceHeight);
+        
+        ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, targetWidth, targetHeight);
+        
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.85);
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target.result;
+    };
+    
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('imageInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  // Validation
+  const MAX_SIZE = 2 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    showAlert('error', `Archivo muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo 2MB.`);
+    return;
+  }
+  
+  if (!file.type.startsWith('image/')) {
+    showAlert('error', 'Por favor selecciona un archivo de imagen.');
+    return;
+  }
+  
+  try {
+    resizedImageBlob = await resizeImage(file);
+    
+    // Show preview
+    const previewUrl = URL.createObjectURL(resizedImageBlob);
+    document.getElementById('previewGrid').innerHTML = `
+      <div class="preview-item">
+        <img src="${previewUrl}" alt="Preview">
+      </div>
+    `;
+    
+    document.getElementById('imagePreview').style.display = 'block';
+    document.getElementById('specDetail').innerHTML = `
+      <strong>Original:</strong> ${(file.size / 1024).toFixed(1)}KB<br>
+      <strong>Después de resize:</strong> ${(resizedImageBlob.size / 1024).toFixed(1)}KB<br>
+      <strong>Dimensión:</strong> 800×800px<br>
+      <strong>Calidad:</strong> JPG (85%)
+    `;
+    
+    document.getElementById('nextImageBtn').style.display = 'block';
+    document.getElementById('imageInput').value = '';
+    
+  } catch (err) {
+    showAlert('error', 'Error al procesar la imagen: ' + err.message);
+  }
+});
+
+// STEP NAVIGATION
+function advanceToImageStep() {
+  const name = document.getElementById('productName').value.trim();
+  const cat = document.getElementById('productCategory').value;
+  const price = document.getElementById('productPrice').value;
+  
+  if (!name || !cat || !price) {
+    showAlert('error', 'Por favor completa todos los campos obligatorios');
+    return;
+  }
+  
+  document.getElementById('section1').style.display = 'none';
+  document.getElementById('section2').style.display = 'block';
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.add('active');
+}
+
+function backToBasicInfo() {
+  document.getElementById('section2').style.display = 'none';
+  document.getElementById('section1').style.display = 'block';
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step1').classList.add('active');
+}
+
+function advanceToSaveStep() {
+  if (!resizedImageBlob) {
+    showAlert('error', 'Por favor sube una imagen');
+    return;
+  }
+  
+  document.getElementById('section2').style.display = 'none';
+  document.getElementById('section3').style.display = 'block';
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.add('active');
+  
+  renderSummary();
+}
+
+function backToImageStep() {
+  document.getElementById('section3').style.display = 'none';
+  document.getElementById('section2').style.display = 'block';
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('step2').classList.add('active');
+}
+
+function renderSummary() {
+  const name = document.getElementById('productName').value;
+  const catId = document.getElementById('productCategory').value;
+  const catLabel = document.querySelector(`option[value="${catId}"]`).text;
+  const price = document.getElementById('productPrice').value;
+  const desc = document.getElementById('productDescription').value;
+  const stock = document.getElementById('productStock').value === 'true' ? 'Disponible' : 'Agotado';
+  
+  document.getElementById('summary').innerHTML = `
+    <strong>${name}</strong> — ${catLabel}<br>
+    Precio: $${price}<br>
+    Estado: ${stock}<br>
+    ${desc ? 'Descripción: ' + desc.substring(0, 50) + '...' : ''}
+  `;
+}
+
+function showAlert(type, message) {
+  const box = document.getElementById('alertBox');
+  box.innerHTML = `<div class="alert ${type}">${message}</div>`;
+  setTimeout(() => { box.innerHTML = ''; }, 5000);
+}
+
+async function submitProduct() {
+  if (!businessId) {
+    const loaded = await loadBusinessInfo();
+    if (!loaded) return;
+  }
+  
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  
+  try {
+    // 1. Upload image to Supabase Storage
+    const fileName = `product-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('marsella-products')
+      .upload(`products/${fileName}`, resizedImageBlob);
+    
+    if (uploadError) throw uploadError;
+    
+    // 2. Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('marsella-products')
+      .getPublicUrl(`products/${fileName}`);
+    
+    uploadedImageUrl = publicUrl;
+    
+    // 3. Save product to database
+    const { error: dbError } = await supabase.from('products').insert({
+      business_id: businessId,
+      name: document.getElementById('productName').value,
+      product_category_id: parseInt(document.getElementById('productCategory').value),
+      description: document.getElementById('productDescription').value,
+      price: parseFloat(document.getElementById('productPrice').value),
+      in_stock: document.getElementById('productStock').value === 'true',
+      image_url: uploadedImageUrl
+    });
+    
+    if (dbError) throw dbError;
+    
+    showAlert('success', '✓ ¡Producto guardado! Aparecerá en Marsella Conecta en unos minutos.');
+    
+    // Reset form
+    setTimeout(() => {
+      document.getElementById('productForm').reset();
+      resizedImageBlob = null;
+      uploadedImageUrl = null;
+      document.getElementById('section3').style.display = 'none';
+      document.getElementById('section1').style.display = 'block';
+      document.getElementById('step3').classList.remove('active');
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('nextImageBtn').style.display = 'none';
+    }, 2000);
+    
+  } catch (err) {
+    showAlert('error', 'Error al guardar: ' + err.message);
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '✓ Guardar Producto';
+}
+
+// Initialize
+loadBusinessInfo().then(loaded => {
+  if (!loaded) {
+    document.getElementById('productForm').style.display = 'none';
+  }
+});
+</script>
+
+</body>
+</html>
