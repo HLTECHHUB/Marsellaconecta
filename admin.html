@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marsella Conecta — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f9fafb;
+  color: #2d2622;
+}
+
+nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e2db;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(45, 38, 34, 0.04);
+}
+
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #c65d3b;
+}
+
+.nav-links a {
+  color: #2d2622;
+  text-decoration: none;
+  margin-left: 24px;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  color: #c65d3b;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 32px;
+  color: #c65d3b;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e8e2db;
+}
+
+.tab-btn {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: #6b6560;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  color: #c65d3b;
+  border-bottom-color: #c65d3b;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(45, 38, 34, 0.04);
+  border: 1px solid #e8e2db;
+}
+
+.card h3 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  color: #2d2622;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f1eb;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  color: #6b6560;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-weight: 700;
+  color: #c65d3b;
+  font-size: 1rem;
+}
+
+.btn-expand {
+  background: #c65d3b;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 12px;
+  width: 100%;
+  transition: opacity 0.2s;
+}
+
+.btn-expand:hover {
+  opacity: 0.9;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b6560;
+}
+
+.modal h2 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #c65d3b;
+}
+
+.list-item {
+  padding: 12px;
+  border-bottom: 1px solid #e8e2db;
+  display: flex;
+  justify-content: space-between;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-rank {
+  font-weight: 700;
+  color: #c65d3b;
+  min-width: 30px;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px;
+  color: #6b6560;
+}
+
+.error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🌶️ Marsella CONECTA — Admin</div>
+  <div class="nav-links">
+    <a href="index.html">← Volver</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>📊 Panel Administrativo</h1>
+  
+  <div class="tabs" id="timePeriodTabs">
+    <button class="tab-btn active" onclick="switchTimePeriod('hour')">Hoy (Por Hora)</button>
+    <button class="tab-btn" onclick="switchTimePeriod('day')">Últimos 7 Días</button>
+    <button class="tab-btn" onclick="switchTimePeriod('week')">Últimas 4 Semanas</button>
+    <button class="tab-btn" onclick="switchTimePeriod('month')">Últimos 12 Meses</button>
+  </div>
+
+  <div id="errorMessage" class="error" style="display: none;"></div>
+  
+  <div class="dashboard" id="dashboard">
+    <div class="loading">Cargando datos...</div>
+  </div>
+</div>
+
+<!-- Modal para ver lista completa -->
+<div class="modal" id="listModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeListModal()">✕</button>
+    <h2 id="modalTitle">Lista Completa</h2>
+    <div id="modalList"></div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+let currentTimePeriod = 'hour';
+
+async function loadAnalytics() {
+  try {
+    // Get traffic stats
+    const { data: events, error } = await supabase
+      .from('analytics_events')
+      .select('*')
+      .gte('created_at', getTimePeriodStart(currentTimePeriod));
+    
+    if (error) {
+      showError('Error cargando datos: ' + error.message);
+      return;
+    }
+
+    const traffic = calculateTraffic(events);
+    const topSearches = getTopSearches(events);
+    const topBusinesses = getTopBusinesses(events);
+
+    renderDashboard(traffic, topSearches, topBusinesses);
+  } catch (err) {
+    console.error('Analytics error:', err);
+    showError('Error inesperado: ' + err.message);
+  }
+}
+
+function getTimePeriodStart(period) {
+  const now = new Date();
+  switch (period) {
+    case 'hour':
+      return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    case 'day':
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    case 'week':
+      return new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
+    case 'month':
+      return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
+  }
+}
+
+function calculateTraffic(events) {
+  const logins = events.filter(e => e.event_type === 'login').length;
+  const searches = events.filter(e => e.event_type === 'search').length;
+  const clicks = events.filter(e => e.event_type === 'business_click').length;
+  const totalUsers = new Set(events.map(e => e.user_id)).size;
+  
+  return { logins, searches, clicks, totalUsers };
+}
+
+function getTopSearches(events) {
+  const searches = {};
+  events.filter(e => e.event_type === 'search' && e.search_query)
+    .forEach(e => {
+      searches[e.search_query] = (searches[e.search_query] || 0) + 1;
+    });
+  
+  return Object.entries(searches)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([query, count]) => ({ query, count }));
+}
+
+function getTopBusinesses(events) {
+  const clicks = {};
+  events.filter(e => e.event_type === 'business_click' && e.business_id)
+    .forEach(e => {
+      clicks[e.business_id] = (clicks[e.business_id] || 0) + 1;
+    });
+  
+  return Object.entries(clicks)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([bizId, count]) => ({ bizId, count }));
+}
+
+function renderDashboard(traffic, topSearches, topBusinesses) {
+  const dashboard = document.getElementById('dashboard');
+  
+  let html = `
+    <div class="card">
+      <h3>📊 Tráfico General</h3>
+      <div class="stat-item">
+        <span class="stat-label">Total de Usuarios</span>
+        <span class="stat-value">${traffic.totalUsers}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Inicios de Sesión</span>
+        <span class="stat-value">${traffic.logins}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Búsquedas</span>
+        <span class="stat-value">${traffic.searches}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Clics en Negocios</span>
+        <span class="stat-value">${traffic.clicks}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔝 Top 10 Búsquedas</h3>
+      ${topSearches.slice(0, 5).map((s, i) => `
+        <div class="stat-item">
+          <span class="stat-label">${i + 1}. ${s.query}</span>
+          <span class="stat-value">${s.count}</span>
+        </div>
+      `).join('')}
+      <button class="btn-expand" onclick="showAllSearches()">Ver Todas (${topSearches.length})</button>
+    </div>
+
+    <div class="card">
+      <h3>🏪 Top 10 Negocios Clicados</h3>
+      ${topBusinesses.slice(0, 5).map((b, i) => `
+        <div class="stat-item">
+          <span class="stat-label">${i + 1}. Negocio #${b.bizId}</span>
+          <span class="stat-value">${b.count}</span>
+        </div>
+      `).join('')}
+      <button class="btn-expand" onclick="showAllBusinesses()">Ver Todos (${topBusinesses.length})</button>
+    </div>
+  `;
+  
+  dashboard.innerHTML = html;
+  
+  // Store for modal display
+  window.allSearches = topSearches;
+  window.allBusinesses = topBusinesses;
+}
+
+function showError(message) {
+  const errorEl = document.getElementById('errorMessage');
+  errorEl.textContent = message;
+  errorEl.style.display = 'block';
+}
+
+window.switchTimePeriod = function(period) {
+  currentTimePeriod = period;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  loadAnalytics();
+};
+
+window.showAllSearches = function() {
+  const modal = document.getElementById('listModal');
+  const list = document.getElementById('modalList');
+  document.getElementById('modalTitle').textContent = '🔝 Todas las Búsquedas';
+  
+  list.innerHTML = window.allSearches.map((s, i) => `
+    <div class="list-item">
+      <span class="list-rank">#${i + 1}</span>
+      <span>${s.query}</span>
+      <span class="stat-value">${s.count}</span>
+    </div>
+  `).join('');
+  
+  modal.classList.add('active');
+};
+
+window.showAllBusinesses = function() {
+  const modal = document.getElementById('listModal');
+  const list = document.getElementById('modalList');
+  document.getElementById('modalTitle').textContent = '🏪 Todos los Negocios Clicados';
+  
+  list.innerHTML = window.allBusinesses.map((b, i) => `
+    <div class="list-item">
+      <span class="list-rank">#${i + 1}</span>
+      <span>Negocio #${b.bizId}</span>
+      <span class="stat-value">${b.count}</span>
+    </div>
+  `).join('');
+  
+  modal.classList.add('active');
+};
+
+window.closeListModal = function() {
+  document.getElementById('listModal').classList.remove('active');
+};
+
+// Load on startup
+loadAnalytics();
+</script>
+
+</body>
+</html>
