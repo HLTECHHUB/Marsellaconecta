@@ -203,7 +203,8 @@ async function doLogin() {
   }
 
   try {
-    const url = `${CONFIG.supabaseUrl}/rest/v1/users?phone_number=eq.${phone}&select=*`;
+    const phoneNum = parseInt(phone); // Convert to number
+    const url = `${CONFIG.supabaseUrl}/rest/v1/users?phone_number=eq.${phoneNum}&select=*`;
     const res = await fetch(url, {
       headers: {
         'apikey': CONFIG.supabaseKey,
