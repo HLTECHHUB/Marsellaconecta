@@ -837,6 +837,7 @@ function renderBusinessCard(biz) {
 
 function renderFilters() {
   const categories = [...new Set(allBusinesses.map(b => b.categoria).filter(Boolean))];
+  console.log('Rendering filters:', categories);
   const html = ['Todos', ...categories].map(cat => `
     <button class="filter-chip ${cat === 'Todos' ? 'active' : ''}" onclick="filterByCategory('${cat}')">
       ${cat === 'Todos' ? '🎯' : getCategoryEmoji(cat)} ${cat}
@@ -981,6 +982,9 @@ function filterByCategory(cat) {
   chips.forEach(el => el.classList.remove('active'));
   event.target.classList.add('active');
   
+  // Remove emoji from category
+  cat = cat.replace(/^[^\w\s]+\s/, '');
+  
   const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
   applyFilters(cat, query);
 }
@@ -988,7 +992,10 @@ function filterByCategory(cat) {
 function executeSearch() {
   const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
   const activeChip = document.querySelector('.filter-chip.active');
-  const currentCategory = activeChip ? activeChip.textContent.trim() : 'Todos';
+  let currentCategory = activeChip ? activeChip.textContent.trim() : 'Todos';
+  
+  // Remove emoji from category (e.g., "🎯 Todos" → "Todos")
+  currentCategory = currentCategory.replace(/^[^\w\s]+\s/, '');
   
   console.log('Search:', { query, category: currentCategory, businessCount: allBusinesses.length });
   applyFilters(currentCategory, query);
@@ -1002,28 +1009,48 @@ function applyFilters(category, searchQuery) {
   
   let filtered = [...allBusinesses];
   
-  // Filter by category
+  // Filter by category (clean both sides)
   if (category && category !== 'Todos') {
-    filtered = filtered.filter(b => b.categoria === category);
+    const cleanCategory = category.replace(/^[^\w\s]+\s/, '').trim();
+    filtered = filtered.filter(b => 
+      (b.categoria || '').toLowerCase().trim() === cleanCategory.toLowerCase().trim()
+    );
+    console.log('Category filter:', { category: cleanCategory, matches: filtered.length });
   }
   
   // Filter by search query (business name, description, barrio, or products)
   if (searchQuery && searchQuery.length > 0) {
+    const beforeSearch = filtered.length;
+    
     filtered = filtered.filter(b => {
-      const businessMatch = 
-        (b.nombre || '').toLowerCase().includes(searchQuery) ||
-        (b.categoria || '').toLowerCase().includes(searchQuery) ||
-        (b.barrio || '').toLowerCase().includes(searchQuery) ||
-        (b.descripcion || '').toLowerCase().includes(searchQuery);
+      // Check all business fields
+      const businessName = (b.nombre || '').toLowerCase().includes(searchQuery);
+      const businessCategory = (b.categoria || '').toLowerCase().includes(searchQuery);
+      const businessBarrio = (b.barrio || '').toLowerCase().includes(searchQuery);
+      const businessDesc = (b.descripcion || '').toLowerCase().includes(searchQuery);
       
-      const productMatch = allProducts.some(p => 
-        p.business_id === b.id && 
-        ((p.name || '').toLowerCase().includes(searchQuery) ||
-         (p.description || '').toLowerCase().includes(searchQuery))
-      );
+      const businessMatch = businessName || businessCategory || businessBarrio || businessDesc;
+      
+      // Check all products for this business
+      const productMatch = allProducts.some(p => {
+        if (p.business_id !== b.id) return false;
+        
+        const productName = (p.name || '').toLowerCase().includes(searchQuery);
+        const productDesc = (p.description || '').toLowerCase().includes(searchQuery);
+        const productCategory = (p.product_category_id) ? 'checked' : false;
+        
+        return productName || productDesc;
+      });
+      
+      // Log matches
+      if (businessMatch || productMatch) {
+        console.log(`✓ Match: "${b.nombre}" - Biz:(name:${businessName}|cat:${businessCategory}|barrio:${businessBarrio}|desc:${businessDesc}) Prod:${productMatch}`);
+      }
       
       return businessMatch || productMatch;
     });
+    
+    console.log(`Search "${searchQuery}": ${beforeSearch} businesses → ${filtered.length} matches`);
   }
   
   console.log('Filtered results:', filtered.length);
@@ -1066,10 +1093,13 @@ async function loadData() {
     // Load businesses
     const { data: businesses } = await supabase.from('businesses').select('*').neq('estado', 'Rechazado').order('created_at', { ascending: true });
     allBusinesses = businesses || [];
+    console.log('✓ Loaded', allBusinesses.length, 'businesses');
+    console.log('Categories in database:', [...new Set(allBusinesses.map(b => b.categoria).filter(Boolean))]);
     
     // Load products
     const { data: products } = await supabase.from('products').select('*');
     allProducts = products || [];
+    console.log('✓ Loaded', allProducts.length, 'products');
     
   } catch (err) {
     console.error('Data loading error:', err);
