@@ -773,6 +773,15 @@ nav {
 
 <!-- MAIN CONTENT -->
 <main>
+  <!-- PROMOTIONS BANNER -->
+  <section class="section" id="promotionsBanner" style="background: linear-gradient(135deg, #c65d3b 0%, #d4a574 100%); padding: 20px 0; display: none;">
+    <div class="container">
+      <div id="promotionCarousel" style="text-align: center; color: white;">
+        <div id="currentPromotion"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- FEATURED -->
   <section class="section" id="featured">
     <div class="container">
@@ -1551,19 +1560,79 @@ async function loadData() {
     const { data: products } = await supabase.from('products').select('*');
     allProducts = products || [];
     console.log('✓ Loaded', allProducts.length, 'products');
+
+    // Load featured businesses
+    const { data: featured } = await supabase.from('featured_businesses').select('business_id').eq('is_active', true).order('featured_order', { ascending: true });
+    const featuredIds = featured ? featured.map(f => f.business_id) : [];
+    const featuredBusinesses = allBusinesses.filter(b => featuredIds.includes(b.id));
+    console.log('✓ Loaded', featuredBusinesses.length, 'featured businesses');
+
+    // Load promotions
+    const { data: promotions } = await supabase.from('promotions').select('*').eq('is_active', true);
+    const now = new Date();
+    const activePromos = (promotions || []).filter(p => {
+      const start = new Date(p.start_date);
+      const end = new Date(p.end_date);
+      return now >= start && now <= end;
+    });
+    console.log('✓ Loaded', activePromos.length, 'active promotions');
+
+    // Display promotions carousel
+    if (activePromos.length > 0) {
+      displayPromotions(activePromos);
+    }
     
   } catch (err) {
     console.error('Data loading error:', err);
   }
   
   renderFilters();
-  renderBusinessGrid('featuredGrid', allBusinesses.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3));
+  
+  // Load featured businesses (fallback to premium if none featured)
+  const { data: featured } = await supabase.from('featured_businesses').select('business_id').eq('is_active', true).order('featured_order', { ascending: true });
+  let featuredToShow = [];
+  if (featured && featured.length > 0) {
+    const featuredIds = featured.map(f => f.business_id);
+    featuredToShow = allBusinesses.filter(b => featuredIds.includes(b.id));
+  } else {
+    featuredToShow = allBusinesses.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3);
+  }
+  
+  renderBusinessGrid('featuredGrid', featuredToShow);
   renderBusinessGrid('allBusinessesGrid', allBusinesses);
   renderCartCount();
 }
 
+function displayPromotions(promos) {
+  const banner = document.getElementById('promotionsBanner');
+  const promo = document.getElementById('currentPromotion');
+  
+  if (!promos || promos.length === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'block';
+  let currentIndex = 0;
+
+  function showPromo() {
+    const p = promos[currentIndex];
+    let html = `<h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 8px;">${p.title}</h2>`;
+    if (p.description) html += `<p style="font-size: 1rem;">${p.description}</p>`;
+    promo.innerHTML = html;
+  }
+
+  showPromo();
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % promos.length;
+    showPromo();
+  }, 5000);
+}
+
 // Expose window functions
 window.toggleCart = toggleCart;
+window.closeCart = closeCart;
+window.displayPromotions = displayPromotions;
 window.sendOrderViaWhatsApp = sendOrderViaWhatsApp;
 window.executeSearch = executeSearch;
 window.applyFilters = applyFilters;
