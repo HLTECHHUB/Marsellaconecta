@@ -868,12 +868,18 @@ let supabase = null;
 
 function initializeSupabase() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    document.getElementById('setupModal').classList.remove('hidden');
+    const modal = document.getElementById('setupModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
     return false;
   }
   
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  document.getElementById('setupModal').classList.add('hidden');
+  const modal = document.getElementById('setupModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
   return true;
 }
 
@@ -898,11 +904,19 @@ function saveCredentials(e) {
   SUPABASE_URL = url;
   SUPABASE_ANON_KEY = key;
   
-  // Initialize and reload
-  initializeSupabase();
+  // Initialize Supabase
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  // Hide modal
+  const modal = document.getElementById('setupModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  
+  // Load data
   loadData();
   
-  alert('✓ Credentials saved! Reloading site...');
+  alert('✓ Credenciales guardadas! Cargando datos...');
 }
 
 window.resetCredentials = function() {
