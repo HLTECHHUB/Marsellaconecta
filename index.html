@@ -18,7 +18,7 @@
   "@type": "LocalBusiness",
   "name": "Marsella Conecta",
   "description": "Directorio local de negocios, productos y servicios en Marsella, El Salvador",
-  "url": "https://hltechhub.github.io/Marsellaconecta/",
+  "url": "https://[YOUR-GITHUB-PAGES-URL]",
   "telephone": "+503-7XXX-XXXX",
   "address": {
     "@type": "PostalAddress",
@@ -634,6 +634,7 @@ nav {
     </ul>
   </div>
   <div class="nav-right">
+    <button onclick="resetCredentials()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; text-decoration: underline; padding: 4px 8px;">Cambiar Credenciales</button>
     <div class="cart-badge" id="cartBadge" onclick="toggleCart()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -697,7 +698,141 @@ nav {
   </div>
 </div>
 
-<!-- CART PANEL -->
+<!-- SETUP MODAL -->
+<div class="setup-modal" id="setupModal">
+  <div class="setup-container">
+    <div class="setup-header">
+      <h1>🌶️ Marsella Conecta Setup</h1>
+      <p>Enter your Supabase credentials (one-time only)</p>
+    </div>
+    
+    <form id="setupForm" onsubmit="saveCredentials(event)">
+      <div class="setup-form-group">
+        <label>Supabase Project URL</label>
+        <input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co" required>
+        <div class="help-text">Copy from Supabase Console → Settings → API</div>
+      </div>
+      
+      <div class="setup-form-group">
+        <label>Supabase Anon Public Key</label>
+        <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIs..." required>
+        <div class="help-text">Copy from Supabase Console → Settings → API</div>
+      </div>
+      
+      <div class="setup-form-group">
+        <label>Your GitHub Pages URL (Optional)</label>
+        <input type="text" id="siteUrl" placeholder="https://username.github.io/marsella-conecta/">
+        <div class="help-text">For SEO and social sharing</div>
+      </div>
+      
+      <button type="submit" class="btn-setup">✓ Save Credentials</button>
+    </form>
+    
+    <div class="setup-footer">
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 16px;">
+        Credentials are stored securely in your browser. Never shared or sent anywhere.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+.setup-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.setup-container {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+
+.setup-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.setup-header h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.setup-header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.setup-form-group {
+  margin-bottom: 20px;
+}
+
+.setup-form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.setup-form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.setup-form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.help-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.btn-setup {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 16px;
+}
+
+.btn-setup:hover {
+  opacity: 0.9;
+}
+
+.setup-footer {
+  text-align: center;
+}
+
+.setup-modal.hidden {
+  display: none;
+}
+</style>
 <div class="cart-modal" id="cartModal">
   <div class="cart-panel">
     <div class="cart-header">Tu Carrito 🛒</div>
@@ -723,12 +858,61 @@ nav {
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// CONFIG
-const SUPABASE_URL = 'https://tlvnolvfrujhlrffdmeb.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsdm5vbHZmcnVqaGxyZmZkbWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDk2NTcsImV4cCI6MjEwNTY4NTY1N30.DZNqaSBGb2-Y6w3mcLSVZ98W0jQxohBgbUls0AqoHfE';
+// CONFIG - Load from localStorage
+let SUPABASE_URL = localStorage.getItem('supabaseUrl') || '';
+let SUPABASE_ANON_KEY = localStorage.getItem('supabaseKey') || '';
 const COUNTRY_CODE = '503';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase (or show setup modal)
+let supabase = null;
+
+function initializeSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    document.getElementById('setupModal').classList.remove('hidden');
+    return false;
+  }
+  
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  document.getElementById('setupModal').classList.add('hidden');
+  return true;
+}
+
+function saveCredentials(e) {
+  e.preventDefault();
+  
+  const url = document.getElementById('supabaseUrl').value.trim();
+  const key = document.getElementById('supabaseKey').value.trim();
+  const siteUrl = document.getElementById('siteUrl').value.trim();
+  
+  if (!url || !key) {
+    alert('Please enter both Supabase URL and API Key');
+    return;
+  }
+  
+  // Save to localStorage
+  localStorage.setItem('supabaseUrl', url);
+  localStorage.setItem('supabaseKey', key);
+  if (siteUrl) localStorage.setItem('siteUrl', siteUrl);
+  
+  // Update global variables
+  SUPABASE_URL = url;
+  SUPABASE_ANON_KEY = key;
+  
+  // Initialize and reload
+  initializeSupabase();
+  loadData();
+  
+  alert('✓ Credentials saved! Reloading site...');
+}
+
+window.resetCredentials = function() {
+  if (confirm('Are you sure? This will clear all saved credentials.')) {
+    localStorage.removeItem('supabaseUrl');
+    localStorage.removeItem('supabaseKey');
+    localStorage.removeItem('siteUrl');
+    location.reload();
+  }
+};
 
 let allBusinesses = [];
 let allProducts = [];
@@ -971,27 +1155,29 @@ function sendOrderViaWhatsApp() {
 
 // ---- SEARCH & FILTER ----
 function filterByCategory(cat) {
-  document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+  const chips = document.querySelectorAll('.filter-chip');
+  if (chips.length === 0) return; // Don't run if filters not loaded
+  
+  chips.forEach(el => el.classList.remove('active'));
   event.target.classList.add('active');
   
-  const query = document.getElementById('globalSearch').value.toLowerCase().trim();
+  const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
   applyFilters(cat, query);
 }
 
 function executeSearch() {
-  const query = document.getElementById('globalSearch').value.toLowerCase().trim();
-  const currentCategory = document.querySelector('.filter-chip.active')?.textContent.trim() || 'Todos';
+  if (allBusinesses.length === 0) return; // Don't run if data not loaded
   
-  if (!query) {
-    document.getElementById('searchResults').classList.remove('active');
-    applyFilters(currentCategory, '');
-    return;
-  }
+  const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
+  const activeChip = document.querySelector('.filter-chip.active');
+  const currentCategory = activeChip ? activeChip.textContent.trim() : 'Todos';
   
   applyFilters(currentCategory, query);
 }
 
 function applyFilters(category, searchQuery) {
+  if (!allBusinesses || allBusinesses.length === 0) return; // Safeguard
+  
   let filtered = allBusinesses;
   
   // Filter by category
@@ -1021,16 +1207,18 @@ function applyFilters(category, searchQuery) {
   // Update both grids
   renderBusinessGrid('featuredGrid', filtered.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3));
   renderBusinessGrid('allBusinessesGrid', filtered);
-  
-  // Hide search dropdown
-  document.getElementById('searchResults').classList.remove('active');
 }
 
-document.getElementById('globalSearch').addEventListener('keydown', e => {
-  if (e.key === 'Enter') executeSearch();
+// Wait for data to load before adding event listeners
+window.addEventListener('load', function() {
+  const searchInput = document.getElementById('globalSearch');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') executeSearch();
+    });
+    searchInput.addEventListener('input', executeSearch);
+  }
 });
-
-document.getElementById('globalSearch').addEventListener('input', executeSearch);
 
 // ---- RENDER GRID ----
 function renderBusinessGrid(elementId, businesses) {
@@ -1040,6 +1228,11 @@ function renderBusinessGrid(elementId, businesses) {
 
 // ---- DATA LOADING ----
 async function loadData() {
+  if (!supabase) {
+    console.error('Supabase not initialized');
+    return;
+  }
+  
   try {
     // Load product categories
     const { data: categories } = await supabase.from('product_categories').select('*').order('order', { ascending: true });
@@ -1072,7 +1265,22 @@ window.filterByCategory = filterByCategory;
 window.openProductsModal = openProductsModal;
 window.closeProductsModal = closeProductsModal;
 
-loadData();
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (initializeSupabase()) {
+    loadData();
+  }
+});
+
+// Expose reset function
+window.resetCredentials = window.resetCredentials || function() {
+  if (confirm('Are you sure? This will clear all saved credentials.')) {
+    localStorage.removeItem('supabaseUrl');
+    localStorage.removeItem('supabaseKey');
+    localStorage.removeItem('siteUrl');
+    location.reload();
+  }
+};
 </script>
 
 </body>
