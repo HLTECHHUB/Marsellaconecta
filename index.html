@@ -1120,7 +1120,6 @@ function generateCardHtml(r, index) {
     ${starsHtml ? `<div class="biz-stars">${starsHtml} ${stars}/5</div>` : ''}
     <div class="biz-actions">
       <a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>
-      ${tel ? `<a class="btn-wa" href="https://wa.me/${COUNTRY_CODE}${tel}" target="_blank">💬 WhatsApp</a>` : ''}
       <button class="btn-share" onclick="window.shareBiz('${name.replace(/'/g,"\\'")}','${tel}')" title="Compartir">⬆️</button>
     </div>
     ${nProducts ? `<button class="btn-products" onclick="window.openProducts('${r.id}')">🛍️ Ver ${nProducts} producto${nProducts!==1?'s':''}</button>` : ''}
@@ -1264,7 +1263,6 @@ window.openBizDetail = function(bizId, promo) {
   const starsHtml = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
   const verified = ['activo', 'verificado', 'active'].includes((r.estado || '').toLowerCase());
   const prods = productsByBiz[r.id] || [];
-  const waHref = tel ? `https://wa.me/${COUNTRY_CODE}${tel}` + (promo ? `?text=${encodeURIComponent('Clic promocional desde Conecta Marsella')}` : '') : '';
   document.getElementById('bizDetailTitle').textContent = r.nombre || 'Negocio';
   document.getElementById('bizDetailBody').innerHTML = `
     <div class="biz-card biz-detail" data-name="${shopEsc(r.nombre)}">
@@ -1284,9 +1282,8 @@ window.openBizDetail = function(bizId, promo) {
       ${tel ? `<div class="bd-row">📱 ${shopEsc(r.telefono)}</div>` : ''}
       ${starsHtml ? `<div class="bd-row biz-stars">${starsHtml} ${stars}/5</div>` : ''}
       <div class="biz-actions" style="margin-top:12px">
-        ${tel ? `<a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a><a class="btn-wa" href="${waHref}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+        ${tel ? `<a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>` : ''}
       </div>
-      ${/^https:\/\//i.test(r.whatsapp_catalog_url || '') ? `<a class="btn-wa" style="display:block;text-align:center;margin-top:10px;text-decoration:none" href="${shopEsc(r.whatsapp_catalog_url)}" target="_blank" rel="noopener">📲 Ver catálogo en WhatsApp</a>` : ''}
       ${prods.length ? `<div class="bd-prods"><h4>🛍️ Productos (${prods.length})</h4>
         ${prods.slice(0, 6).map(p => `<div class="bd-prod"><span>${shopEsc(p.name)}</span><b>${p.price != null ? money(p.price) : ''}</b></div>`).join('')}
         <button class="btn-products" style="margin-top:10px" onclick="window.closeBizDetail();window.openProducts('${r.id}')">Ver todos y pedir</button></div>` : ''}
@@ -1353,24 +1350,11 @@ function renderCart() {
         <span class="cart-qty"><button onclick="window.cartQty(${x.p.id},-1)">−</button><span>${x.qty}</span><button onclick="window.cartQty(${x.p.id},1)">+</button></span></div>`).join('')}
       <div style="display:flex;justify-content:space-between;font-weight:800;margin-top:8px"><span>Total</span><span>${money(total)}</span></div>
       <button class="cart-send" onclick="window.sendOrder('${bizId}')">📨 Enviar solicitud al negocio</button>
-      <div style="font-size:.74rem;color:var(--ink-muted);margin-top:6px">El negocio debe aceptar tu pedido. Después podrás enviarlo por WhatsApp.</div>
+      <div style="font-size:.74rem;color:var(--ink-muted);margin-top:6px">El negocio debe aceptar tu pedido. Después coordinan los detalles por el chat de la app.</div>
     </div>`;
   }).join('') + '<div id="cartOrders"></div>';
   loadMyOrders();
 }
-
-const orderMsg = (biz, o) => `🛒 *Hola ${biz.nombre}, este es mi pedido (ya aceptado en Conecta Marsella):*\n\n` +
-  (o.items || []).map(i => `• ${i.name} x${i.qty}: ${money((Number(i.price) || 0) * i.qty)}`).join('\n') +
-  `\n\n💰 *Total: ${money(o.total)}*` + (o.customer_name ? `\n👤 ${o.customer_name}` : '') + `\n🔗 Conecta Marsella`;
-
-window.orderWhatsApp = function(orderId, direct) {
-  const o = (window._myOrders || []).find(x => x.id === orderId); if (!o) return;
-  const biz = allData.find(b => String(b.id) === String(o.business_id));
-  const tel = cleanPhone(biz && biz.telefono);
-  if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
-  logUserEvent('Pedido_WhatsApp', (o.items || []).map(i => `${i.qty}× ${i.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, Number(o.total) || 0);
-  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(direct ? orderMsg(biz, o).replace(' (ya aceptado en Conecta Marsella)', '') : orderMsg(biz, o))}`, '_blank');
-};
 
 async function loadMyOrders() {
   const el = document.getElementById('cartOrders');
@@ -1384,10 +1368,10 @@ async function loadMyOrders() {
     const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
     return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
       <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
-      ${o.status === 'pendiente' && o.due_at ? (() => { const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000); const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' }); return left >= 0 ? `<div style="font-size:.8rem;color:#1b6b4a;font-weight:700">⏱️ ${shopEsc(biz.nombre || 'El negocio')} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div style="font-size:.82rem;color:#b3261e;font-weight:700">⚠️ El negocio no ha respondido a tiempo.</div><button class="cart-send" style="background:#fff;color:#25a244;border:1.5px solid #25a244;margin-top:6px" onclick="window.orderWhatsApp('${o.id}', true)">💬 Escribirle por WhatsApp</button>`; })() : ''}
+      ${o.status === 'pendiente' && o.due_at ? (() => { const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000); const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' }); return left >= 0 ? `<div style="font-size:.8rem;color:#1b6b4a;font-weight:700">⏱️ ${shopEsc(biz.nombre || 'El negocio')} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div style="font-size:.82rem;color:#b3261e;font-weight:700">⚠️ El negocio no ha respondido a tiempo.</div><div style="font-size:.8rem;color:var(--ink-muted);margin-top:4px">Puedes escribirle por el chat mientras responde.</div>`; })() : ''}
       ${o.status === 'modificado' ? `<div style="background:#fff4e5;border-radius:10px;padding:10px;font-size:.86rem;margin:6px 0">✏️ <b>${shopEsc(biz.nombre || 'El negocio')} propone cambios:</b><br>${shopEsc(o.business_note || '')}${o.proposed_items ? modDiff(o) : ''}</div><div style="display:flex;gap:8px"><button class="cart-send" style="flex:1" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button><button class="cart-send" style="flex:1;background:#fff;color:#b3261e;border:1.5px solid #e6b8b4" onclick="window.answerMod('${o.id}', false)">✖ Cancelar</button></div>` : ''}
       ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
-      ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}
+      ${o.status === 'aceptado' ? `<div style="font-size:.84rem;color:#1b6b4a;font-weight:700;margin:6px 0">✅ Pedido aceptado. Coordina la entrega por el chat.</div>` : ''}
       ${!['rechazado', 'cancelado'].includes(o.status) ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : ''}
       ${o.status === 'aceptado' ? `<button class="cart-send" style="background:#fff;color:#3949ab;border:1.5px solid #3949ab;margin-top:6px" onclick="window.completeMyOrder('${o.id}')">✔ Ya recibí mi pedido</button>` : ''}</div>`;
   }).join('');
@@ -1456,10 +1440,9 @@ window.sendOrder = async function(bizId) {
     let notified = 0;
     try { const r = await supabase.functions.invoke('order-push', { body: { order_id: orderId, event: 'new' } }); notified = (r.data && r.data.notified) || 0; } catch (_) {}
     if (notified > 0) {
-      alert('✅ ¡Solicitud enviada! ' + biz.nombre + ' recibió una notificación. Cuando la acepten podrás enviar tu pedido por WhatsApp desde aquí.');
-    } else if (confirm(biz.nombre + ' aún no tiene las notificaciones activas, así que no vio tu solicitud.\n\n¿Quieres avisarle ahora por WhatsApp?')) {
-      const tel = cleanPhone(biz.telefono);
-      if (tel) window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, { items: payload, total, customer_name: [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ') }).replace(' (ya aceptado en Conecta Marsella)', ''))}`, '_blank');
+      alert('✅ ¡Solicitud enviada! ' + biz.nombre + ' recibió una notificación. Te avisaremos cuando la acepten y podrán coordinar por el chat.');
+    } else {
+      alert('📨 Solicitud enviada. ' + biz.nombre + ' aún no tiene las notificaciones activas en su teléfono, pero verá tu pedido al abrir la app. Puedes escribirle por el chat de tu pedido.');
     }
     // So the neighbor also hears back, offer alerts on this device.
     if (pushSupported && !(isIOS && !isStandalone()) && Notification.permission === 'default' && confirm('¿Quieres que te avisemos aquí cuando el negocio acepte tu pedido?')) { await window.togglePush(); }
@@ -1483,17 +1466,7 @@ async function loadPromotions() {
     const now = Date.now();
     const promos = (data || []).filter(p => !p.expira_at || new Date(p.expira_at).getTime() >= now);
     if (!promos.length) return;
-    // Promos linked to a business get a WhatsApp link to that business with a tracking message.
-    const bizIds = [...new Set(promos.map(p => p.business_id).filter(Boolean))];
-    const bizTel = {};
-    if (bizIds.length) {
-      const { data: bs } = await supabase.from('businesses').select('id,telefono').in('id', bizIds);
-      (bs || []).forEach(b => { bizTel[b.id] = cleanPhone(b.telefono); });
-    }
-    const promoLink = (p) => {
-      const tel = p.business_id && bizTel[p.business_id];
-      return tel ? `https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent('Clic promocional desde Conecta Marsella')}` : (p.cta_url || '');
-    };
+    const promoLink = (p) => p.cta_url || '';
     const seenPromo = new Set();
     window.promoClick = (i) => { const p = promos[i]; if (p) logUserEvent('Promo_Click', p.titulo, p.negocio_nombre || '', null, p.id); };
     window.promoOpen = (i) => {

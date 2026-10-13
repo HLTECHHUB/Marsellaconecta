@@ -51,7 +51,7 @@
 
 <div class="wrap">
   <h1>🛍️ Mis productos</h1>
-  <p class="sub">Agrega, edita o quita los productos de tu negocio. Los clientes los ven y pueden pedirte por WhatsApp.</p>
+  <p class="sub">Agrega, edita o quita los productos de tu negocio. Los vecinos los ven y te los piden desde la app.</p>
   <div id="msg" class="msg"></div>
   <div id="gate" class="card" style="display:none"></div>
 
@@ -92,12 +92,6 @@
 
     <div class="card"><div id="list"><div class="empty">Cargando...</div></div></div>
 
-    <div class="card">
-      <h3>📲 Catálogo de WhatsApp (opcional)</h3>
-      <p class="hint" style="margin:0 0 8px">Si ya tienes un catálogo en WhatsApp Business, pega aquí su enlace (WhatsApp Business → Catálogo → Compartir). Los clientes verán un botón “Ver catálogo en WhatsApp” en tu negocio.</p>
-      <input id="catUrl" placeholder="https://wa.me/c/503XXXXXXXX">
-      <div style="margin-top:10px"><button class="btn btn-l" onclick="saveCatalogUrl()">Guardar enlace</button></div>
-    </div>
   </div>
 </div>
 
@@ -136,7 +130,7 @@ async function boot() {
 }
 
 async function load() {
-  $('bizName').textContent = biz.nombre; $('catUrl').value = biz.whatsapp_catalog_url || '';
+  $('bizName').textContent = biz.nombre;
   const { data, error } = await supabase.from('products').select('*').eq('business_id', biz.id).order('created_at', { ascending: false });
   if (error) { $('list').innerHTML = `<div class="empty">Error: ${esc(error.message)}</div>`; return; }
   products = data || [];
@@ -210,13 +204,6 @@ window.saveBulk = async () => {
   flash(`${items.length} productos agregados ✓`); load();
 };
 
-window.saveCatalogUrl = async () => {
-  const u = $('catUrl').value.trim();
-  if (u && !/^https:\/\/[^\s]+$/i.test(u)) return flash('El enlace debe empezar con https://', false);
-  const { error } = await supabase.from('businesses').update({ whatsapp_catalog_url: u || null }).eq('id', biz.id);
-  if (error) return flash('No se pudo guardar: ' + error.message, false);
-  biz.whatsapp_catalog_url = u || null; flash('Enlace guardado ✓');
-};
 
 boot();
 </script>
