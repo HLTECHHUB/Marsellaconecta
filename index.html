@@ -269,6 +269,59 @@
   .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 600px) { .nav-links { display: none; } .listings-grid { grid-template-columns: 1fr; } .cta-banner { text-align: center; } .cta-banner-text { min-width: 100%; } }
+
+  /* PROMO BANNER CAROUSEL */
+  .promo-banner { position: relative; margin: 0; background: var(--ink); overflow: hidden; }
+  .promo-slide { display: none; position: relative; min-height: 180px; background-size: cover; background-position: center; color: #fff; }
+  .promo-slide.active { display: flex; align-items: center; }
+  .promo-slide::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(45,38,34,0.78) 0%, rgba(45,38,34,0.25) 70%, transparent 100%); }
+  .promo-slide:not(.noimg) { aspect-ratio: 4/1; min-height: 200px; }
+  @media (max-width: 600px) { .promo-slide:not(.noimg) { aspect-ratio: 2/1; } }
+  .promo-slide.noimg { background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); }
+  .promo-slide.noimg::before { background: none; }
+  .promo-copy { position: relative; padding: 24px 28px; max-width: 560px; }
+  .promo-copy h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.2rem, 4vw, 1.9rem); line-height: 1.15; margin-bottom: 6px; }
+  .promo-copy p { font-size: 0.9rem; opacity: 0.92; margin-bottom: 12px; }
+  .promo-copy .promo-biz-tag { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; }
+  .promo-copy a { display: inline-block; background: #fff; color: var(--accent); font-weight: 700; font-size: 0.82rem; padding: 9px 18px; border-radius: 9px; text-decoration: none; }
+  .promo-dots { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+  .promo-dots button { width: 8px; height: 8px; border-radius: 50%; border: none; background: rgba(255,255,255,0.5); cursor: pointer; padding: 0; }
+  .promo-dots button.active { background: #fff; }
+
+  /* PRODUCTS + CART */
+  .nav-cart { position: relative; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; background: #f5e6e0; border-radius: 9px; border: none; font-size: 1.05rem; }
+  .nav-cart .count { position: absolute; top: -6px; right: -6px; background: #d84040; color: #fff; min-width: 20px; height: 20px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; display: none; place-items: center; padding: 0 4px; }
+  .btn-products { grid-column: 1 / -1; background: #f5e6e0; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 9px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; width: 100%; margin-top: 8px; }
+  .btn-products:hover { background: var(--accent); color: #fff; }
+  .shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; }
+  .shop-overlay.active { display: flex; }
+  .shop-modal { background: var(--surface); width: 100%; max-width: 640px; max-height: 88vh; border-radius: 16px; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+  .shop-head { position: sticky; top: 0; background: var(--surface); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1; }
+  .shop-head h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
+  .shop-x { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--ink-muted); }
+  .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr)); gap: 12px; padding: 16px 20px 20px; }
+  .prod-card { border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .prod-card.added { border-color: var(--accent2); background: #e2f1ed; }
+  .prod-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: linear-gradient(135deg, #f5e6e0, #e2f1ed); }
+  .prod-info { padding: 10px 12px 12px; }
+  .prod-name { font-weight: 700; font-size: 0.85rem; line-height: 1.2; margin-bottom: 3px; }
+  .prod-cat { font-size: 0.7rem; color: var(--ink-muted); margin-bottom: 6px; }
+  .prod-price { color: var(--accent); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; }
+  .prod-stock { font-size: 0.72rem; color: var(--accent2); font-weight: 700; }
+  .prod-stock.out { color: #d84040; }
+  .prod-add { width: 100%; margin-top: 8px; padding: 8px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .prod-add:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cart-drawer { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: flex-end; z-index: 600; }
+  .cart-drawer.active { display: flex; }
+  .cart-panel { background: var(--surface); width: 100%; max-width: 400px; height: 100%; display: flex; flex-direction: column; }
+  .cart-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+  .cart-group { border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+  .cart-group h4 { font-family: 'Syne', sans-serif; font-size: 0.92rem; margin-bottom: 8px; }
+  .cart-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.83rem; padding: 5px 0; border-bottom: 1px dashed var(--border); }
+  .cart-qty button { width: 24px; height: 24px; border: none; border-radius: 6px; background: var(--border); cursor: pointer; font-weight: 700; }
+  .cart-qty span { display: inline-block; min-width: 22px; text-align: center; }
+  .cart-send { width: 100%; margin-top: 10px; padding: 11px; border: none; border-radius: 9px; background: #25d366; color: #fff; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .cart-empty { text-align: center; color: var(--ink-muted); padding: 40px 10px; }
 </style>
 </head>
 <body>
@@ -281,6 +334,7 @@
     <a href="pages/plans.html">Planes</a>
   </div>
   <div class="nav-actions">
+    <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
     <a href="pages/register.html" id="navMerchantCta" class="nav-cta">+ Agregar Negocio</a>
@@ -308,9 +362,9 @@
   <div class="stat-item"><div class="stat-num">🇸🇻</div><div class="stat-label">El Salvador</div></div>
 </div>
 
-<div class="section" id="promoSection" style="display:none">
-  <div class="section-title">🔥 Promociones de la Semana</div>
-  <div class="promo-grid" id="promoGrid"></div>
+<div class="promo-banner" id="promoSection" style="display:none">
+  <div id="promoSlides"></div>
+  <div class="promo-dots" id="promoDots"></div>
 </div>
 
 <div class="section">
@@ -408,6 +462,19 @@
     <div>
       <button class="btn-logout-modal" onclick="executeNavbarSessionLogout()">🔴 Cerrar mi Sesión Comunitaria</button>
     </div>
+  </div>
+</div>
+
+<div class="shop-overlay" id="productsOverlay" onclick="if(event.target===this) window.closeProducts()">
+  <div class="shop-modal">
+    <div class="shop-head"><div><h3 id="productsTitle">Productos</h3><div id="productsSub" style="font-size:0.78rem;color:var(--ink-muted)"></div></div><button class="shop-x" onclick="window.closeProducts()">✕</button></div>
+    <div class="prod-grid" id="productsGrid"></div>
+  </div>
+</div>
+<div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
+  <div class="cart-panel">
+    <div class="shop-head"><h3>Mi pedido 🛒</h3><button class="shop-x" onclick="window.closeCart()">✕</button></div>
+    <div class="cart-body" id="cartBody"></div>
   </div>
 </div>
 
@@ -767,7 +834,8 @@ function generateCardHtml(r, index) {
   const icon = getCategorySvg(cat);
   const avatarContent = r.imagen_url ? `<img src="${r.imagen_url}" alt="${name}" loading="lazy">` : icon;
   const isVerified = ['activo', 'verificado', 'active'].includes(status);
-  const isFeatured = plan.includes('pro') || plan.includes('premium') || plan.includes('destacado');
+  const isFeatured = plan.includes('pro') || plan.includes('premium') || plan.includes('destacado') || featuredIds.has(r.id);
+  const nProducts = (productsByBiz[r.id] || []).length;
 
   const badges = [
     isVerified ? '<span class="badge badge-verified">✓ Activo</span>' : '',
@@ -792,6 +860,7 @@ function generateCardHtml(r, index) {
       ${tel ? `<a class="btn-wa" href="https://wa.me/${COUNTRY_CODE}${tel}" target="_blank">💬 WhatsApp</a>` : ''}
       <button class="btn-share" onclick="window.shareBiz('${name.replace(/'/g,"\\'")}','${tel}')" title="Compartir">⬆️</button>
     </div>
+    ${nProducts ? `<button class="btn-products" onclick="window.openProducts('${r.id}')">🛍️ Ver ${nProducts} producto${nProducts!==1?'s':''}</button>` : ''}
   </div>`;
 }
 
@@ -881,35 +950,157 @@ function daysUntil(dateStr) {
   return Math.ceil(diffMs / 86400000);
 }
 
+
+// ================= PRODUCTS, CART, PROMO BANNER =================
+let productsByBiz = {};
+let productsById = {};
+let productCats = {};
+let featuredIds = new Set();
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem('marsella-cart') || '[]'); } catch (e) { cart = []; }
+
+const shopEsc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = (n) => '$' + (Number(n) || 0).toFixed(2);
+const saveCart = () => { try { localStorage.setItem('marsella-cart', JSON.stringify(cart)); } catch (e) {} };
+
+async function loadShopData() {
+  try {
+    const [cats, prods, feat] = await Promise.all([
+      supabase.from('product_categories').select('id,name').order('order'),
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('featured_businesses').select('business_id').eq('is_active', true),
+    ]);
+    (cats.data || []).forEach(c => { productCats[c.id] = c.name; });
+    productsByBiz = {}; productsById = {};
+    (prods.data || []).forEach(p => { (productsByBiz[p.business_id] ||= []).push(p); productsById[p.id] = p; });
+    featuredIds = new Set((feat.data || []).map(f => f.business_id));
+  } catch (e) { console.warn('No se pudieron cargar productos:', e); }
+  cart = cart.filter(i => productsById[i.id]);   // drop items that no longer exist
+  saveCart(); renderCartCount();
+  renderCards();
+}
+
+window.openProducts = function(bizId) {
+  const biz = allData.find(b => String(b.id) === String(bizId));
+  const list = productsByBiz[bizId] || [];
+  document.getElementById('productsTitle').textContent = biz ? biz.nombre : 'Productos';
+  document.getElementById('productsSub').textContent = `${list.length} producto${list.length!==1?'s':''}`;
+  renderProductsGrid(bizId);
+  document.getElementById('productsOverlay').classList.add('active');
+};
+window.closeProducts = () => document.getElementById('productsOverlay').classList.remove('active');
+
+function renderProductsGrid(bizId) {
+  const list = productsByBiz[bizId] || [];
+  document.getElementById('productsGrid').dataset.biz = bizId;
+  document.getElementById('productsGrid').innerHTML = list.map(p => {
+    const inCart = cart.some(i => i.id === p.id);
+    return `<div class="prod-card ${inCart ? 'added' : ''}">
+      ${p.image_url ? `<img class="prod-img" src="${shopEsc(p.image_url)}" alt="${shopEsc(p.name)}" loading="lazy">` : '<div class="prod-img"></div>'}
+      <div class="prod-info">
+        <div class="prod-name">${shopEsc(p.name)}</div>
+        <div class="prod-cat">${shopEsc(productCats[p.product_category_id] || 'Otros')}</div>
+        ${p.description ? `<div style="font-size:0.74rem;color:var(--ink-muted);margin-bottom:6px">${shopEsc(p.description)}</div>` : ''}
+        <div class="prod-price">${money(p.price)}</div>
+        <div class="prod-stock ${p.in_stock ? '' : 'out'}">${p.in_stock ? '✓ Disponible' : 'Agotado'}</div>
+        <button class="prod-add" onclick="window.addToCart(${p.id})" ${p.in_stock ? '' : 'disabled'}>${inCart ? '✓ Agregado (+1)' : 'Agregar'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCartCount() {
+  const n = cart.reduce((s, i) => s + i.qty, 0);
+  const el = document.getElementById('cartCount');
+  el.textContent = n; el.style.display = n ? 'grid' : 'none';
+}
+
+window.addToCart = function(id) {
+  const p = productsById[id]; if (!p || !p.in_stock) return;
+  const line = cart.find(i => i.id === id);
+  if (line) line.qty += 1; else cart.push({ id, qty: 1 });
+  saveCart(); renderCartCount();
+  const grid = document.getElementById('productsGrid');
+  if (grid.dataset.biz) renderProductsGrid(grid.dataset.biz);
+};
+window.cartQty = function(id, d) {
+  const line = cart.find(i => i.id === id); if (!line) return;
+  line.qty += d;
+  if (line.qty <= 0) cart = cart.filter(i => i.id !== id);
+  saveCart(); renderCartCount(); renderCart();
+};
+window.openCart = function() { renderCart(); document.getElementById('cartDrawer').classList.add('active'); };
+window.closeCart = () => document.getElementById('cartDrawer').classList.remove('active');
+
+function renderCart() {
+  const body = document.getElementById('cartBody');
+  if (!cart.length) { body.innerHTML = '<div class="cart-empty"><div style="font-size:2.4rem">🛒</div><p>Tu pedido está vacío.</p><p style="font-size:0.8rem;margin-top:6px">Abre un negocio con productos y toca “Agregar”.</p></div>'; return; }
+  const groups = {};
+  cart.forEach(i => { const p = productsById[i.id]; if (p) (groups[p.business_id] ||= []).push({ p, qty: i.qty }); });
+  body.innerHTML = Object.entries(groups).map(([bizId, items]) => {
+    const biz = allData.find(b => String(b.id) === String(bizId)) || {};
+    const total = items.reduce((s, x) => s + (Number(x.p.price) || 0) * x.qty, 0);
+    return `<div class="cart-group">
+      <h4>📍 ${shopEsc(biz.nombre || 'Negocio')}</h4>
+      ${items.map(x => `<div class="cart-line"><span>${shopEsc(x.p.name)}<br><small style="color:var(--ink-muted)">${money(x.p.price)}</small></span>
+        <span class="cart-qty"><button onclick="window.cartQty(${x.p.id},-1)">−</button><span>${x.qty}</span><button onclick="window.cartQty(${x.p.id},1)">+</button></span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-weight:800;margin-top:8px"><span>Total</span><span>${money(total)}</span></div>
+      <button class="cart-send" onclick="window.sendOrder('${bizId}')">💬 Enviar pedido por WhatsApp</button>
+    </div>`;
+  }).join('');
+}
+
+window.sendOrder = function(bizId) {
+  if (!currentProfile) { window.closeCart(); openAuthModal(); return; }
+  const biz = allData.find(b => String(b.id) === String(bizId));
+  const tel = cleanPhone(biz && biz.telefono);
+  if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
+  const items = cart.map(i => ({ p: productsById[i.id], qty: i.qty })).filter(x => x.p && String(x.p.business_id) === String(bizId));
+  if (!items.length) return;
+  const total = items.reduce((s, x) => s + (Number(x.p.price) || 0) * x.qty, 0);
+  const who = [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ');
+  const msg = `🛒 *Hola ${biz.nombre}, quiero hacer este pedido:*\n\n` +
+    items.map(x => `• ${x.p.name} x${x.qty}: ${money((Number(x.p.price) || 0) * x.qty)}`).join('\n') +
+    `\n\n💰 *Total: ${money(total)}*` + (who ? `\n👤 ${who}` : '') + `\n🔗 Marsella Conecta`;
+  logUserEvent('Pedido_WhatsApp', money(total), biz.nombre);
+  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+  cart = cart.filter(i => !(productsById[i.id] && String(productsById[i.id].business_id) === String(bizId)));
+  saveCart(); renderCartCount(); renderCart();
+};
+
+// ---- Promo banner carousel ----
+let promoTimer = null;
 async function loadPromotions() {
   try {
-    const { data, error } = await supabase
-      .from('promotions')
-      .select('*')
-      .eq('activo', true)
-      .order('orden', { ascending: true });
+    const { data, error } = await supabase.from('promotions').select('*').eq('activo', true).order('orden', { ascending: true });
     if (error) throw error;
-    if (!data || !data.length) return;
-
+    const now = Date.now();
+    const promos = (data || []).filter(p => !p.expira_at || new Date(p.expira_at).getTime() >= now);
+    if (!promos.length) return;
     document.getElementById('promoSection').style.display = 'block';
-    document.getElementById('promoGrid').innerHTML = data.map(p => {
-      const days = daysUntil(p.expira_at);
-      const expiryHtml = (days !== null && days >= 0)
-        ? `<div class="promo-expiry">⏱ Expira en ${days} día${days!==1?'s':''}</div>`
-        : '';
-      return `<div class="promo-card">
-        ${p.imagen_url ? `<img class="promo-img" src="${p.imagen_url}" alt="${p.titulo || ''}" loading="lazy">` : ''}
-        <div class="promo-body">
-          <div class="promo-title">${p.titulo || ''}</div>
-          ${p.negocio_nombre ? `<div class="promo-biz">${p.negocio_nombre}</div>` : ''}
-          ${expiryHtml}
-          <a class="promo-cta" href="${p.cta_url || '#'}" target="${p.cta_url ? '_blank' : '_self'}">${p.cta_text || 'Ver Promoción'}</a>
-        </div>
-      </div>`;
+    document.getElementById('promoSlides').innerHTML = promos.map((p, i) => {
+      const bg = p.imagen_url ? `style="background-image:url('${shopEsc(p.imagen_url)}')"` : '';
+      const link = p.cta_url ? `<a href="${shopEsc(p.cta_url)}" target="_blank" rel="noopener">${shopEsc(p.cta_text || 'Ver Promoción')}</a>` : '';
+      return `<div class="promo-slide ${i === 0 ? 'active' : ''} ${p.imagen_url ? '' : 'noimg'}" ${bg}>
+        <div class="promo-copy">
+          ${p.negocio_nombre ? `<div class="promo-biz-tag">${shopEsc(p.negocio_nombre)}</div>` : ''}
+          <h2>${shopEsc(p.titulo)}</h2>
+          ${p.descripcion ? `<p>${shopEsc(p.descripcion)}</p>` : ''}
+          ${link}
+        </div></div>`;
     }).join('');
-  } catch (e) {
-    console.warn('No se pudieron cargar promociones:', e);
-  }
+    const dots = document.getElementById('promoDots');
+    dots.innerHTML = promos.length > 1 ? promos.map((_, i) => `<button class="${i === 0 ? 'active' : ''}" onclick="window.goPromo(${i})" aria-label="Promoción ${i+1}"></button>`).join('') : '';
+    let idx = 0;
+    window.goPromo = (n) => {
+      idx = n;
+      document.querySelectorAll('.promo-slide').forEach((el, k) => el.classList.toggle('active', k === n));
+      dots.querySelectorAll('button').forEach((el, k) => el.classList.toggle('active', k === n));
+      clearInterval(promoTimer);
+      if (promos.length > 1) promoTimer = setInterval(() => window.goPromo((idx + 1) % promos.length), 6000);
+    };
+    window.goPromo(0);
+  } catch (e) { console.warn('No se pudieron cargar promociones:', e); }
 }
 
 // Expose the functions used by inline onclick= handlers in the HTML above.
@@ -948,8 +1139,9 @@ document.getElementById('sortSelect').addEventListener('change', renderCards);
 supabase.auth.onAuthStateChange((_event, _session) => { evaluateUserSession(); });
 
 document.addEventListener('DOMContentLoaded', evaluateUserSession);
-loadData();
+loadData().then(loadShopData);
 loadPromotions();
+renderCartCount();
 </script>
 </body>
 </html>

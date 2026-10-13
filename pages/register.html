@@ -132,12 +132,6 @@
 </div>
 
 <div class="form-shell">
-  <div id="authGate" style="display:none;background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center">
-    <h2 style="font-family:'Syne',sans-serif;margin-bottom:8px">Primero crea tu cuenta de vecino</h2>
-    <p style="color:var(--ink-muted);font-size:0.9rem;margin-bottom:18px">Para registrar un negocio necesitas una cuenta. Así podrás administrar tu ficha después.</p>
-    <a href="register-user.html" style="display:inline-block;text-decoration:none;margin:4px;padding:11px 22px;border-radius:10px;font-weight:600;font-size:0.88rem;background:var(--accent);color:#fff">Crear cuenta</a>
-    <a href="../index.html" style="display:inline-block;text-decoration:none;margin:4px;padding:11px 22px;border-radius:10px;font-weight:600;font-size:0.88rem;background:var(--bg);color:var(--accent);border:1.5px solid var(--border)">Ya tengo cuenta · Iniciar sesión</a>
-  </div>
   <form id="registrationForm" onsubmit="event.preventDefault();">
     
     <div class="form-card active" id="card1">
@@ -217,7 +211,13 @@
       <div class="field">
         <label>Correo electrónico <span class="req">*</span></label>
         <input type="email" id="f_email" required placeholder="ejemplo@correo.com">
-        <div class="hint">Usaremos este correo únicamente para validar tu ficha. Para administrar tu negocio, crea (o usa) tu cuenta de vecino en "Unirte Ahora".</div>
+        <div class="hint" id="emailHint">Este correo será también tu usuario. Con él podrás ver el directorio y administrar tu negocio.</div>
+      </div>
+
+      <div class="field" id="accountFields">
+        <label>Crea tu contraseña <span class="req">*</span></label>
+        <input type="password" id="f_pass" minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+        <div class="hint">Se creará tu cuenta de vecino junto con tu negocio: una sola cuenta para comprar y para vender. ¿Ya tienes cuenta? <a href="../index.html" style="color:var(--accent);font-weight:600">Inicia sesión primero</a>.</div>
       </div>
 
       <div class="field">
@@ -300,25 +300,51 @@
   </div>
 </div>
 
+<div class="form-shell" id="pendingCard" style="display:none">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center">
+    <div style="font-size:2.2rem">📧</div>
+    <h2 style="font-family:'Syne',sans-serif;margin:8px 0">Confirma tu correo para terminar</h2>
+    <p style="color:var(--ink-muted);font-size:0.92rem">Te enviamos un mensaje a <strong id="pendingEmail"></strong>. Confirma tu cuenta, inicia sesión en el directorio y vuelve a esta página: registraremos tu negocio automáticamente con los datos que ya llenaste.</p>
+    <a href="../index.html" style="display:inline-block;margin-top:16px;padding:11px 22px;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;text-decoration:none">Ir al directorio</a>
+  </div>
+</div>
+
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
 
 let myProfile = null;
-(async function requireAccount() {
+const PENDING_KEY = 'marsella-pending-business';
+const DRAFT_FIELDS = ['f_nombre','f_cat','f_barrio','f_tel','f_desc','f_horario','f_owner','f_dui','f_email','f_source'];
+
+async function loadMyProfile() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
+  if (!session) return null;
+  for (let i = 0; i < 4; i++) {            // the sign-up trigger may take a moment
     const { data } = await supabase.from('profiles').select('id,nombre,apellido,email').eq('auth_user_id', session.user.id).maybeSingle();
-    myProfile = data;
+    if (data) return data;
+    await new Promise(r => setTimeout(r, 400));
   }
-  if (!myProfile) {
-    document.getElementById('registrationForm').style.display = 'none';
-    document.getElementById('progressWrap').style.display = 'none';
-    document.getElementById('authGate').style.display = 'block';
-    return;
-  }
-  const o = document.getElementById('f_owner'), e = document.getElementById('f_email');
-  if (o && !o.value) o.value = [myProfile.nombre, myProfile.apellido].filter(Boolean).join(' ');
-  if (e && !e.value) e.value = myProfile.email || '';
+  return null;
+}
+
+(async function boot() {
+  myProfile = await loadMyProfile();
+  if (!myProfile) return;
+  document.getElementById('accountFields').style.display = 'none';
+  const e = document.getElementById('f_email'), o = document.getElementById('f_owner');
+  if (!e.value) e.value = myProfile.email || '';
+  if (!o.value) o.value = [myProfile.nombre, myProfile.apellido].filter(Boolean).join(' ');
+  document.getElementById('emailHint').textContent = 'Ya iniciaste sesión: tu negocio quedará vinculado a tu cuenta.';
+  // Finish a registration that was started before confirming the email
+  try {
+    const draft = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null');
+    if (draft) {
+      localStorage.removeItem(PENDING_KEY);
+      DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el && draft[id] != null) el.value = draft[id]; });
+      if (draft.plan) { const r = document.querySelector(`input[name="plan"][value="${draft.plan}"]`); if (r) r.checked = true; }
+      await dispatchDirectToSheets();
+    }
+  } catch (err) { console.warn('Pending registration failed:', err); }
 })();
 
 function validateAndNext(step) {
@@ -331,6 +357,10 @@ function validateAndNext(step) {
   } else if (step === 2) {
     if (!document.getElementById('f_owner').value.trim() || !document.getElementById('f_email').value.trim()) {
       alert('El nombre del propietario y el correo son requeridos.');
+      return;
+    }
+    if (!myProfile && (document.getElementById('f_pass').value || '').length < 6) {
+      alert('Crea una contraseña de al menos 6 caracteres.');
       return;
     }
     goToStep(3);
@@ -385,6 +415,40 @@ async function dispatchDirectToSheets() {
   const businessName = document.getElementById('f_nombre').value.trim();
   const selectedTier = document.querySelector('input[name="plan"]:checked')?.value || 'Gratuito';
 
+  if (!myProfile) {
+    // New visitor: create the neighbor account together with the business.
+    const full = document.getElementById('f_owner').value.trim();
+    const parts = full.split(/\s+/);
+    const nombre = parts.shift() || '';
+    const apellido = parts.join(' ');
+    const email = document.getElementById('f_email').value.trim();
+    targetBtn.textContent = 'Creando tu cuenta...';
+    const { data: su, error: suErr } = await supabase.auth.signUp({
+      email,
+      password: document.getElementById('f_pass').value,
+      options: { data: { nombre, apellido, whatsapp: document.getElementById('f_tel').value.trim(), quartier: document.getElementById('f_barrio').value.trim(), source: 'registro-negocio' } }
+    });
+    if (suErr || (su && su.user && su.user.identities && su.user.identities.length === 0)) {
+      alert('Ese correo ya tiene una cuenta (o no se pudo crear: ' + (suErr ? suErr.message : 'ya registrado') + '). Inicia sesión en el directorio y vuelve a registrar tu negocio.');
+      targetBtn.disabled = false; targetBtn.textContent = '✓ Finalizar Registro';
+      return;
+    }
+    if (!su.session) {
+      // Email confirmation is required: keep the form and finish after the first login.
+      const draft = { plan: selectedTier };
+      DRAFT_FIELDS.forEach(id => { draft[id] = document.getElementById(id).value; });
+      try { localStorage.setItem(PENDING_KEY, JSON.stringify(draft)); } catch (e) {}
+      document.getElementById('registrationForm').style.display = 'none';
+      document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('pendingCard').style.display = 'block';
+      document.getElementById('pendingEmail').textContent = email;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    myProfile = await loadMyProfile();
+    if (!myProfile) { alert('Tu cuenta se creó pero no pudimos cargar tu perfil. Recarga la página e inténtalo de nuevo.'); targetBtn.disabled = false; return; }
+    targetBtn.textContent = 'Guardando ficha...';
+  }
   let imagenUrl = null;
   const rawImageFile = document.getElementById('f_imagen').files[0];
   if (rawImageFile) {
@@ -402,7 +466,6 @@ async function dispatchDirectToSheets() {
     targetBtn.textContent = 'Guardando ficha...';
   }
 
-  if (!myProfile) { alert('Inicia sesión para registrar tu negocio.'); targetBtn.disabled = false; return; }
   const { data: biz, error: bizErr } = await supabase
     .from('businesses')
     .insert({
