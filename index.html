@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marsella Conecta — Directorio Local</title>
+<title>Conecta Marsella — Directorio Local</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c65d3b">
 <meta name="mobile-web-app-capable" content="yes">
@@ -420,7 +420,7 @@
 <body>
 
 <nav>
-  <div class="nav-logo">Marsella<span>Conecta</span></div>
+  <div class="nav-logo">Conecta<span>Marsella</span></div>
   <div class="nav-links" id="navPublicLinks">
     <a href="index.html" class="active">Directorio</a>
     <a href="pages/register.html">Registrar Negocio</a>
@@ -518,7 +518,7 @@
   <a href="pages/register.html" class="biz-hide-element">Registrar negocio</a> &nbsp;·&nbsp;
   <a href="pages/plans.html" class="biz-hide-element">Planes y precios</a> &nbsp;·&nbsp;
   <a href="pages/admin.html">Admin</a>
-  <br><br>© 2026 Marsella Conecta. Hecho con ❤️ para la comunidad.
+  <br><br>© 2026 Conecta Marsella. Hecho con ❤️ para la comunidad.
 </footer>
 
 <div class="mc-modal-overlay" id="authGateModal">
@@ -744,7 +744,7 @@ async function evaluateUserSession() {
 }
 
 async function executeNavbarSessionLogout() {
-  if (confirm('¿Estás seguro de que deseas cerrar tu sesión en Marsella Conecta?')) {
+  if (confirm('¿Estás seguro de que deseas cerrar tu sesión en Conecta Marsella?')) {
     await logUserEvent('Cierre_Sesion');
     await supabase.auth.signOut();
     window.location.reload();
@@ -1128,7 +1128,7 @@ function generateCardHtml(r, index) {
 }
 
 window.shareBiz = function(name, tel) {
-  const text = `Mira ${name} en Marsella Conecta`;
+  const text = `Mira ${name} en Conecta Marsella`;
   if (navigator.share) {
     navigator.share({ title: name, text, url: window.location.href }).catch(() => {});
   } else {
@@ -1264,7 +1264,7 @@ window.openBizDetail = function(bizId, promo) {
   const starsHtml = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
   const verified = ['activo', 'verificado', 'active'].includes((r.estado || '').toLowerCase());
   const prods = productsByBiz[r.id] || [];
-  const waHref = tel ? `https://wa.me/${COUNTRY_CODE}${tel}` + (promo ? `?text=${encodeURIComponent('Clic promocional desde Marsella Conecta')}` : '') : '';
+  const waHref = tel ? `https://wa.me/${COUNTRY_CODE}${tel}` + (promo ? `?text=${encodeURIComponent('Clic promocional desde Conecta Marsella')}` : '') : '';
   document.getElementById('bizDetailTitle').textContent = r.nombre || 'Negocio';
   document.getElementById('bizDetailBody').innerHTML = `
     <div class="biz-card biz-detail" data-name="${shopEsc(r.nombre)}">
@@ -1359,9 +1359,9 @@ function renderCart() {
   loadMyOrders();
 }
 
-const orderMsg = (biz, o) => `🛒 *Hola ${biz.nombre}, este es mi pedido (ya aceptado en Marsella Conecta):*\n\n` +
+const orderMsg = (biz, o) => `🛒 *Hola ${biz.nombre}, este es mi pedido (ya aceptado en Conecta Marsella):*\n\n` +
   (o.items || []).map(i => `• ${i.name} x${i.qty}: ${money((Number(i.price) || 0) * i.qty)}`).join('\n') +
-  `\n\n💰 *Total: ${money(o.total)}*` + (o.customer_name ? `\n👤 ${o.customer_name}` : '') + `\n🔗 Marsella Conecta`;
+  `\n\n💰 *Total: ${money(o.total)}*` + (o.customer_name ? `\n👤 ${o.customer_name}` : '') + `\n🔗 Conecta Marsella`;
 
 window.orderWhatsApp = function(orderId, direct) {
   const o = (window._myOrders || []).find(x => x.id === orderId); if (!o) return;
@@ -1369,7 +1369,7 @@ window.orderWhatsApp = function(orderId, direct) {
   const tel = cleanPhone(biz && biz.telefono);
   if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
   logUserEvent('Pedido_WhatsApp', (o.items || []).map(i => `${i.qty}× ${i.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, Number(o.total) || 0);
-  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(direct ? orderMsg(biz, o).replace(' (ya aceptado en Marsella Conecta)', '') : orderMsg(biz, o))}`, '_blank');
+  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(direct ? orderMsg(biz, o).replace(' (ya aceptado en Conecta Marsella)', '') : orderMsg(biz, o))}`, '_blank');
 };
 
 async function loadMyOrders() {
@@ -1459,7 +1459,7 @@ window.sendOrder = async function(bizId) {
       alert('✅ ¡Solicitud enviada! ' + biz.nombre + ' recibió una notificación. Cuando la acepten podrás enviar tu pedido por WhatsApp desde aquí.');
     } else if (confirm(biz.nombre + ' aún no tiene las notificaciones activas, así que no vio tu solicitud.\n\n¿Quieres avisarle ahora por WhatsApp?')) {
       const tel = cleanPhone(biz.telefono);
-      if (tel) window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, { items: payload, total, customer_name: [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ') }).replace(' (ya aceptado en Marsella Conecta)', ''))}`, '_blank');
+      if (tel) window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, { items: payload, total, customer_name: [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ') }).replace(' (ya aceptado en Conecta Marsella)', ''))}`, '_blank');
     }
     // So the neighbor also hears back, offer alerts on this device.
     if (pushSupported && !(isIOS && !isStandalone()) && Notification.permission === 'default' && confirm('¿Quieres que te avisemos aquí cuando el negocio acepte tu pedido?')) { await window.togglePush(); }
@@ -1492,7 +1492,7 @@ async function loadPromotions() {
     }
     const promoLink = (p) => {
       const tel = p.business_id && bizTel[p.business_id];
-      return tel ? `https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent('Clic promocional desde Marsella Conecta')}` : (p.cta_url || '');
+      return tel ? `https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent('Clic promocional desde Conecta Marsella')}` : (p.cta_url || '');
     };
     const seenPromo = new Set();
     window.promoClick = (i) => { const p = promos[i]; if (p) logUserEvent('Promo_Click', p.titulo, p.negocio_nombre || '', null, p.id); };
@@ -1554,8 +1554,8 @@ window.installApp = async function() {
   const inApp = /fban|fbav|instagram|whatsapp|line\/|tiktok|wv\)/i.test(navigator.userAgent);
   const warn = inApp ? '<div class="warn">⚠️ Estás dentro de otra app (WhatsApp, Facebook, Instagram…). Toca los <b>⋮</b> o “Abrir en el navegador” y abre este enlace en <b>' + (isIOS ? 'Safari' : 'Chrome') + '</b> primero.</div>' : '';
   document.getElementById('installSteps').innerHTML = warn + (isIOS
-    ? '<ol><li><span>Abre esta página en <b>Safari</b> y toca el botón <b>Compartir</b> ⬆️ (abajo en la pantalla).</span></li><li><span>Desliza y elige <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Toca <b>Añadir</b>. ¡Listo! Verás el ícono de Marsella Conecta.</span></li></ol>'
-    : '<ol><li><span>Abre esta página en <b>Chrome</b> y toca el menú <b>⋮</b> (arriba a la derecha).</span></li><li><span>Elige <b>“Instalar app”</b> o <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Confirma con <b>Instalar</b>. ¡Listo! Verás el ícono de Marsella Conecta.</span></li></ol>');
+    ? '<ol><li><span>Abre esta página en <b>Safari</b> y toca el botón <b>Compartir</b> ⬆️ (abajo en la pantalla).</span></li><li><span>Desliza y elige <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Toca <b>Añadir</b>. ¡Listo! Verás el ícono de Conecta Marsella.</span></li></ol>'
+    : '<ol><li><span>Abre esta página en <b>Chrome</b> y toca el menú <b>⋮</b> (arriba a la derecha).</span></li><li><span>Elige <b>“Instalar app”</b> o <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Confirma con <b>Instalar</b>. ¡Listo! Verás el ícono de Conecta Marsella.</span></li></ol>');
   document.getElementById('installOverlay').classList.add('active');
 };
 refreshInstallBtn();
@@ -1587,7 +1587,7 @@ window.togglePush = async function() {
       const { error } = await supabase.rpc('save_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
       if (error) { await sub.unsubscribe(); throw error; }
       logUserEvent('Notificaciones_Activadas');
-      reg.showNotification('Marsella Conecta', { body: '¡Listo! Te avisaremos de promociones y novedades del barrio.', icon: './assets/icons/icon-192.png' });
+      reg.showNotification('Conecta Marsella', { body: '¡Listo! Te avisaremos de promociones y novedades del barrio.', icon: './assets/icons/icon-192.png' });
     }
   } catch (e) {
     console.warn('Notificaciones:', e);

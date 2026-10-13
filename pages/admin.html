@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin — Marsella Conecta</title>
+<title>Panel Admin — Conecta Marsella</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -171,10 +171,10 @@
 
 <!-- ===================== LOGIN GATE ===================== -->
 <div id="loginScreen">
-  <nav><div class="nav-logo">Marsella<span>Conecta</span> · Admin</div><div></div></nav>
+  <nav><div class="nav-logo">Conecta<span>Marsella</span> · Admin</div><div></div></nav>
   <div class="login-shell">
     <h1>🔒 Panel de Administración</h1>
-    <p>Acceso restringido a administradores de Marsella Conecta.</p>
+    <p>Acceso restringido a administradores de Conecta Marsella.</p>
     <div class="field"><label>Correo</label><input type="email" id="loginEmail" placeholder="admin@correo.com"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
     <button class="btn btn-primary" id="loginBtn" onclick="doAdminLogin()">Ingresar</button>
@@ -185,7 +185,7 @@
 <!-- ===================== DASHBOARD ===================== -->
 <div id="dashboard" style="display:none">
   <nav>
-    <div class="nav-logo">Marsella<span>Conecta</span> · Admin</div>
+    <div class="nav-logo">Conecta<span>Marsella</span> · Admin</div>
     <div class="nav-right">
       <span id="adminEmailLabel"></span>
       <button class="btn-logout" onclick="openPwModal()">🔑 Cambiar contraseña</button>
@@ -1302,7 +1302,7 @@ window.resetPromoForm = function() {
   togglePromoForm(false);
 };
 
-const PROMO_WA_TEXT = 'Clic promocional desde Marsella Conecta';
+const PROMO_WA_TEXT = 'Clic promocional desde Conecta Marsella';
 function fillPromoBusinessSelect() {
   const sel = document.getElementById('promo_business'); if (!sel) return;
   const cur = sel.value;

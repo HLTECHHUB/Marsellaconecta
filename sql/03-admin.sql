@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Admin dashboard add-on
+-- Conecta Marsella — Admin dashboard add-on
 -- Run this AFTER supabase-schema.sql and promotions-schema.sql,
 -- once, in the Supabase Studio SQL Editor.
 --

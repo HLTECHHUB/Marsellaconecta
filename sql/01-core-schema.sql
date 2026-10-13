@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Supabase schema
+-- Conecta Marsella — Supabase schema
 -- Run this once in Supabase Studio: Project > SQL Editor > New query
 -- ============================================================
 

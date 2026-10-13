@@ -1,4 +1,4 @@
-// Marsella Conecta — send Web Push notifications (admin only).
+// Conecta Marsella — send Web Push notifications (admin only).
 // Secrets (Supabase > Edge Functions > Secrets):
 //   VAPID_PRIVATE_KEY  — private key (base64url) paired with vapidPublicKey in assets/js/config.js
 //   VAPID_PUBLIC_KEY   — the same public key as config.js

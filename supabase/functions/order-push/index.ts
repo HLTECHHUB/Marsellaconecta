@@ -1,4 +1,4 @@
-// Marsella Conecta — push notifications for order requests.
+// Conecta Marsella — push notifications for order requests.
 //   event "new":      the neighbor who made the order notifies the business owner.
 //   event "message":  a chat message; goes to the other person in the order.
 //   event "modify":   the business proposes changes; notifies the neighbor.

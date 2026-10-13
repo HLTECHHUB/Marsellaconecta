@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Business images add-on
+-- Conecta Marsella — Business images add-on
 -- Run this once, in Supabase Studio SQL Editor, AFTER
 -- supabase-schema.sql and admin-schema.sql.
 -- ============================================================

@@ -13,7 +13,7 @@ drop table if exists public.users cascade;
 
 -- ===== sql/01-core-schema.sql =====
 -- ============================================================
--- Marsella Conecta — Supabase schema
+-- Conecta Marsella — Supabase schema
 -- Run this once in Supabase Studio: Project > SQL Editor > New query
 -- ============================================================
 
@@ -212,7 +212,7 @@ create index idx_profiles_email on public.profiles(lower(email));
 
 -- ===== sql/02-promotions.sql =====
 -- ============================================================
--- Marsella Conecta — Promotions add-on
+-- Conecta Marsella — Promotions add-on
 -- Run this AFTER supabase-schema.sql, once, in Supabase Studio
 -- SQL Editor. Adds a curated promotions/banner system.
 -- ============================================================
@@ -262,7 +262,7 @@ create policy "promo_images_public_read"
 
 -- ===== sql/03-admin.sql =====
 -- ============================================================
--- Marsella Conecta — Admin dashboard add-on
+-- Conecta Marsella — Admin dashboard add-on
 -- Run this AFTER supabase-schema.sql and promotions-schema.sql,
 -- once, in the Supabase Studio SQL Editor.
 --
@@ -416,7 +416,7 @@ create policy "promo_images_admin_delete"
 
 -- ===== sql/04-admin-stats.sql =====
 -- ============================================================
--- Marsella Conecta — Admin stats add-on
+-- Conecta Marsella — Admin stats add-on
 -- Run this once, in Supabase Studio SQL Editor, AFTER
 -- admin-schema.sql. Just adds one policy: admins can read the
 -- events_log table (searches, logins, business clicks, etc.)
@@ -430,7 +430,7 @@ create policy "events_log_select_admin"
 
 -- ===== sql/05-business-images.sql =====
 -- ============================================================
--- Marsella Conecta — Business images add-on
+-- Conecta Marsella — Business images add-on
 -- Run this once, in Supabase Studio SQL Editor, AFTER
 -- supabase-schema.sql and admin-schema.sql.
 -- ============================================================
@@ -468,7 +468,7 @@ create policy "business_images_admin_delete"
 
 -- ===== sql/06-claim-business.sql =====
 -- ============================================================
--- Marsella Conecta — Business claim add-on
+-- Conecta Marsella — Business claim add-on
 -- Run this once, in Supabase Studio SQL Editor, AFTER
 -- supabase-schema.sql and admin-schema.sql.
 --
@@ -518,7 +518,7 @@ grant execute on function public.claim_business(uuid, text) to authenticated;
 
 -- ===== sql/07-notify-trigger.sql =====
 -- ============================================================
--- Marsella Conecta — Notify webhook (SQL version)
+-- Conecta Marsella — Notify webhook (SQL version)
 -- Run this AFTER deploying the notify-new-business Edge Function
 -- (see NOTIFY-SETUP.md steps 1-3 first — you still need Resend +
 -- the function deployed + secrets set for this to actually send

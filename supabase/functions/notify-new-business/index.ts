@@ -1,4 +1,4 @@
-// Marsella Conecta — new business notification
+// Conecta Marsella — new business notification
 //
 // Fires whenever a row is inserted into `businesses` (wired up via
 // a Database Webhook — see the deployment guide). Sends a short
