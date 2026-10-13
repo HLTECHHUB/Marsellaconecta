@@ -599,7 +599,7 @@ function getSessionId() {
   } catch (e) { return null; }
 }
 
-async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null, promotionId = null) {
+async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null, promotionId = null, productId = null) {
   try {
     await supabase.from('events_log').insert({
       profile_id: currentProfile?.id || null,
@@ -609,7 +609,8 @@ async function logUserEvent(eventType, searchVal = '', bizName = '', categoria =
       session_id: getSessionId(),
       categoria: categoria || (activeFilter && activeFilter !== 'Todos' ? activeFilter : null),
       pagina: location.pathname.split('/').pop() || 'index.html',
-      promotion_id: promotionId
+      promotion_id: promotionId,
+      product_id: productId
     });
   } catch (err) {
     console.warn('Analytics logger failed:', err);
@@ -1137,7 +1138,7 @@ function renderCartCount() {
 window.addToCart = function(id) {
   const p = productsById[id]; if (!p || !p.in_stock) return;
   const line = cart.find(i => i.id === id);
-  { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : ''); }
+  { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : '', null, null, p.id); }
   if (line) line.qty += 1; else cart.push({ id, qty: 1 });
   saveCart(); renderCartCount();
   const grid = document.getElementById('productsGrid');

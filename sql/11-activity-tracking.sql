@@ -7,3 +7,7 @@ create index if not exists events_log_profile_idx on public.events_log (profile_
 alter table public.promotions add column if not exists business_id uuid references public.businesses(id) on delete set null;
 alter table public.events_log add column if not exists promotion_id uuid references public.promotions(id) on delete set null;
 create index if not exists events_log_promo_idx on public.events_log (promotion_id) where promotion_id is not null;
+
+-- Cart analytics: which product was added to the cart
+alter table public.events_log add column if not exists product_id bigint references public.products(id) on delete set null;
+create index if not exists events_log_product_idx on public.events_log (product_id) where product_id is not null;
