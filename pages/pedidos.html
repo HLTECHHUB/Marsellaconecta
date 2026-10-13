@@ -75,7 +75,7 @@ import { openOrderChat, unreadCount } from '../assets/js/chat.js';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => '$' + Number(n || 0).toFixed(2);
 const fmt = (d) => new Date(d).toLocaleString('es-SV', { timeZone: 'America/El_Salvador', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-let bizNames = {}, myBiz = [], modId = null, ordersById = {};
+let bizNames = {}, myBiz = [], modId = null, ordersById = {}, discarded = new Set();
 const MODS = ['No tenemos disponible uno o más productos de tu pedido.', 'No tenemos toda la cantidad que pediste.', 'Podemos entregar solo una parte de tu pedido hoy.', 'Tu pedido tendrá un costo adicional de entrega.', 'Podemos entregarlo más tarde de lo normal.', 'Solo podemos entregarlo mañana.', 'Necesitamos confirmar el precio de algún producto.', 'Podemos ofrecerte un producto sustituto, ¿te parece bien?', 'Otro (escribe el detalle abajo)'];
 const SLAS = [[5, '5 minutos'], [10, '10 minutos'], [15, '15 minutos'], [30, '30 minutos'], [60, '1 hora'], [120, '2 horas'], [240, '4 horas']];
 
@@ -149,14 +149,21 @@ async function loadOrders() {
   if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }
 window.openChat = (id, name) => openOrderChat(id, name);
+window.modDiscard = (k) => {
+  const o = ordersById[modId]; const inp = document.getElementById('mq' + k), row = document.getElementById('mrow' + k), btn = document.getElementById('mbtn' + k);
+  if (discarded.has(k)) { discarded.delete(k); inp.disabled = false; inp.value = o.items[k].qty; row.style.opacity = 1; row.querySelector('.mname').style.textDecoration = 'none'; btn.textContent = '🗑 Descartar'; }
+  else { discarded.add(k); inp.value = 0; inp.disabled = true; row.style.opacity = .55; row.querySelector('.mname').style.textDecoration = 'line-through'; btn.textContent = '↩ Restaurar'; }
+  modCalc();
+};
 window.modCalc = () => {
   const o = ordersById[modId]; if (!o) return; let t = 0;
   (o.items || []).forEach((i, k) => { const v = Math.max(0, Math.min(Number(i.qty), Number(document.getElementById('mq' + k).value || 0))); t += (Number(i.price) || 0) * v; });
   document.getElementById('modTotal').textContent = 'Nuevo total: ' + money(t) + '  (antes ' + money(o.total) + ')';
 };
 window.openMod = (id) => {
-  modId = id; const o = ordersById[id] || { items: [] };
-  document.getElementById('modItems').innerHTML = (o.items || []).map((i, k) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--border);align-items:center"><span>${esc(i.name)} <span class="muted">(pidió ${esc(i.qty)} · ${money(i.price)})</span></span><input id="mq${k}" type="number" min="0" max="${esc(i.qty)}" value="${esc(i.qty)}" oninput="modCalc()" style="width:72px;margin:0;padding:8px"></div>`).join('') + '<div class="sla" id="modTotal" style="margin-top:8px"></div>';
+  modId = id; discarded = new Set(); const o = ordersById[id] || { items: [] };
+  document.getElementById('modItems').innerHTML = (o.items || []).map((i, k) => `<div class="row" id="mrow${k}" style="padding:8px 0;border-bottom:1px solid var(--border);align-items:center;gap:8px"><span style="flex:1"><span class="mname">${esc(i.name)}</span><br><span class="muted">pidió ${esc(i.qty)} · ${money(i.price)}</span></span><input id="mq${k}" type="number" min="0" max="${esc(i.qty)}" value="${esc(i.qty)}" oninput="modCalc()" style="width:64px;margin:0;padding:8px"><button class="btn btn-no" id="mbtn${k}" style="padding:8px 10px;font-size:.78rem" onclick="modDiscard(${k})">🗑 Descartar</button></div>`).join('')
+    + '<div class="sla" id="modTotal" style="margin-top:8px"></div><label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:6px"><input type="checkbox" id="modStock" checked style="width:auto;margin:2px 0 0"><span>Marcar los productos descartados como <b>agotados</b> en mi catálogo</span></label>';
   modCalc(); document.getElementById('modErr').textContent = ''; document.getElementById('modExtra').value = '';
   document.getElementById('modPreset').innerHTML = MODS.map((m) => `<option>${esc(m)}</option>`).join('');
   document.getElementById('modOv').classList.add('on');
@@ -172,6 +179,10 @@ window.sendMod = async () => {
   const { error } = await supabase.rpc('modify_order', { p_order_id: modId, p_note: note, p_items: changed ? items : null });
   if (error) { document.getElementById('modErr').textContent = error.message; return; }
   document.getElementById('modOv').classList.remove('on');
+  if (document.getElementById('modStock')?.checked) {
+    const gone = (o.items || []).filter((i, k) => discarded.has(k) && i.product_id).map((i) => i.product_id);
+    if (gone.length) await supabase.from('products').update({ in_stock: false }).in('id', gone);
+  }
   supabase.functions.invoke('order-push', { body: { order_id: modId, event: 'modify' } }).catch(() => {});
   loadOrders();
 };
