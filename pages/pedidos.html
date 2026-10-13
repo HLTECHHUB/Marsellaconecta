@@ -23,7 +23,7 @@
   .items { margin: 8px 0; font-size: .92rem; line-height: 1.6; }
   .actions { display: flex; gap: 10px; margin-top: 10px; } .actions .btn { flex: 1; }
   .pill { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; }
-  .p-pendiente { background: #fff4e5; color: #9a5b00; } .p-aceptado { background: #e2f1ed; color: var(--accent2); } .p-rechazado { background: #fdecea; color: #b3261e; }
+  .p-pendiente { background: #fff4e5; color: #9a5b00; } .p-aceptado { background: #e2f1ed; color: var(--accent2); } .p-completado { background:#e8eaf6; color:#3949ab; } .p-rechazado { background: #fdecea; color: #b3261e; }
   .push-box { background: #fff; border: 1.5px dashed var(--accent2); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
   input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; }
   .login { max-width: 380px; margin: 60px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; }
@@ -45,6 +45,7 @@
     <div class="sub" id="who">Cargando…</div>
     <div class="push-box" id="pushBox"></div>
     <div id="pending"></div>
+    <div id="active"></div>
     <h2>Historial</h2>
     <div id="history"></div>
   </div>
@@ -93,7 +94,8 @@ window.togglePush = async () => {
 
 function orderCard(o) {
   const items = (o.items || []).map((i) => `• ${esc(i.name)} ×${esc(i.qty)} — ${money((i.price || 0) * i.qty)}`).join('<br>');
-  const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>` : '';
+  const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>`
+    : o.status === 'aceptado' ? `<div class="actions"><button class="btn btn-ok" onclick="completeOrder('${o.id}')">📦 Marcar como entregado</button></div>` : '';
   return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
     <div class="muted">${esc(bizNames[o.business_id] || '')} · ${fmt(o.created_at)}</div><div class="items">${items}</div>
     <div class="row"><b>Total ${money(o.total)}</b></div>${acts}
@@ -102,8 +104,9 @@ function orderCard(o) {
 async function loadOrders() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
   if (error) { document.getElementById('pending').innerHTML = '<div class="err">No se pudieron cargar los pedidos.</div>'; return; }
-  const pend = (data || []).filter((o) => o.status === 'pendiente'), done = (data || []).filter((o) => o.status !== 'pendiente');
+  const pend = (data || []).filter((o) => o.status === 'pendiente'), active = (data || []).filter((o) => o.status === 'aceptado'), done = (data || []).filter((o) => ['rechazado', 'completado'].includes(o.status));
   document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
+  document.getElementById('active').innerHTML = active.length ? '<h2>🚚 En curso (' + active.length + ')</h2>' + active.map(orderCard).join('') : '';
   document.getElementById('history').innerHTML = done.length ? done.map(orderCard).join('') : '<div class="muted">Aún no hay historial.</div>';
   const { data: { session } } = await supabase.auth.getSession();
   for (const o of (data || []).filter((x) => x.status !== 'rechazado').slice(0, 20)) {
@@ -113,6 +116,12 @@ async function loadOrders() {
   if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }
 window.openChat = (id, name) => openOrderChat(id, name);
+window.completeOrder = async (id) => {
+  if (!confirm('¿Marcar este pedido como entregado? Se cerrará el chat.')) return;
+  const { error } = await supabase.rpc('complete_order', { p_order_id: id });
+  if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+  loadOrders();
+};
 window.respond = async (id, status) => {
   if (!confirm(status === 'aceptado' ? '¿Aceptar este pedido?' : '¿Rechazar este pedido?')) return;
   const { error } = await supabase.rpc('respond_order', { p_order_id: id, p_status: status });
