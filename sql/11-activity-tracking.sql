@@ -11,3 +11,6 @@ create index if not exists events_log_promo_idx on public.events_log (promotion_
 -- Cart analytics: which product was added to the cart
 alter table public.events_log add column if not exists product_id bigint references public.products(id) on delete set null;
 create index if not exists events_log_product_idx on public.events_log (product_id) where product_id is not null;
+
+-- Optional link to the business's own WhatsApp catalog (wa.me/c/...)
+alter table public.businesses add column if not exists whatsapp_catalog_url text;

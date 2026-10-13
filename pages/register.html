@@ -502,7 +502,7 @@ async function dispatchDirectToSheets() {
   document.getElementById('registrationForm').style.display = 'none';
   document.getElementById('progressWrap').style.display = 'none';
 
-  document.getElementById('addProductsLink').href = 'product-upload.html?business=' + encodeURIComponent(biz.id);
+  document.getElementById('addProductsLink').href = 'mis-productos.html?business=' + encodeURIComponent(biz.id);
   document.getElementById('outBiz').textContent = businessName;
   document.getElementById('outId').textContent = biz.id.slice(0, 8).toUpperCase();
 
