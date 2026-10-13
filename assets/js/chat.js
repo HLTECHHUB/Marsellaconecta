@@ -44,7 +44,7 @@ export async function openOrderChat(orderId, title) {
   if (!session) { alert('Inicia sesión para usar el chat.'); return; }
   const me = session.user.id;
   const { data: ord } = await supabase.from('orders').select('status').eq('id', orderId).maybeSingle();
-  const closed = !ord || ['rechazado', 'completado'].includes(ord.status);
+  const closed = !ord || ['rechazado', 'completado', 'cancelado'].includes(ord.status);
   const ov = document.createElement('div'); ov.className = 'mcc-ov';
   ov.innerHTML = `<div class="mcc-box"><div class="mcc-head"><div><b>💬 ${esc(title || 'Chat del pedido')}</b><small>Solo tú y el otro participante ven esta conversación</small></div><button class="mcc-x" aria-label="Cerrar">✕</button></div>
     <div class="mcc-list" id="mccList"><div class="mcc-empty">Cargando…</div></div>
