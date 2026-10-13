@@ -2,1657 +2,942 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Marsella Conecta — Directorio de negocios locales, productos y servicios en Marsella, El Salvador. Compra directo de negocios locales.">
-<meta name="keywords" content="negocios, servicios, productos, Marsella, El Salvador, directorio local, compra">
-<meta name="theme-color" content="#0d67a7">
-<meta property="og:title" content="Marsella Conecta — Tu Directorio Local">
-<meta property="og:description" content="Descubre y compra directamente de negocios y servicios locales en Marsella.">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="es_SV">
-
-<!-- JSON-LD Structured Data -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "Marsella Conecta",
-  "description": "Directorio local de negocios, productos y servicios en Marsella, El Salvador",
-  "url": "https://[YOUR-GITHUB-PAGES-URL]",
-  "telephone": "+503-7XXX-XXXX",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Marsella",
-    "addressLocality": "Marsella",
-    "addressRegion": "La Libertad",
-    "addressCountry": "SV"
-  },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": "13.6667",
-    "longitude": "-89.2333"
-  }
-}
-</script>
-
-<title>Marsella Conecta — Directorio Local y Productos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marsella Conecta — Directorio Local</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-
-<!-- Load configuration first (REQUIRED - must be in same directory as index.html) -->
-<script src="config.js"></script>
-
 <style>
-:root {
-  --primary: #c65d3b;
-  --primary-light: #f5e6e0;
-  --primary-dark: #a84a2f;
-  --success: #1b6b4a;
-  --success-light: #e2f1ed;
-  --gold: #d4a574;
-  --gold-light: #fef6f0;
-  --bg: #faf7f2;
-  --surface: #ffffff;
-  --surface-secondary: #f5f1eb;
-  --text: #2d2622;
-  --text-muted: #6b6560;
-  --border: #e8e2db;
-  --error: #d84040;
-  --radius: 12px;
-  --shadow-sm: 0 1px 2px rgba(45, 38, 34, 0.04);
-  --shadow-md: 0 4px 12px rgba(45, 38, 34, 0.08);
-  --shadow-lg: 0 8px 24px rgba(45, 38, 34, 0.12);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { 
-  font-family: 'DM Sans', sans-serif; 
-  background: var(--bg); 
-  color: var(--text); 
-  line-height: 1.5;
-  overflow-x: hidden;
-}
-
-/* NAV */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  padding: 12px 20px;
-  display: flex; align-items: center; justify-content: space-between; gap: 20px;
-}
-
-.nav-left { display: flex; align-items: center; gap: 32px; }
-.nav-logo { 
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem;
-  background: linear-gradient(135deg, #c65d3b 0%, #d4a574 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  white-space: nowrap;
-}
-
-.nav-menu {
-  display: flex; gap: 24px; list-style: none;
-}
-
-.nav-menu a {
-  color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9rem;
-  transition: color 0.2s;
-}
-
-.nav-menu a:hover { color: var(--primary); }
-
-.nav-right {
-  display: flex; align-items: center; gap: 16px; margin-left: auto;
-}
-
-.cart-badge {
-  position: relative; cursor: pointer;
-  width: 40px; height: 40px;
-  display: grid; place-items: center;
-  background: var(--primary-light);
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.cart-badge:hover { background: var(--primary); }
-.cart-badge svg { width: 20px; height: 20px; stroke: var(--primary); color: var(--primary); }
-.cart-badge.active svg { stroke: #fff; color: #fff; }
-
-.cart-count {
-  position: absolute; top: -8px; right: -8px;
-  background: var(--error); color: #fff;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  display: grid; place-items: center;
-  font-size: 0.75rem; font-weight: 800;
-}
-
-.btn-primary {
-  background: var(--primary); color: #fff;
-  border: none; border-radius: 8px;
-  padding: 10px 20px; font-weight: 600; font-size: 0.9rem;
-  cursor: pointer; transition: opacity 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.btn-primary:hover { opacity: 0.9; }
-
-@media (max-width: 768px) {
-  .nav-menu { display: none; }
-  .nav-left { gap: 16px; }
-  .nav-logo { font-size: 1rem; }
-}
-
-/* HERO & SEARCH */
-.hero {
-  background: linear-gradient(135deg, #c65d3b 0%, #1b6b4a 100%);
-  color: #fff; padding: 60px 20px;
-  text-align: center;
-}
-
-.hero h1 {
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.8rem, 6vw, 3rem);
-  line-height: 1.2; margin-bottom: 12px;
-}
-
-.hero p {
-  font-size: 1rem; color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 36px; max-width: 540px; margin-left: auto; margin-right: auto;
-}
-
-.search-container {
-  max-width: 680px; margin: 0 auto; position: relative;
-}
-
-.search-input-group {
-  display: flex; gap: 8px;
-  background: var(--surface);
-  border-radius: 12px; padding: 6px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-.search-input-group input {
-  flex: 1; border: none; outline: none;
-  padding: 14px 16px; background: transparent;
-  font-size: 1rem; font-family: 'DM Sans', sans-serif;
-}
-
-.search-input-group button {
-  background: var(--primary); color: #fff;
-  border: none; border-radius: 8px;
-  padding: 10px 20px; cursor: pointer;
-  font-weight: 600; transition: opacity 0.2s;
-}
-
-.search-input-group button:hover { opacity: 0.9; }
-
-.search-results {
-  position: absolute; top: 100%; left: 0; right: 0;
-  background: var(--surface);
-  border-radius: 12px; margin-top: 8px;
-  box-shadow: var(--shadow-lg);
-  display: none; max-height: 400px; overflow-y: auto;
-  z-index: 50;
-}
-
-.search-results.active { display: block; }
-
-.search-result-item {
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  cursor: pointer; transition: background 0.15s;
-  display: flex; align-items: center; gap: 12px;
-}
-
-.search-result-item:last-child { border-bottom: none; }
-.search-result-item:hover { background: var(--surface-secondary); }
-
-.search-result-icon {
-  width: 40px; height: 40px;
-  background: var(--primary-light); border-radius: 8px;
-  display: grid; place-items: center; flex-shrink: 0;
-}
-
-.search-result-text { flex: 1; min-width: 0; }
-.search-result-name { font-weight: 600; font-size: 0.9rem; }
-.search-result-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-
-/* QUICK FILTERS */
-.filters-bar {
-  padding: 20px; background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none;
-}
-
-.filters-bar::-webkit-scrollbar { display: none; }
-
-.filter-chip {
-  padding: 8px 16px; border: 1.5px solid var(--border);
-  background: var(--surface); border-radius: 20px;
-  cursor: pointer; font-size: 0.85rem; white-space: nowrap;
-  transition: all 0.2s; font-weight: 500;
-}
-
-.filter-chip:hover { border-color: var(--primary); color: var(--primary); }
-.filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-/* SECTIONS */
-.container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
-.section { padding: 40px 20px; }
-.section-title {
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem;
-  margin-bottom: 24px; color: var(--text);
-}
-
-/* BUSINESS GRID */
-.businesses-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
-  gap: 20px; margin-bottom: 40px;
-}
-
-.business-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: all 0.3s;
-  box-shadow: var(--shadow-sm);
-}
-
-.business-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
-  border-color: var(--primary);
-}
-
-.business-hero {
-  width: 100%; aspect-ratio: 16/9;
-  background: linear-gradient(135deg, var(--primary-light), var(--success-light));
-  overflow: hidden; position: relative;
-}
-
-.business-hero img {
-  width: 100%; height: 100%; object-fit: cover;
-  display: block;
-}
-
-.business-hero-overlay {
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-}
-
-.business-badge {
-  position: absolute; top: 12px; left: 12px;
-  background: rgba(21, 153, 87, 0.95); color: #fff;
-  padding: 4px 12px; border-radius: 20px;
-  font-size: 0.7rem; font-weight: 700;
-  backdrop-filter: blur(10px);
-  display: flex; align-items: center; gap: 4px;
-}
-
-.business-content { padding: 16px; }
-
-.business-header {
-  display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;
-}
-
-.business-avatar {
-  width: 48px; height: 48px;
-  background: var(--primary-light); border-radius: 8px;
-  display: grid; place-items: center; flex-shrink: 0;
-}
-
-.business-info { flex: 1; min-width: 0; }
-
-.business-name {
-  font-family: 'Syne', sans-serif; font-weight: 700;
-  font-size: 1rem; line-height: 1.2;
-}
-
-.business-meta {
-  font-size: 0.8rem; color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.business-rating {
-  color: var(--gold); font-size: 0.85rem; font-weight: 600;
-  margin-top: 4px;
-}
-
-.business-desc {
-  font-size: 0.85rem; color: var(--text-muted);
-  line-height: 1.4; margin-bottom: 12px;
-}
-
-.business-hours {
-  font-size: 0.8rem; color: var(--text-muted);
-  margin-bottom: 12px;
-  padding-bottom: 12px; border-bottom: 1px solid var(--border);
-}
-
-.business-hours strong { color: var(--success); }
-
-/* PRODUCTS SECTION - HIDDEN FROM CARDS */
-.products-preview {
-  display: none;
-}
-
-/* ACTIONS */
-.business-actions {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.btn-action {
-  padding: 10px 12px;
-  border: none; border-radius: 8px;
-  font-weight: 600; font-size: 0.85rem;
-  cursor: pointer; transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  text-decoration: none;
-}
-
-.btn-call {
-  background: var(--text); color: #fff;
-}
-
-.btn-call:hover { opacity: 0.85; }
-
-.btn-whatsapp {
-  background: #25d366; color: #fff;
-}
-
-.btn-whatsapp:hover { opacity: 0.85; }
-
-.btn-products {
-  grid-column: 1 / -1;
-  background: var(--primary-light); color: var(--primary);
-  border: 1.5px solid var(--primary);
-  cursor: pointer;
-}
-
-.btn-products:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-/* MODAL: PRODUCTS */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 500; opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-  backdrop-filter: blur(4px);
-}
-
-.modal-overlay.active {
-  opacity: 1; pointer-events: auto;
-}
-
-.modal-content {
-  background: var(--surface);
-  width: 90%; max-width: 500px;
-  border-radius: var(--radius);
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideIn 0.3s ease-out;
-  box-shadow: var(--shadow-lg);
-  padding: 24px;
-}
-
-@keyframes slideIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.modal-header {
-  padding: 20px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; background: var(--surface);
-}
-
-.modal-title {
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem;
-}
-
-.modal-close {
-  background: none; border: none;
-  font-size: 1.5rem; cursor: pointer;
-  color: var(--text-muted); transition: color 0.2s;
-}
-
-.modal-close:hover { color: var(--text); }
-
-.modal-body { padding: 20px; }
-
-.products-full-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
-  gap: 12px;
-}
-
-.product-card {
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: all 0.2s;
-  cursor: pointer;
-  position: relative;
-}
-
-.product-card:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-}
-
-.product-card.added {
-  border-color: var(--success);
-  background: var(--success-light);
-}
-
-.product-image {
-  width: 100%; aspect-ratio: 1;
-  background: var(--surface-secondary);
-  overflow: hidden;
-}
-
-.product-image img {
-  width: 100%; height: 100%; object-fit: cover;
-  display: block;
-}
-
-.product-info { padding: 12px; }
-
-.product-name {
-  font-weight: 600; font-size: 0.85rem;
-  margin-bottom: 4px; line-height: 1.2;
-}
-
-.product-category {
-  font-size: 0.7rem; color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.product-price {
-  color: var(--primary); font-weight: 700; font-size: 0.95rem;
-  margin-bottom: 8px;
-}
-
-.product-stock {
-  font-size: 0.75rem; color: var(--success); font-weight: 600;
-}
-
-.product-stock.out { color: var(--error); }
-
-.product-add-btn {
-  width: 100%; padding: 8px;
-  background: var(--primary); color: #fff;
-  border: none; border-radius: 6px;
-  font-weight: 600; font-size: 0.8rem;
-  cursor: pointer; transition: opacity 0.2s;
-  margin-top: 8px;
-}
-
-.product-add-btn:hover { opacity: 0.9; }
-
-/* CART MODAL */
-.cart-modal {
-  position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex; align-items: center; justify-content: flex-end;
-  z-index: 300; opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-}
-
-.cart-modal.active { opacity: 1; pointer-events: auto; }
-
-.cart-panel {
-  background: var(--surface);
-  width: 100%; max-width: 400px; height: 100vh;
-  display: flex; flex-direction: column;
-  animation: slideRight 0.3s ease-out;
-  overflow: hidden;
-}
-
-@keyframes slideRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-.cart-header {
-  padding: 20px; border-bottom: 1px solid var(--border);
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem;
-  position: relative;
-}
-
-.cart-items { flex: 1; overflow-y: auto; padding: 16px; }
-
-.cart-item {
-  display: flex; gap: 12px; margin-bottom: 12px;
-  padding: 12px; background: var(--surface-secondary);
-  border-radius: 8px;
-}
-
-.cart-item-img {
-  width: 60px; height: 60px;
-  background: var(--border); border-radius: 6px;
-  flex-shrink: 0; overflow: hidden;
-}
-
-.cart-item-img img { width: 100%; height: 100%; object-fit: cover; }
-
-.cart-item-info { flex: 1; min-width: 0; }
-
-.cart-item-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
-
-.cart-item-business { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
-
-.cart-item-price { color: var(--primary); font-weight: 700; }
-
-.cart-item-qty {
-  display: flex; align-items: center; gap: 6px; margin-top: 6px;
-}
-
-.qty-btn {
-  background: var(--border); border: none;
-  width: 24px; height: 24px;
-  border-radius: 4px; cursor: pointer;
-  font-weight: 600; transition: background 0.2s;
-}
-
-.qty-btn:hover { background: var(--primary); color: #fff; }
-
-.cart-remove {
-  background: none; border: none;
-  color: var(--error); cursor: pointer;
-  font-size: 0.8rem; font-weight: 600;
-  margin-top: 6px; transition: opacity 0.2s;
-}
-
-.cart-remove:hover { opacity: 0.7; }
-
-.cart-footer {
-  padding: 16px; border-top: 1px solid var(--border);
-}
-
-.cart-total {
-  display: flex; justify-content: space-between;
-  font-family: 'Syne', sans-serif; font-weight: 800;
-  font-size: 1.1rem; margin-bottom: 12px;
-}
-
-.cart-checkout {
-  width: 100%; padding: 12px;
-  background: var(--success); color: #fff;
-  border: none; border-radius: 8px;
-  font-weight: 700; cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  transition: opacity 0.2s;
-}
-
-.cart-checkout:hover { opacity: 0.9; }
-
-.cart-empty {
-  text-align: center; padding: 40px 20px;
-  color: var(--text-muted);
-}
-
-.cart-empty-icon { font-size: 3rem; margin-bottom: 12px; }
-
-/* AUTH FORMS */
-.auth-tab {
-  flex: 1;
-  padding: 12px;
-  background: var(--surface-secondary);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text-muted);
-}
-
-.auth-tab.active {
-  background: var(--primary);
-  color: white;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 6px;
-  font-size: 0.9rem;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 10px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: var(--primary-light);
-}
-
-.form-group small {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.8rem;
-}
-
-.btn-submit {
-  width: 100%;
-  padding: 12px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.btn-submit:hover {
-  opacity: 0.9;
-}
-
-.btn-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .nav-right { flex-direction: column; }
-  .businesses-grid { grid-template-columns: 1fr; }
-  .cart-panel { max-width: 100%; }
-  .modal-content { max-width: 100%; }
-  .products-full-grid { grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr)); }
-}
-
-/* UTILS */
-.text-center { text-align: center; }
-.mt-20 { margin-top: 20px; }
-.mb-20 { margin-bottom: 20px; }
-.opacity-50 { opacity: 0.5; }
-
-/* Loading state */
-.loading { text-align: center; padding: 40px; }
-.spinner {
-  width: 32px; height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --ink: #101828;
+    --ink-muted: #667085;
+    --accent: #0d67a7;
+    --accent2: #159957;
+    --accent3: #1c74b3;
+    --warn: #e48727;
+    --gold: #c9a84c;
+    --border: #e3e7ee;
+    --card-shadow: 0 2px 12px rgba(16,24,40,0.06);
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; max-width: 100vw; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface); color: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 60px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(16,24,40,0.04);
+  }
+  .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; color: var(--ink); }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-links a {
+    color: var(--ink-muted); text-decoration: none; font-size: 0.82rem; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px; transition: all 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active { background: #e4eef5; color: var(--accent); }
+  
+  /* AUTH COMPONENT NAVIGATION CONTAINER */
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-join-nav {
+    background: transparent; color: var(--accent2); text-decoration: none;
+    font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border: 1.5px solid var(--accent2);
+    border-radius: 20px; transition: all 0.2s ease; display: none;
+  }
+  .btn-join-nav:hover { background: var(--accent2); color: #fff; }
+
+  /* CONTEXT-AWARE PROFILE BUTTON */
+  .profile-badge-nav {
+    background: var(--bg); color: var(--ink); border: 1.5px solid var(--border);
+    padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; display: none; transition: background 0.2s;
+  }
+  .profile-badge-nav:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent3); color: #fff; border: none; cursor: pointer;
+    padding: 8px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; text-decoration: none;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    background: var(--ink); padding: 52px 24px 44px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 120%, rgba(13,103,167,0.28) 0%, transparent 70%);
+  }
+  .hero-eyebrow {
+    display: inline-block; background: rgba(13,103,167,0.15); border: 1px solid rgba(13,103,167,0.3);
+    color: #7ec2e8; font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 800; color: #fff; line-height: 1.1; margin-bottom: 14px; position: relative;
+  }
+  .hero h1 em { color: #5fb0dd; font-style: normal; }
+  .hero p { color: rgba(255,255,255,0.6); font-size: 1rem; max-width: 480px; margin: 0 auto 28px; }
+  .search-wrap { max-width: 540px; margin: 0 auto; position: relative; text-align: left; }
+  .search-wrap input {
+    width: 100%; padding: 16px 56px 16px 20px; border: none; border-radius: 12px; font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.25); outline: none;
+  }
+  .search-wrap button {
+    position: absolute; right: 8px; top: 8px;
+    background: var(--accent); border: none; border-radius: 8px; width: 38px; height: 38px; cursor: pointer;
+    display: grid; place-items: center; transition: opacity 0.2s;
+  }
+  .search-wrap button:hover { opacity: 0.85; }
+  .search-wrap button svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+
+  /* SEARCH SUGGESTIONS */
+  .search-suggest-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; justify-content: center; }
+  .search-suggest-chip {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+    font-size: 0.74rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all 0.15s;
+  }
+  .search-suggest-chip:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .search-dropdown {
+    position: absolute; top: 56px; left: 0; right: 0; background: #fff; border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(16,24,40,0.18); overflow: hidden; z-index: 50; display: none; max-height: 320px; overflow-y: auto;
+  }
+  .search-dropdown.active { display: block; }
+  .search-dropdown-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.12s;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:hover { background: var(--bg); }
+  .search-dropdown-icon { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; background: #e4eef5; color: var(--accent); display: grid; place-items: center; }
+  .search-dropdown-icon svg { width: 16px; height: 16px; }
+  .search-dropdown-name { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+  .search-dropdown-meta { font-size: 0.72rem; color: var(--ink-muted); }
+
+  /* STATS BAR */
+  .stats-bar { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .stats-bar::-webkit-scrollbar { display: none; }
+  .stat-item { flex: 1; min-width: 100px; text-align: center; padding: 14px 12px; border-right: 1px solid var(--border); }
+  .stat-item:last-child { border-right: none; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 0.7rem; color: var(--ink-muted); margin-top: 2px; }
+
+  /* PROMOTIONS */
+  .promo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 14px; }
+  .promo-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--card-shadow); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+  .promo-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(16,24,40,0.1); }
+  .promo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--bg); display: block; }
+  .promo-body { padding: 14px 16px 16px; }
+  .promo-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.92rem; margin-bottom: 3px; }
+  .promo-biz { font-size: 0.76rem; color: var(--ink-muted); margin-bottom: 8px; }
+  .promo-expiry { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; color: var(--warn); font-weight: 600; margin-bottom: 10px; }
+  .promo-cta {
+    display: block; width: 100%; text-align: center; padding: 9px; border-radius: 9px; border: none;
+    background: var(--accent2); color: #fff; font-weight: 700; font-size: 0.8rem; text-decoration: none; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .promo-cta:hover { opacity: 0.88; }
+
+  /* CATEGORIES */
+  .section { padding: 28px 20px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 14px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(90px, 100%), 1fr)); gap: 10px; }
+  .cat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 8px; text-align: center; cursor: pointer; transition: all 0.2s; user-select: none; }
+  .cat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--card-shadow); }
+  .cat-card.active { border-color: var(--accent); background: #e4eef5; }
+  .cat-icon { width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 50%; background: #e4eef5; color: var(--accent); display: grid; place-items: center; }
+  .cat-icon svg { width: 20px; height: 20px; }
+  .cat-card.active .cat-icon { background: var(--accent); color: #fff; }
+  .cat-name { font-size: 0.7rem; font-weight: 600; color: var(--ink); }
+
+  /* PILLS */
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pill { padding: 7px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* LISTINGS & HOMEPAGE SECTIONS */
+  .listings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .results-count { font-size: 0.82rem; color: var(--ink-muted); }
+  .sort-select { font-family: 'DM Sans', sans-serif; font-size: 0.8rem; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--surface); cursor: pointer; outline: none; }
+  .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+  
+  .section-divider {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--ink);
+    margin: 28px 0 14px 0; width: 100%; grid-column: 1 / -1; display: flex; align-items: center; gap: 12px;
+  }
+  .section-divider::after { content: ''; flex: 1; height: 1.5px; background: var(--border); }
+
+  .biz-card { background: var(--surface); border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--card-shadow); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; animation: fadeUp 0.3s ease both; }
+  .biz-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(26,23,20,0.12); }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .biz-header { padding: 16px 16px 0; display: flex; align-items: flex-start; gap: 12px; }
+  .biz-avatar { width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%); display: grid; place-items: center; overflow: hidden; }
+  .biz-avatar svg { width: 22px; height: 22px; color: #fff; }
+  .biz-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .biz-meta { flex: 1; min-width: 0; }
+  .biz-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .biz-cat-barrio { font-size: 0.75rem; color: var(--ink-muted); margin-top: 2px; }
+  .biz-badges { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .badge { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; }
+  .badge-verified { background: #e3f5eb; color: var(--accent2); }
+  .badge-new { background: #fff3cd; color: #92600a; }
+  .badge-featured { background: #fff1e6; color: var(--warn); }
+  .badge-premium { background: #1a1714; color: var(--gold); }
+
+  .biz-desc { padding: 10px 16px; font-size: 0.82rem; color: var(--ink-muted); line-height: 1.5; }
+  .biz-hours { padding: 0 16px 6px; font-size: 0.78rem; color: var(--ink-muted); }
+  .biz-hours span { color: var(--accent2); font-weight: 600; }
+  .biz-stars { padding: 0 16px 12px; font-size: 0.8rem; color: var(--gold); }
+
+  .biz-actions { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .btn-call, .btn-wa, .btn-share {
+    flex: 1; padding: 9px; border-radius: 9px; font-size: 0.78rem; font-weight: 600;
+    border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: opacity 0.2s, transform 0.15s; text-decoration: none;
+  }
+  .btn-call { background: var(--ink); color: #fff; }
+  .btn-wa { background: #25d366; color: #fff; }
+  .btn-share { background: var(--bg); color: var(--ink); border: 1.5px solid var(--border); flex: 0 0 38px; }
+  .btn-call:hover, .btn-wa:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  /* COMMUNITY WALL CONVERSION MODAL LAYER */
+  .mc-modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,23,20,0.65);
+    z-index: 2000; display: grid; place-items: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  .mc-modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .mc-modal-card {
+    background: var(--surface); border-radius: 16px; border: 1.5px solid var(--border);
+    padding: 32px; max-width: 420px; width: 90%; text-align: center;
+    box-shadow: 0 10px 32px rgba(26,23,20,0.2); transform: translateY(15px); transition: transform 0.25s ease;
+  }
+  .mc-modal-overlay.active .mc-modal-card { transform: translateY(0); }
+  .mc-modal-icon { font-size: 3.2rem; margin-bottom: 12px; }
+  .mc-modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.45rem; margin-bottom: 10px; line-height: 1.25; }
+  .mc-modal-text { font-size: 0.88rem; color: var(--ink-muted); line-height: 1.5; margin-bottom: 24px; }
+  .mc-modal-cta {
+    display: block; width: 100%; background: var(--accent); color: #fff;
+    text-decoration: none; padding: 13px; border-radius: 10px; font-weight: 700;
+    font-size: 0.9rem; margin-bottom: 14px; transition: opacity 0.2s;
+  }
+  .mc-modal-cta:hover { opacity: 0.9; }
+  .mc-modal-close { background: none; border: none; font-size: 0.82rem; color: var(--ink-muted); cursor: pointer; text-decoration: underline; }
+
+  /* PROFILE AND EDITING PORTAL FIELDS */
+  .modal-form-group { text-align: left; margin-bottom: 14px; }
+  .modal-form-group label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
+  .modal-form-group input { width:100%; padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; background: var(--bg); }
+  .modal-form-group input:focus { border-color: var(--accent); background: #fff; }
+  .modal-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-switch-text { font-size: 0.82rem; margin-top: 14px; color: var(--ink-muted); }
+  .modal-switch-text span { color: var(--accent); cursor: pointer; text-decoration: underline; font-weight: 600; }
+  
+  /* LOGOUT BUTTON */
+  .btn-logout-modal {
+    background: none; border: none; color: #cc0000; font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 700; text-decoration: underline; cursor: pointer;
+    margin-top: 18px; display: inline-block; transition: opacity 0.15s;
+  }
+  .btn-logout-modal:hover { opacity: 0.75; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  
+  .cta-banner { margin: 24px 20px; padding: 28px 24px; border-radius: 16px; background: linear-gradient(135deg, var(--ink) 0%, var(--accent3) 100%); color: #fff; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .cta-banner-text { flex: 1; min-width: 200px; }
+  .cta-banner h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800; margin-bottom: 5px; }
+  .cta-banner p { font-size: 0.83rem; color: rgba(255,255,255,0.65); }
+  .cta-banner a { background: var(--accent); color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; white-space: nowrap; transition: opacity 0.2s; }
+  .cta-banner a:hover { opacity: 0.85; }
+
+  footer { background: var(--ink); color: rgba(255,255,255,0.5); padding: 28px 24px; text-align: center; font-size: 0.78rem; margin-top: 20px; }
+  footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+  footer strong { color: #fff; font-family: 'Syne', sans-serif; }
+  .loading { text-align: center; padding: 40px; color: var(--ink-muted); font-size: 0.9rem; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 600px) { .nav-links { display: none; } .listings-grid { grid-template-columns: 1fr; } .cta-banner { text-align: center; } .cta-banner-text { min-width: 100%; } }
 </style>
 </head>
-
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="nav-left">
-    <div class="nav-logo">🌶️ MarsellaCONECTA</div>
-    <ul class="nav-menu">
-      <li><a href="#directorio">Directorio</a></li>
-      <li><a href="admin.html" style="color: #c65d3b; font-weight: 700;">👁️ Admin</a></li>
-      <li><a href="business.html" style="color: #c65d3b; font-weight: 700;">📊 Negocio</a></li>
-    </ul>
+  <div class="nav-logo">Marsella<span>Conecta</span></div>
+  <div class="nav-links" id="navPublicLinks">
+    <a href="index.html" class="active">Directorio</a>
+    <a href="pages/register.html">Registrar Negocio</a>
+    <a href="pages/plans.html">Planes</a>
   </div>
-  <div class="nav-right">
-    <!-- User Menu -->
-    <div id="userMenuContainer" style="display: flex; gap: 12px; align-items: center;">
-      <div id="userLoggedIn" style="display: none; align-items: center; gap: 8px;">
-        <span id="userDisplayName" style="font-size: 0.9rem; color: var(--text-muted);"></span>
-        <button onclick="logoutUser()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Salir</button>
-      </div>
-      <div id="userNotLoggedIn" style="display: flex; gap: 8px;">
-        <button onclick="openLoginGateModal()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 600; font-size: 0.9rem;">Iniciar Sesión</button>
-        <button onclick="openLoginGateModal(); switchAuthTab('register')" class="btn-primary" style="padding: 6px 12px; font-size: 0.9rem;">Registrarse</button>
-      </div>
-    </div>
-    
-    <div class="cart-badge" id="cartBadge" onclick="toggleCart()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-      </svg>
-      <div class="cart-count" id="cartCount" style="display: none;">0</div>
-    </div>
+  <div class="nav-actions">
+    <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
+    <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
+    <a href="pages/register.html" id="navMerchantCta" class="nav-cta">+ Agregar Negocio</a>
   </div>
 </nav>
 
-<!-- HERO & SEARCH -->
-<section class="hero">
-  <div class="container">
-    <h1>Compra directo de tu comunidad</h1>
-    <p>Descubre negocios, productos y servicios locales. Ordena por WhatsApp a quien más te guste.</p>
-    
-    <div class="search-container">
-      <div class="search-input-group">
-        <input type="text" id="globalSearch" placeholder="Filtrar negocios o productos...">
-        <button onclick="executeSearch()">Filtrar</button>
-      </div>
-    </div>
+<div class="hero">
+  <div class="hero-eyebrow">📍 Comunidad Local</div>
+  <h1>Descubre negocios en<br><em>Marsella</em></h1>
+  <p>El directorio de tu colonia. Encuentra servicios locales verificados, con horarios y contacto directo.</p>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="¿Qué buscas hoy? Ej. Electricista, Pupusas, Taxi..." autocomplete="off">
+    <button onclick="doSearch()">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+    <div class="search-dropdown" id="searchDropdown"></div>
   </div>
-</section>
+  <div class="search-suggest-chips" id="searchChips"></div>
+</div>
 
-<!-- FILTERS -->
-<div class="filters-bar" id="filtersBar"></div>
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num" id="totalBiz">—</div><div class="stat-label">Negocios</div></div>
+  <div class="stat-item"><div class="stat-num" id="totalCat">—</div><div class="stat-label">Categorías</div></div>
+  <div class="stat-item"><div class="stat-num" id="totalVer">—</div><div class="stat-label">Verificados</div></div>
+  <div class="stat-item"><div class="stat-num">🇸🇻</div><div class="stat-label">El Salvador</div></div>
+</div>
 
-<!-- MAIN CONTENT -->
-<main>
-  <!-- PROMOTIONS BANNER -->
-  <section class="section" id="promotionsBanner" style="background: linear-gradient(135deg, #c65d3b 0%, #d4a574 100%); padding: 20px 0; display: none;">
-    <div class="container">
-      <div id="promotionCarousel" style="text-align: center; color: white;">
-        <div id="currentPromotion"></div>
-      </div>
-    </div>
-  </section>
+<div class="section" id="promoSection" style="display:none">
+  <div class="section-title">🔥 Promociones de la Semana</div>
+  <div class="promo-grid" id="promoGrid"></div>
+</div>
 
-  <!-- FEATURED -->
-  <section class="section" id="featured">
-    <div class="container">
-      <div class="section-title">⭐ Destacados Hoy</div>
-      <div class="businesses-grid" id="featuredGrid"></div>
-    </div>
-  </section>
+<div class="section">
+  <div class="section-title">Explorar por categoría</div>
+  <div class="cat-grid" id="catGrid"></div>
+</div>
 
-  <!-- ALL BUSINESSES -->
-  <section class="section" id="directorio">
-    <div class="container">
-      <div class="section-title">🏪 Todos los Negocios</div>
-      <div class="businesses-grid" id="allBusinessesGrid"></div>
-    </div>
-  </section>
-</main>
-
-<!-- LOGIN GATE MODAL (Combined Register + Login) -->
-<div class="modal-overlay" id="loginGateModal">
-  <div class="modal-content" style="max-width: 480px;">
-    <button class="modal-close" onclick="closeLoginGateModal()" style="position: absolute; top: 12px; right: 12px;">✕</button>
-    
-    <div class="modal-header" style="text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 2.5rem; margin-bottom: 12px;">🌶️</div>
-      <div class="modal-title">Marsella Conecta</div>
-      <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 8px;">Para contactar negocios, inicia sesión o crea una cuenta</p>
-    </div>
-    
-    <!-- Tab Toggle -->
-    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-      <button onclick="switchAuthTab('login')" id="tabLoginBtn" class="auth-tab active">Iniciar Sesión</button>
-      <button onclick="switchAuthTab('register')" id="tabRegisterBtn" class="auth-tab">Crear Cuenta</button>
-    </div>
-    
-    <div class="modal-body">
-      <!-- LOGIN FORM -->
-      <div id="loginFormContainer" style="display: block;">
-        <form onsubmit="loginUser(event)">
-          <div class="form-group">
-            <label>Número WhatsApp *</label>
-            <input type="tel" id="loginPhone" placeholder="71234567" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Contraseña *</label>
-            <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
-          </div>
-          
-          <button type="submit" class="btn-submit">Iniciar Sesión</button>
-        </form>
-      </div>
-      
-      <!-- REGISTRATION FORM -->
-      <div id="registerFormContainer" style="display: none;">
-        <form onsubmit="registerUser(event)">
-          <div class="form-group">
-            <label>Nombre Completo *</label>
-            <input type="text" id="regName" placeholder="Tu nombre completo" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Número WhatsApp *</label>
-            <input type="tel" id="regPhone" placeholder="71234567" required>
-            <small style="color: var(--text-muted);">Ej: 71234567 (sin +503)</small>
-          </div>
-          
-          <div class="form-group">
-            <label>Contraseña *</label>
-            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Quartier *</label>
-            <select id="regQuartier" required>
-              <option value="">Selecciona tu Quartier</option>
-              <option value="Marsella 1">Marsella 1</option>
-              <option value="Marsella 2">Marsella 2</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>Dirección (Opcional)</label>
-            <input type="text" id="regAddress" placeholder="Tu dirección">
-          </div>
-          
-          <button type="submit" class="btn-submit">Crear Cuenta</button>
-        </form>
-      </div>
-    </div>
+<div class="section">
+  <div class="pills" id="pillRow"></div>
+  <div class="listings-header">
+    <div class="results-count" id="resultsCount">Cargando...</div>
+    <select class="sort-select" id="sortSelect" onchange="renderCards()">
+      <option value="name">Nombre A-Z</option>
+      <option value="stars">Mayor calificación</option>
+      <option value="newest">Más recientes</option>
+    </select>
+  </div>
+  <div id="listingsGrid" class="listings-grid">
+    <div class="loading"><div class="spinner"></div>Cargando negocios...</div>
   </div>
 </div>
 
-<!-- PRODUCTS MODAL -->
-<div class="modal-overlay" id="productsModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="productsModalTitle">Productos</div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="productsModalSubtitle"></p>
-      </div>
-      <button class="modal-close" onclick="closeProductsModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="products-full-grid" id="productsFullGrid"></div>
-    </div>
+<div class="cta-banner" id="bottomMerchantBanner">
+  <div class="cta-banner-text">
+    <h3>¿Tienes un negocio en Marsella?</h3>
+    <p>Regístralo gratis y llega a toda la colonia. Planes premium desde $5/mes.</p>
+  </div>
+  <a href="pages/register.html">Registrar mi negocio →</a>
+</div>
+
+<footer id="footerContainer">
+  <strong>MarsellaCONECTA</strong> &nbsp;·&nbsp; El Salvador &nbsp;·&nbsp;
+  <a href="pages/register.html" class="biz-hide-element">Registrar negocio</a> &nbsp;·&nbsp;
+  <a href="pages/plans.html" class="biz-hide-element">Planes y precios</a> &nbsp;·&nbsp;
+  <a href="pages/admin.html">Admin</a>
+  <br><br>© 2026 Marsella Conecta. Hecho con ❤️ para la comunidad.
+</footer>
+
+<div class="mc-modal-overlay" id="authGateModal">
+  <div class="mc-modal-card">
+    <div class="mc-modal-icon">🏡</div>
+    <div class="mc-modal-title">Únete a nuestra comunidad enseguida</div>
+    <div class="mc-modal-text">Para proteger la seguridad de los vecinos y acceder a los canales directos de comunicación con los negocios, debes formar parte activa de nuestra red vecinal.</div>
+    <a href="pages/register-user.html" class="mc-modal-cta">Unirme como Vecino</a>
+    <div class="modal-switch-text">¿Ya tienes cuenta comunitaria? <span onclick="switchToLoginLayout()">Inicia Sesión aquí</span></div>
+    <button class="mc-modal-close" style="margin-top:10px" onclick="closeAuthModal()">Volver al directorio</button>
   </div>
 </div>
 
+<div class="mc-modal-overlay" id="userLoginModal">
+  <div class="mc-modal-card">
+    <div class="mc-modal-icon">🔒</div>
+    <div class="mc-modal-title">Acceso Vecinal</div>
+    <div class="mc-modal-text">Ingresa tus credenciales registradas para reanudar tu sesión permanente.</div>
+    
+    <div class="modal-form-group">
+      <label>Correo Electrónico</label>
+      <input type="email" id="log_email" placeholder="ejemplo@correo.com">
+    </div>
+    <div class="modal-form-group">
+      <label>Contraseña</label>
+      <input type="password" id="log_password" placeholder="••••••••">
+    </div>
+    
+    <button class="mc-modal-cta" id="loginSubmitBtn" onclick="executeNeighborLogin()">Iniciar Sesión</button>
+    <div class="modal-switch-text" style="font-size:0.75rem">¿Olvidaste tu contraseña? <span onclick="executePasswordRecoveryRequest()">Recuperar Clave</span></div>
+    <button class="mc-modal-close" style="margin-top:10px" onclick="closeLoginModal()">Cancelar</button>
+  </div>
+</div>
 
-<div class="cart-modal" id="cartModal" onclick="if(event.target.id==='cartModal') closeCart()">
-  <div class="cart-panel">
-    <div class="cart-header">
-      Tu Carrito 🛒
-      <button onclick="closeCart()" style="position: absolute; right: 12px; top: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">✕</button>
+<div class="mc-modal-overlay" id="profileEditModal">
+  <div class="mc-modal-card" style="max-width:460px">
+    <div class="mc-modal-icon">⚙️</div>
+    <div class="mc-modal-title">Configuración de Perfil</div>
+    <div class="mc-modal-text">Modifica tus variables comunitarias en tiempo real. Tu ID de cuenta no cambiará.</div>
+    
+    <div class="modal-row-split">
+      <div class="modal-form-group"><label>Nombre</label><input type="text" id="edit_nombre"></div>
+      <div class="modal-form-group"><label>Apellido</label><input type="text" id="edit_apellido"></div>
     </div>
-    <div class="cart-items" id="cartItems">
-      <div class="cart-empty">
-        <div class="cart-empty-icon">🛒</div>
-        <p>Tu carrito está vacío</p>
-        <p style="font-size: 0.9rem; margin-top: 8px;">Explora productos y agrega aquí</p>
-      </div>
+    <div class="modal-form-group"><label>Correo Electrónico</label><input type="email" id="edit_email"></div>
+    <div class="modal-row-split">
+      <div class="modal-form-group"><label>WhatsApp</label><input type="tel" id="edit_whatsapp" maxlength="9"></div>
+      <div class="modal-form-group"><label>Senda / Quartier</label><input type="text" id="edit_quartier"></div>
     </div>
-    <div class="cart-footer">
-      <div class="cart-total">
-        <span>Total:</span>
-        <span id="cartTotalAmount">$0.00</span>
-      </div>
-      <button class="cart-checkout" id="checkoutBtn" onclick="sendOrderViaWhatsApp()">
-        Enviar Pedido por WhatsApp
-      </button>
+    <div class="modal-form-group"><label>Cambiar Contraseña (Opcional)</label><input type="password" id="edit_password" placeholder="Dejar en blanco para mantener actual"></div>
+    
+    <button class="mc-modal-cta" id="editProfileSubmitBtn" onclick="dispatchProfileOverwrites()">✓ Guardar Cambios</button>
+    <button class="mc-modal-close" onclick="closeProfileEditModal()">Cerrar sin guardar</button>
+
+    <div style="margin-top:10px">
+      <a href="pages/mi-negocio.html" style="display:block;text-align:center;padding:10px;border-radius:9px;background:var(--bg);color:var(--accent);font-weight:700;font-size:0.85rem;text-decoration:none;border:1.5px solid var(--border)">🏪 Administrar Mi Negocio</a>
+    </div>
+
+    <div>
+      <button class="btn-logout-modal" onclick="executeNavbarSessionLogout()">🔴 Cerrar mi Sesión Comunitaria</button>
     </div>
   </div>
 </div>
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// ---- Fill these in from Supabase > Project Settings > API ----
+// ----------------------------------------------------------------
 
-// CONFIG - Loaded from config.js (must be in same directory)
-const SUPABASE_URL = CONFIG.supabaseUrl;
-const SUPABASE_ANON_KEY = CONFIG.supabaseKey;
+import { supabase } from './assets/js/supabase.js';
 const COUNTRY_CODE = '503';
 
-// Initialize Supabase
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CATEGORY_ICONS = {
+  'Transporte': '🚕', 'Alimentacion': '🍴', 'Servicios Otros': '🔧',
+  'Bebidas': '🍺', 'Instalacion AC': '❄️', 'Plomería': '🔩',
+  'Electricidad': '⚡', 'Mecánica': '🔨', 'Belleza': '💇',
+  'Farmacia': '💊', 'Tienda': '🛒', 'Médico': '🏥', 'Servicios Tecnicos/ Hogar': '🏠'
+};
+const FALLBACK_ICON = '📦';
 
-let allBusinesses = [];
-let allProducts = [];
-let productCategories = [];
-let cart = JSON.parse(localStorage.getItem('marsella-cart')) || [];
+// Clean line-icon SVGs (24x24, stroke-based) used in place of emoji
+// wherever we want a more polished, consistent visual — category
+// cards, the search dropdown, and business avatars without a photo.
+const CATEGORY_SVG = {
+  'Transporte': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 4 0M5 17a2 2 0 1 1 4 0M15 17a2 2 0 1 0 4 0M15 17a2 2 0 1 1 4 0M3 17V10l2-5h10l4 5v7"/><path d="M3 10h16"/></svg>',
+  'Alimentacion': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v6a2 2 0 0 0 4 0V2M9 8v14M18 2c-2 1-3 3-3 6s1 5 3 6v6"/></svg>',
+  'Servicios Otros': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2z"/></svg>',
+  'Bebidas': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12l-1.2 9a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 10Z"/><path d="M8 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/></svg>',
+  'Instalacion AC': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"/></svg>',
+  'Plomería': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s5 5.5 5 9.5a5 5 0 0 1-10 0C7 8.5 12 3 12 3Z"/></svg>',
+  'Electricidad': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>',
+  'Mecánica': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2z"/></svg>',
+  'Belleza': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="m20 4-14 8 14 8M8.5 12h11.5"/></svg>',
+  'Farmacia': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>',
+  'Tienda': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8 5.5 3h13L20 8M4 8v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8M4 8h16M9 12a3 3 0 0 0 6 0"/></svg>',
+  'Médico': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 13.6 12 22l-8.8-8.4a5.5 5.5 0 0 1 8-7.6l.8.8.8-.8a5.5 5.5 0 0 1 8 7.6Z"/></svg>',
+  'Servicios Tecnicos/ Hogar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>',
+};
+const FALLBACK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>';
 
-// ============================================
-// USER AUTHENTICATION & ANALYTICS
-// ============================================
+function getCategorySvg(cat) { return CATEGORY_SVG[cat] || FALLBACK_SVG; }
 
-let currentUser = null;
+const SAMPLE_DATA = [
+  { nombre: 'VIP Taxi Marsella', categoria: 'Transporte', barrio: 'Colonia Marsella', telefono: '75404955', descripcion: 'Servicio de taxi 24/7 para toda la zona', estado: 'Activo', estrellas: 5, horario: 'Todos los días 6am-10pm', plan: 'Gratuito' }
+];
 
-// Load user from session
-function loadUserSession() {
-  const userStr = localStorage.getItem('marsella-user');
-  if (userStr) {
-    try {
-      currentUser = JSON.parse(userStr);
-      console.log('User session loaded:', currentUser.name);
-      updateUserMenuUI();
-    } catch (e) {
-      console.error('Failed to load user session:', e);
-      localStorage.removeItem('marsella-user');
-    }
-  }
-}
+let allData = [];
+let filtered = [];
+let activeFilter = 'Todos';
+let searchDebounceTimer = null;
+let currentProfile = null; // cached profile row of the signed-in neighbor
 
-// Update UI based on login state
-function updateUserMenuUI() {
-  const loggedInDiv = document.getElementById('userLoggedIn');
-  const loggedOutDiv = document.getElementById('userNotLoggedIn');
-  
-  if (currentUser) {
-    loggedInDiv.style.display = 'flex';
-    loggedOutDiv.style.display = 'none';
-    document.getElementById('userDisplayName').textContent = currentUser.name.split(' ')[0];
-  } else {
-    loggedInDiv.style.display = 'none';
-    loggedOutDiv.style.display = 'flex';
-  }
-}
-
-// Open/Close Auth Modals
-// Simple hash function (NOT secure, only for MVP testing)
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(16);
-}
-
-// Register User
-async function registerUser(e) {
-  e.preventDefault();
-  
-  const name = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const quartier = document.getElementById('regQuartier').value;
-  const address = document.getElementById('regAddress').value.trim();
-  
-  if (!name || !phone || !password || !quartier) {
-    alert('Por favor completa todos los campos requeridos');
-    return;
-  }
-  
-  console.log('Registering user:', { name, phone, quartier });
-  
+async function logUserEvent(eventType, searchVal = '', bizName = '') {
   try {
-    // Check if phone already exists
-    const { data: existingUsers } = await supabase
-      .from('users')
-      .select('id')
-      .eq('phone_number', phone);
-    
-    if (existingUsers && existingUsers.length > 0) {
-      alert('❌ Este número ya está registrado. Por favor inicia sesión o usa otro número.');
-      return;
-    }
-    
-    // Create user
-    const passwordHash = simpleHash(password);
-    const { data: newUser, error } = await supabase
-      .from('users')
-      .insert({
-        phone_number: phone,
-        password_hash: passwordHash,
-        name: name,
-        whatsapp: phone,
-        quartier: quartier,
-        address: address || null,
-        created_at: new Date().toISOString()
-      })
-      .select();
-    
-    if (error) {
-      console.error('Registration error:', error);
-      alert('Error al crear cuenta: ' + error.message);
-      return;
-    }
-    
-    if (newUser && newUser.length > 0) {
-      currentUser = {
-        id: newUser[0].id,
-        name: newUser[0].name,
-        phone: newUser[0].phone_number,
-        quartier: newUser[0].quartier
-      };
-      localStorage.setItem('marsella-user', JSON.stringify(currentUser));
-      
-      // Track registration login
-      trackEvent('login', null, null);
-      
-      updateUserMenuUI();
-      closeRegisterModal();
-      alert('✓ ¡Bienvenido ' + name + '! Tu cuenta ha sido creada.');
-    }
-  } catch (err) {
-    console.error('Registration error:', err);
-    alert('Error inesperado: ' + err.message);
-  }
-}
-
-// Login User
-async function loginUser(e) {
-  e.preventDefault();
-  
-  const phone = document.getElementById('loginPhone').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  if (!phone || !password) {
-    alert('Por favor completa ambos campos');
-    return;
-  }
-  
-  console.log('Logging in user:', phone);
-  
-  try {
-    const passwordHash = simpleHash(password);
-    
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('phone_number', phone)
-      .eq('password_hash', passwordHash);
-    
-    if (error || !user || user.length === 0) {
-      alert('❌ Número o contraseña incorrectos');
-      return;
-    }
-    
-    currentUser = {
-      id: user[0].id,
-      name: user[0].name,
-      phone: user[0].phone_number,
-      quartier: user[0].quartier
-    };
-    localStorage.setItem('marsella-user', JSON.stringify(currentUser));
-    
-    // Update last login
-    await supabase
-      .from('users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', user[0].id);
-    
-    // Track login event
-    trackEvent('login', null, null);
-    
-    updateUserMenuUI();
-    closeLoginModal();
-    alert('✓ ¡Bienvenido ' + user[0].name + '!');
-  } catch (err) {
-    console.error('Login error:', err);
-    alert('Error al iniciar sesión: ' + err.message);
-  }
-}
-
-// Logout User
-function logoutUser() {
-  if (confirm('¿Deseas cerrar sesión?')) {
-    currentUser = null;
-    localStorage.removeItem('marsella-user');
-    updateUserMenuUI();
-    alert('Sesión cerrada.');
-  }
-}
-
-// Analytics: Track events
-async function trackEvent(eventType, businessId = null, searchQuery = null) {
-  if (!currentUser) return; // Only track logged-in users
-  
-  try {
-    await supabase.from('analytics_events').insert({
-      user_id: currentUser.id,
-      event_type: eventType,
-      business_id: businessId,
-      search_query: searchQuery,
-      created_at: new Date().toISOString()
+    await supabase.from('events_log').insert({
+      profile_id: currentProfile?.id || null,
+      evento_tipo: eventType,
+      valor_busqueda: searchVal,
+      negocio_nombre: bizName
     });
-    
-    console.log('📊 Event tracked:', { eventType, businessId, searchQuery });
   } catch (err) {
-    console.error('Analytics error:', err);
+    console.warn('Analytics logger failed:', err);
   }
 }
 
-// Check if user is logged in (for contact buttons)
-function checkLogin() {
-  if (!currentUser) {
-    openLoginGateModal();
-    return false;
+async function evaluateUserSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const navJoinBtn = document.getElementById('navJoinBtn');
+  const navMerchantCta = document.getElementById('navMerchantCta');
+  const navPublicLinks = document.getElementById('navPublicLinks');
+  const profileBadge = document.getElementById('navProfileBadge');
+  const bottomBanner = document.getElementById('bottomMerchantBanner');
+  const footerBizElements = document.querySelectorAll('.biz-hide-element');
+
+  if (!session) {
+    currentProfile = null;
+    if (navJoinBtn) navJoinBtn.style.display = 'block';
+    if (navMerchantCta) navMerchantCta.style.display = 'block';
+    if (navPublicLinks) navPublicLinks.style.display = 'flex';
+    if (bottomBanner) bottomBanner.style.display = 'flex';
+    if (profileBadge) profileBadge.style.display = 'none';
+    footerBizElements.forEach(el => el.style.display = 'inline');
+    return;
   }
-  return true;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('auth_user_id', session.user.id)
+    .single();
+  currentProfile = profile;
+
+  if (navJoinBtn) navJoinBtn.style.display = 'none';
+  if (navMerchantCta) navMerchantCta.style.display = 'none';
+  if (navPublicLinks) navPublicLinks.style.display = 'none';
+  if (bottomBanner) bottomBanner.style.display = 'none';
+
+  if (profileBadge) {
+    profileBadge.textContent = `👤 Hola, ${profile?.nombre || 'Vecino'}`;
+    profileBadge.style.display = 'block';
+  }
+  footerBizElements.forEach(el => el.style.display = 'none');
 }
 
-// Login Gate Modal functions
-function openLoginGateModal() {
-  document.getElementById('loginGateModal').classList.add('active');
+async function executeNavbarSessionLogout() {
+  if (confirm('¿Estás seguro de que deseas cerrar tu sesión en Marsella Conecta?')) {
+    await logUserEvent('Cierre_Sesion');
+    await supabase.auth.signOut();
+    window.location.reload();
+  }
 }
 
-function closeLoginGateModal() {
-  document.getElementById('loginGateModal').classList.remove('active');
-  // Clear forms
-  document.getElementById('loginPhone').value = '';
-  document.getElementById('loginPassword').value = '';
-  document.getElementById('regName').value = '';
-  document.getElementById('regPhone').value = '';
-  document.getElementById('regPassword').value = '';
-  document.getElementById('regQuartier').value = '';
-  document.getElementById('regAddress').value = '';
-}
+function openAuthModal() { document.getElementById('authGateModal').classList.add('active'); }
+function closeAuthModal() { document.getElementById('authGateModal').classList.remove('active'); }
+function switchToLoginLayout() { closeAuthModal(); document.getElementById('userLoginModal').classList.add('active'); }
+function closeLoginModal() { document.getElementById('userLoginModal').classList.remove('active'); }
 
-function switchAuthTab(tab) {
-  const loginForm = document.getElementById('loginFormContainer');
-  const registerForm = document.getElementById('registerFormContainer');
-  const loginBtn = document.getElementById('tabLoginBtn');
-  const registerBtn = document.getElementById('tabRegisterBtn');
-  
-  if (tab === 'login') {
-    loginForm.style.display = 'block';
-    registerForm.style.display = 'none';
-    loginBtn.classList.add('active');
-    registerBtn.classList.remove('active');
+async function executeNeighborLogin() {
+  const emailInput = document.getElementById('log_email').value.trim().toLowerCase();
+  const passwordInput = document.getElementById('log_password').value;
+  const loginBtn = document.getElementById('loginSubmitBtn');
+
+  if (!emailInput || !passwordInput) {
+    alert('Por favor introduce tu correo electrónico y tu contraseña.');
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Autenticando credenciales...';
+
+  const { error } = await supabase.auth.signInWithPassword({ email: emailInput, password: passwordInput });
+
+  if (!error) {
+    await evaluateUserSession();
+    await logUserEvent('Login_Exitoso');
+    closeLoginModal();
+    alert('¡Sesión iniciada con éxito! Bienvenido de vuelta.');
   } else {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'block';
-    loginBtn.classList.remove('active');
-    registerBtn.classList.add('active');
+    alert('Credenciales inválidas.\n\nSi te registraste antes de la actualización de seguridad de julio 2026, tu contraseña anterior ya no es válida: usa "Unirte Ahora" con el mismo correo para crear tu nueva contraseña.');
   }
+
+  loginBtn.disabled = false;
+  loginBtn.textContent = 'Iniciar Sesión';
 }
 
-// STATE
-let currentBusinessProducts = [];
-let currentBusinessId = null;
-let currentBusinessName = '';
-
-// ---- UTILS ----
-function renderCartCount() {
-  const count = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
-  const badge = document.getElementById('cartCount');
-  if (count > 0) {
-    badge.textContent = count;
-    badge.style.display = 'block';
+async function executePasswordRecoveryRequest() {
+  const emailInput = document.getElementById('log_email').value.trim();
+  if (!emailInput) {
+    alert('Introduce tu dirección de correo electrónico en el campo superior para iniciar el proceso de recuperación.');
+    return;
+  }
+  const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
+    redirectTo: new URL('pages/reset-password.html', location.href).href
+  });
+  if (error) {
+    alert('No se pudo enviar el correo de recuperación. Verifica que ya tengas una cuenta creada en el nuevo sistema (usa "Unirte Ahora" si aún no la has creado).');
   } else {
-    badge.style.display = 'none';
+    alert(`Se ha enviado un enlace de recuperación de contraseña a: ${emailInput}. Revisa tu correo.`);
   }
+  logUserEvent('Solicitud_Recuperacion_Clave', emailInput, '');
 }
 
-function toggleCart() {
-  const modal = document.getElementById('cartModal');
-  modal.classList.toggle('active');
-  renderCart();
+async function openProfileEditModal() {
+  if (!currentProfile) return;
+  document.getElementById('edit_nombre').value = currentProfile.nombre || '';
+  document.getElementById('edit_apellido').value = currentProfile.apellido || '';
+  document.getElementById('edit_email').value = currentProfile.email || '';
+  document.getElementById('edit_quartier').value = currentProfile.quartier || '';
+  document.getElementById('edit_whatsapp').value = currentProfile.whatsapp || '';
+  document.getElementById('edit_password').value = '';
+  document.getElementById('profileEditModal').classList.add('active');
+}
+function closeProfileEditModal() { document.getElementById('profileEditModal').classList.remove('active'); }
+
+async function dispatchProfileOverwrites() {
+  const saveBtn = document.getElementById('editProfileSubmitBtn');
+  const nombre = document.getElementById('edit_nombre').value.trim();
+  const apellido = document.getElementById('edit_apellido').value.trim();
+  const email = document.getElementById('edit_email').value.trim();
+  const quartier = document.getElementById('edit_quartier').value.trim();
+  const whatsapp = document.getElementById('edit_whatsapp').value.trim();
+  const password = document.getElementById('edit_password').value;
+
+  if (!nombre || !apellido || !email || !quartier) {
+    alert('Por favor rellena todos los campos obligatorios.');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Guardando cambios...';
+
+  const { error: profileErr } = await supabase
+    .from('profiles')
+    .update({ nombre, apellido, quartier, whatsapp })
+    .eq('id', currentProfile.id);
+
+  const authUpdates = {};
+  if (password) authUpdates.password = password;
+  if (email && email.toLowerCase() !== (currentProfile.email || '').toLowerCase()) authUpdates.email = email;
+
+  let authErr = null;
+  if (Object.keys(authUpdates).length) {
+    const res = await supabase.auth.updateUser(authUpdates);
+    authErr = res.error;
+    if (!authErr && authUpdates.email) {
+      await supabase.from('profiles').update({ email }).eq('id', currentProfile.id);
+    }
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = '✓ Guardar Cambios';
+
+  if (profileErr || authErr) {
+    alert('Hubo un problema guardando algunos cambios: ' + (profileErr?.message || authErr?.message));
+    return;
+  }
+
+  await evaluateUserSession();
+  logUserEvent('Edicion_Perfil_Exitoso');
+  closeProfileEditModal();
+  alert('¡Tu perfil comunitario ha sido actualizado con éxito!' + (authUpdates.email ? ' Revisa tu correo para confirmar el nuevo email.' : ''));
 }
 
-function closeCart() {
-  const modal = document.getElementById('cartModal');
-  modal.classList.remove('active');
+function parseCSV(text) { /* unused now, kept as no-op for compatibility */ return []; }
+
+function doSearch() { applyFilters(); logUserEvent('Busqueda_Boton', document.getElementById('searchInput').value.trim(), ''); }
+
+function renderStats() {
+  document.getElementById('totalBiz').textContent = allData.length;
+  document.getElementById('totalCat').textContent = new Set(allData.map(r => r.categoria).filter(Boolean)).size;
+  document.getElementById('totalVer').textContent = allData.filter(r => ['activo','verificado','active'].includes((r.estado||'').toLowerCase())).length;
 }
 
-function closeProductsModal() {
-  document.getElementById('productsModal').classList.remove('active');
+function renderCategories() {
+  const cats = [...new Set(allData.map(r => r.categoria).filter(Boolean))];
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = cats.map(c => `
+    <div class="cat-card" data-cat="${c}" onclick="window.filterByCategory('${c.replace(/'/g,"\\'")}')">
+      <div class="cat-icon">${getCategorySvg(c)}</div>
+      <div class="cat-name">${c}</div>
+    </div>`).join('');
 }
 
-function openProductsModal(bizId, bizName) {
-  currentBusinessId = bizId;
-  currentBusinessName = bizName;
-  currentBusinessProducts = allProducts.filter(p => p.business_id === bizId);
-  
-  document.getElementById('productsModalTitle').textContent = bizName;
-  document.getElementById('productsModalSubtitle').textContent = `${currentBusinessProducts.length} producto${currentBusinessProducts.length !== 1 ? 's' : ''}`;
-  
-  renderProductsGrid();
-  document.getElementById('productsModal').classList.add('active');
+function renderPills() {
+  const cats = ['Todos', ...new Set(allData.map(r => r.categoria).filter(Boolean))];
+  const row = document.getElementById('pillRow');
+  row.innerHTML = cats.map(c => `<button class="pill ${c===activeFilter?'active':''}" onclick="window.filterByCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('');
 }
 
-// ---- RENDER ----
-function renderProductsGrid() {
-  const grid = document.getElementById('productsFullGrid');
-  grid.innerHTML = currentBusinessProducts.map(product => {
-    const inCart = cart.some(item => item.product_id === product.id);
-    return `
-      <div class="product-card ${inCart ? 'added' : ''}" data-product-id="${product.id}">
-        ${product.image_url ? `<div class="product-image"><img src="${product.image_url}" alt="${product.name}" loading="lazy"></div>` : '<div class="product-image" style="background: linear-gradient(135deg, var(--primary-light), var(--success-light));"></div>'}
-        <div class="product-info">
-          <div class="product-name">${product.name}</div>
-          <div class="product-category">${product.product_category_id ? productCategories.find(c => c.id === product.product_category_id)?.name || 'Otros' : 'Otros'}</div>
-          <div class="product-price">$${(product.price || 0).toFixed(2)}</div>
-          <div class="product-stock ${product.in_stock ? '' : 'out'}">
-            ${product.in_stock ? '✓ En stock' : 'Agotado'}
-          </div>
-          <button class="product-add-btn" onclick="window.addProductToCart(${product.id}, '${product.name}', ${product.price}, '${currentBusinessName}')" ${!product.in_stock ? 'disabled' : ''}>
-            ${inCart ? '✓ Agregado' : 'Agregar'}
-          </button>
-        </div>
+window.filterByCategory = function(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.cat-card').forEach(el => el.classList.toggle('active', el.dataset.cat === cat));
+  applyFilters();
+  renderPills();
+};
+
+function applyFilters() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+  clearTimeout(searchDebounceTimer);
+  if (q.length > 2) {
+    searchDebounceTimer = setTimeout(() => logUserEvent('Busqueda_Palabra', q, ''), 1200);
+  }
+
+  filtered = allData.filter(r => {
+    const matchCat = activeFilter === 'Todos' || r.categoria === activeFilter;
+    if (!q) return matchCat;
+
+    const hay = [r.nombre, r.categoria, r.sub_categoria, r.barrio, r.descripcion, r.horario].join(' ').toLowerCase();
+
+    let implicitMatch = false;
+    if ((q === 'taxi' || q === 'moto' || q === 'flete') && hay.includes('transporte')) implicitMatch = true;
+    if ((q === 'comida' || q === 'pupusa' || q === 'pan' || q === 'bebida') && hay.includes('alimentacion')) implicitMatch = true;
+    if ((q === 'aire' || q === 'clima' || q === 'gotera' || q === 'techo') && (hay.includes('tecnicos') || hay.includes('hogar'))) implicitMatch = true;
+
+    return matchCat && (hay.includes(q) || implicitMatch);
+  });
+  renderCards();
+  renderSearchDropdown(q);
+}
+
+// ---- Intuitive search: live suggestions dropdown + quick-pick chips ----
+function renderSearchDropdown(q) {
+  const dropdown = document.getElementById('searchDropdown');
+  if (!q || q.length < 2) { dropdown.classList.remove('active'); dropdown.innerHTML = ''; return; }
+
+  const matches = allData.filter(r => (r.nombre || '').toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) { dropdown.classList.remove('active'); dropdown.innerHTML = ''; return; }
+
+  dropdown.innerHTML = matches.map(r => `
+    <div class="search-dropdown-item" onclick="window.selectSearchResult('${(r.nombre || '').replace(/'/g,"\\'")}')">
+      <div class="search-dropdown-icon">${getCategorySvg(r.categoria)}</div>
+      <div>
+        <div class="search-dropdown-name">${r.nombre || ''}</div>
+        <div class="search-dropdown-meta">${r.categoria || ''}${r.barrio ? ' · ' + r.barrio : ''}</div>
       </div>
-    `;
-  }).join('');
+    </div>`).join('');
+  dropdown.classList.add('active');
 }
 
-function renderBusinessCard(biz) {
-  const products = allProducts.filter(p => p.business_id === biz.id);
-  const productPreview = products.slice(0, 3);
-  
-  return `
-    <div class="business-card">
-      <div class="business-hero">
-        ${biz.imagen_url ? `<img src="${biz.imagen_url}" alt="${biz.nombre}">` : ''}
-        <div class="business-hero-overlay"></div>
-        ${biz.estado?.toLowerCase() === 'verificado' ? '<div class="business-badge">✓ Verificado</div>' : ''}
-      </div>
-      <div class="business-content">
-        <div class="business-header">
-          <div class="business-avatar">${biz.categoria ? getCategoryEmoji(biz.categoria) : '🏪'}</div>
-          <div class="business-info">
-            <div class="business-name">${biz.nombre}</div>
-            <div class="business-meta">${biz.categoria || 'Servicios'}${biz.barrio ? ' • ' + biz.barrio : ''}</div>
-            <div class="business-rating">${'★'.repeat(Math.round(biz.estrellas || 0))}${biz.estrellas ? ' ' + biz.estrellas + '/5' : ''}</div>
-          </div>
-        </div>
-        ${biz.descripcion ? `<div class="business-desc">${biz.descripcion}</div>` : ''}
-        ${biz.horario ? `<div class="business-hours">🕐 <strong>${biz.horario}</strong></div>` : ''}
-        
-        <div class="business-actions">
-          <a class="btn-action btn-call" href="tel:+${COUNTRY_CODE}${(biz.telefono || '').replace(/\D/g, '')}" onclick="return checkLogin() && (trackEvent('business_click', ${biz.id}, null) || true)">📞 Llamar</a>
-          <a class="btn-action btn-whatsapp" href="https://wa.me/${COUNTRY_CODE}${(biz.telefono || '').replace(/\D/g, '')}" target="_blank" onclick="trackEvent('business_click', ${biz.id}, null); return checkLogin();">💬 WhatsApp</a>
-          ${products.length > 0 ? `<button class="btn-action btn-products" onclick="if(checkLogin()) { trackEvent('business_click', ${biz.id}, null); openProductsModal(${biz.id}, '${biz.nombre.replace(/'/g, "\\'")}'); }">Ver ${products.length} Producto${products.length !== 1 ? 's' : ''}</button>` : ''}
-        </div>
+window.selectSearchResult = function(name) {
+  document.getElementById('searchInput').value = name;
+  document.getElementById('searchDropdown').classList.remove('active');
+  applyFilters();
+  document.getElementById('listingsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) document.getElementById('searchDropdown').classList.remove('active');
+});
+
+function renderSearchChips() {
+  const commonTerms = ['Taxi', 'Comida', 'Plomero', 'Electricista', 'Belleza'];
+  const available = commonTerms.filter(term =>
+    allData.some(r => (r.categoria || '').toLowerCase().includes(term.toLowerCase()) || (r.nombre || '').toLowerCase().includes(term.toLowerCase()))
+  );
+  const chips = available.length ? available : [...new Set(allData.map(r => r.categoria).filter(Boolean))].slice(0, 5);
+  document.getElementById('searchChips').innerHTML = chips.map(term =>
+    `<button class="search-suggest-chip" onclick="window.quickSearch('${term.replace(/'/g,"\\'")}')">${term}</button>`
+  ).join('');
+}
+
+window.quickSearch = function(term) {
+  document.getElementById('searchInput').value = term;
+  document.getElementById('searchDropdown').classList.remove('active');
+  applyFilters();
+  document.getElementById('listingsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('searchInput').addEventListener('keydown', e => e.key === 'Enter' && doSearch());
+document.getElementById('searchInput').addEventListener('focus', function() { renderSearchDropdown(this.value.toLowerCase().trim()); });
+
+function cleanPhone(t) { return (t || '').replace(/\D/g, ''); }
+
+function generateCardHtml(r, index) {
+  const name = r.nombre || 'Negocio';
+  const cat = r.categoria;
+  const barrio = r.barrio;
+  const tel = cleanPhone(r.telefono);
+  const desc = r.descripcion;
+  const status = (r.estado || '').toLowerCase();
+  const stars = parseFloat(r.estrellas) || 0;
+  const hours = r.horario;
+  const plan = (r.plan || '').toLowerCase();
+  const icon = getCategorySvg(cat);
+  const avatarContent = r.imagen_url ? `<img src="${r.imagen_url}" alt="${name}" loading="lazy">` : icon;
+  const isVerified = ['activo', 'verificado', 'active'].includes(status);
+  const isFeatured = plan.includes('pro') || plan.includes('premium') || plan.includes('destacado');
+
+  const badges = [
+    isVerified ? '<span class="badge badge-verified">✓ Activo</span>' : '',
+    isFeatured ? '<span class="badge badge-featured">⭐ Destacado</span>' : '',
+  ].filter(Boolean).join('');
+  const starsHtml = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
+
+  return `<div class="biz-card" data-name="${name}" style="animation-delay:${index*0.03}s">
+    <div class="biz-header">
+      <div class="biz-avatar">${avatarContent}</div>
+      <div class="biz-meta">
+        <div class="biz-name">${name}</div>
+        <div class="biz-cat-barrio">${cat}${barrio ? ' · ' + barrio : ''}</div>
+        <div class="biz-badges">${badges}</div>
       </div>
     </div>
-  `;
+    ${desc ? `<div class="biz-desc">${desc}</div>` : ''}
+    ${hours ? `<div class="biz-hours">🕐 <span>${hours}</span></div>` : ''}
+    ${starsHtml ? `<div class="biz-stars">${starsHtml} ${stars}/5</div>` : ''}
+    <div class="biz-actions">
+      <a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>
+      ${tel ? `<a class="btn-wa" href="https://wa.me/${COUNTRY_CODE}${tel}" target="_blank">💬 WhatsApp</a>` : ''}
+      <button class="btn-share" onclick="window.shareBiz('${name.replace(/'/g,"\\'")}','${tel}')" title="Compartir">⬆️</button>
+    </div>
+  </div>`;
 }
 
-function renderFilters() {
-  const categories = [...new Set(allBusinesses.map(b => b.categoria).filter(Boolean))];
-  console.log('Rendering filters:', categories);
-  const html = ['Todos', ...categories].map(cat => `
-    <button class="filter-chip ${cat === 'Todos' ? 'active' : ''}" onclick="filterByCategory('${cat}')">
-      ${cat === 'Todos' ? '🎯' : getCategoryEmoji(cat)} ${cat}
-    </button>
-  `).join('');
-  document.getElementById('filtersBar').innerHTML = html;
-}
-
-function renderCart() {
-  const container = document.getElementById('cartItems');
-  
-  if (cart.length === 0) {
-    container.innerHTML = `
-      <div class="cart-empty">
-        <div class="cart-empty-icon">🛒</div>
-        <p>Tu carrito está vacío</p>
-        <p style="font-size: 0.9rem; margin-top: 8px;">Explora productos y agrega aquí</p>
-      </div>
-    `;
-    document.getElementById('checkoutBtn').disabled = true;
-    document.getElementById('cartTotalAmount').textContent = '$0.00';
-    return;
-  }
-  
-  let total = 0;
-  const itemsHtml = cart.map((item, idx) => {
-    const product = allProducts.find(p => p.id === item.product_id);
-    const qty = item.qty || 1;
-    const subtotal = (item.price || 0) * qty;
-    total += subtotal;
-    
-    return `
-      <div class="cart-item">
-        ${product?.image_url ? `<div class="cart-item-img"><img src="${product.image_url}"></div>` : '<div class="cart-item-img" style="background: var(--border);"></div>'}
-        <div class="cart-item-info">
-          <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-business">${item.business_name}</div>
-          <div class="cart-item-price">$${item.price?.toFixed(2) || '0.00'}</div>
-          <div class="cart-item-qty">
-            <button class="qty-btn" onclick="window.updateCartQty(${idx}, -1)">−</button>
-            <span style="min-width: 20px; text-align: center;">${qty}</span>
-            <button class="qty-btn" onclick="window.updateCartQty(${idx}, 1)">+</button>
-          </div>
-          <button class="cart-remove" onclick="window.removeFromCart(${idx})">Eliminar</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  container.innerHTML = itemsHtml;
-  document.getElementById('cartTotalAmount').textContent = '$' + total.toFixed(2);
-  document.getElementById('checkoutBtn').disabled = false;
-}
-
-function getCategoryEmoji(cat) {
-  const map = {
-    'Transporte': '🚕', 'Alimentacion': '🍴', 'Servicios Otros': '🔧',
-    'Bebidas': '🍺', 'Instalacion AC': '❄️', 'Plomería': '🔩',
-    'Electricidad': '⚡', 'Mecánica': '🔨', 'Belleza': '💇',
-    'Farmacia': '💊', 'Tienda': '🛒', 'Médico': '🏥'
-  };
-  return map[cat] || '🏪';
-}
-
-// ---- CART MANAGEMENT ----
-window.addProductToCart = function(productId, name, price, businessName) {
-  const existing = cart.find(item => item.product_id === productId);
-  if (existing) {
-    existing.qty = (existing.qty || 1) + 1;
+window.shareBiz = function(name, tel) {
+  const text = `Mira ${name} en Marsella Conecta`;
+  if (navigator.share) {
+    navigator.share({ title: name, text, url: window.location.href }).catch(() => {});
   } else {
-    cart.push({ product_id: productId, name, price, business_name: businessName, qty: 1 });
-  }
-  localStorage.setItem('marsella-cart', JSON.stringify(cart));
-  renderCartCount();
-  renderProductsGrid();
-  renderCart();
-};
-
-window.updateCartQty = function(idx, delta) {
-  if (cart[idx]) {
-    cart[idx].qty = Math.max(1, (cart[idx].qty || 1) + delta);
-    localStorage.setItem('marsella-cart', JSON.stringify(cart));
-    renderCartCount();
-    renderCart();
+    navigator.clipboard?.writeText(`${text} - ${window.location.href}`);
+    alert('Enlace copiado al portapapeles.');
   }
 };
 
-window.removeFromCart = function(idx) {
-  cart.splice(idx, 1);
-  localStorage.setItem('marsella-cart', JSON.stringify(cart));
-  renderCartCount();
-  renderProductsGrid();
-  renderCart();
-};
+function renderCards() {
+  const sort = document.getElementById('sortSelect').value;
+  const isSearching = document.getElementById('searchInput').value.trim().length > 0;
 
-function sendOrderViaWhatsApp() {
-  if (cart.length === 0) return;
-  
-  const businessGroups = {};
-  cart.forEach(item => {
-    if (!businessGroups[item.business_name]) businessGroups[item.business_name] = [];
-    businessGroups[item.business_name].push(item);
+  let sorted = [...filtered].sort((a, b) => {
+    if (sort === 'stars') return (parseFloat(b.estrellas) || 0) - (parseFloat(a.estrellas) || 0);
+    if (sort === 'name') return (a.nombre || '').localeCompare(b.nombre || '');
+    return 0;
   });
-  
-  let message = '🛒 *Deseo solicitar estos productos:*\n\n';
-  let total = 0;
-  
-  Object.entries(businessGroups).forEach(([bizName, items]) => {
-    message += `📍 *${bizName}*\n`;
-    items.forEach(item => {
-      const subtotal = (item.price || 0) * (item.qty || 1);
-      total += subtotal;
-      message += `  • ${item.name} x${item.qty || 1}: $${subtotal.toFixed(2)}\n`;
-    });
-    message += '\n';
-  });
-  
-  message += `💰 *Total: $${total.toFixed(2)}*\n\n`;
-  message += `Fecha: ${new Date().toLocaleDateString('es-SV')} ${new Date().toLocaleTimeString('es-SV')}\n`;
-  message += `🔗 Marsella Conecta`;
-  
-  const encoded = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${COUNTRY_CODE}?text=${encoded}`;
-  
-  window.open(whatsappUrl, '_blank');
-  
-  // Clear cart after sending
-  setTimeout(() => {
-    cart = [];
-    localStorage.removeItem('marsella-cart');
-    renderCartCount();
-    renderCart();
-    document.getElementById('cartModal').classList.remove('active');
-  }, 500);
-}
 
-// ---- SEARCH & FILTER ----
-function filterByCategory(cat) {
-  const chips = document.querySelectorAll('.filter-chip');
-  if (chips.length === 0) return; // Don't run if filters not loaded
-  
-  chips.forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
-  
-  // Remove emoji from category
-  cat = cat.replace(/^[^\w\s]+\s/, '');
-  
-  const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
-  applyFilters(cat, query);
-}
+  document.getElementById('resultsCount').textContent = `${sorted.length} negocio${sorted.length!==1?'s':''} encontrado${sorted.length!==1?'s':''}`;
+  const grid = document.getElementById('listingsGrid');
 
-function executeSearch() {
-  const query = document.getElementById('globalSearch')?.value.toLowerCase().trim() || '';
-  const activeChip = document.querySelector('.filter-chip.active');
-  let currentCategory = activeChip ? activeChip.textContent.trim() : 'Todos';
-  
-  // Remove emoji from category (e.g., "🎯 Todos" → "Todos")
-  currentCategory = currentCategory.replace(/^[^\w\s]+\s/, '');
-  
-  console.log('Search:', { query, category: currentCategory, businessCount: allBusinesses.length });
-  
-  // Track search event if user is logged in
-  if (query && currentUser) {
-    trackEvent('search', null, query);
-  }
-  
-  applyFilters(currentCategory, query);
-}
-
-function applyFilters(category, searchQuery) {
-  if (!allBusinesses) {
-    console.warn('No businesses loaded yet');
+  if (!sorted.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No se encontraron negocios con ese criterio.</p></div>';
     return;
   }
-  
-  let filtered = [...allBusinesses];
-  
-  // Filter by category (clean both sides)
-  if (category && category !== 'Todos') {
-    const cleanCategory = category.replace(/^[^\w\s]+\s/, '').trim();
-    filtered = filtered.filter(b => 
-      (b.categoria || '').toLowerCase().trim() === cleanCategory.toLowerCase().trim()
-    );
-    console.log('Category filter:', { category: cleanCategory, matches: filtered.length });
-  }
-  
-  // Filter by search query (business name, description, barrio, or products)
-  if (searchQuery && searchQuery.length > 0) {
-    const beforeSearch = filtered.length;
-    
-    filtered = filtered.filter(b => {
-      // Check all business fields
-      const businessName = (b.nombre || '').toLowerCase().includes(searchQuery);
-      const businessCategory = (b.categoria || '').toLowerCase().includes(searchQuery);
-      const businessBarrio = (b.barrio || '').toLowerCase().includes(searchQuery);
-      const businessDesc = (b.descripcion || '').toLowerCase().includes(searchQuery);
-      
-      const businessMatch = businessName || businessCategory || businessBarrio || businessDesc;
-      
-      // Check all products for this business
-      const productMatch = allProducts.some(p => {
-        if (p.business_id !== b.id) return false;
-        
-        const productName = (p.name || '').toLowerCase().includes(searchQuery);
-        const productDesc = (p.description || '').toLowerCase().includes(searchQuery);
-        const productCategory = (p.product_category_id) ? 'checked' : false;
-        
-        return productName || productDesc;
-      });
-      
-      // Log matches
-      if (businessMatch || productMatch) {
-        console.log(`✓ Match: "${b.nombre}" - Biz:(name:${businessName}|cat:${businessCategory}|barrio:${businessBarrio}|desc:${businessDesc}) Prod:${productMatch}`);
-      }
-      
-      return businessMatch || productMatch;
-    });
-    
-    console.log(`Search "${searchQuery}": ${beforeSearch} businesses → ${filtered.length} matches`);
-  }
-  
-  console.log('Filtered results:', filtered.length);
-  
-  // Update both grids
-  renderBusinessGrid('featuredGrid', filtered.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3));
-  renderBusinessGrid('allBusinessesGrid', filtered);
-}
 
-// Attach search listeners and load user session
-document.addEventListener('DOMContentLoaded', function() {
-  // Load user session
-  loadUserSession();
-  
-  const searchInput = document.getElementById('globalSearch');
-  if (searchInput) {
-    searchInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') executeSearch();
-    });
-    searchInput.addEventListener('input', executeSearch);
-    console.log('Search listeners attached');
-  }
-  
-  // Close modal on overlay click
-  document.getElementById('loginGateModal').addEventListener('click', function(e) {
-    if (e.target === this) closeLoginGateModal();
-  });
-});
+  if (activeFilter === 'Todos' && !isSearching) {
+    const totalCount = sorted.length;
+    const newEntrepreneurs = sorted.slice(Math.max(0, totalCount - 4)).reverse();
+    const generalDirectory = sorted.slice(0, Math.max(0, totalCount - 4));
 
-// ---- RENDER GRID ----
-function renderBusinessGrid(elementId, businesses) {
-  const grid = document.getElementById(elementId);
-  grid.innerHTML = businesses.map(biz => renderBusinessCard(biz)).join('');
-}
-
-// ---- DATA LOADING ----
-async function loadData() {
-  if (!supabase) {
-    console.error('Supabase not initialized');
-    return;
-  }
-  
-  try {
-    // Load product categories
-    const { data: categories } = await supabase.from('product_categories').select('*').order('order', { ascending: true });
-    productCategories = categories || [];
-    
-    // Load businesses
-    const { data: businesses } = await supabase.from('businesses').select('*').neq('estado', 'Rechazado').order('created_at', { ascending: true });
-    allBusinesses = businesses || [];
-    console.log('✓ Loaded', allBusinesses.length, 'businesses');
-    console.log('Categories in database:', [...new Set(allBusinesses.map(b => b.categoria).filter(Boolean))]);
-    
-    // Load products
-    const { data: products } = await supabase.from('products').select('*');
-    allProducts = products || [];
-    console.log('✓ Loaded', allProducts.length, 'products');
-
-    // Load featured businesses
-    const { data: featured } = await supabase.from('featured_businesses').select('business_id').eq('is_active', true).order('featured_order', { ascending: true });
-    const featuredIds = featured ? featured.map(f => f.business_id) : [];
-    const featuredBusinesses = allBusinesses.filter(b => featuredIds.includes(b.id));
-    console.log('✓ Loaded', featuredBusinesses.length, 'featured businesses');
-
-    // Load promotions
-    const { data: promotions } = await supabase.from('promotions').select('*').eq('is_active', true);
-    const now = new Date();
-    const activePromos = (promotions || []).filter(p => {
-      const start = new Date(p.start_date);
-      const end = new Date(p.end_date);
-      return now >= start && now <= end;
-    });
-    console.log('✓ Loaded', activePromos.length, 'active promotions');
-
-    // Display promotions carousel
-    if (activePromos.length > 0) {
-      displayPromotions(activePromos);
+    let compiledHtml = '';
+    if (newEntrepreneurs.length > 0) {
+      compiledHtml += `<div class="section-divider">🌱 Nuevos Emprendimientos (Recién Agregados)</div>`;
+      compiledHtml += newEntrepreneurs.map((item, idx) => generateCardHtml(item, idx)).join('');
     }
-    
-  } catch (err) {
-    console.error('Data loading error:', err);
-  }
-  
-  renderFilters();
-  
-  // Load featured businesses (fallback to premium if none featured)
-  const { data: featured } = await supabase.from('featured_businesses').select('business_id').eq('is_active', true).order('featured_order', { ascending: true });
-  let featuredToShow = [];
-  if (featured && featured.length > 0) {
-    const featuredIds = featured.map(f => f.business_id);
-    featuredToShow = allBusinesses.filter(b => featuredIds.includes(b.id));
+    if (generalDirectory.length > 0) {
+      compiledHtml += `<div class="section-divider">🏪 Todos los Negocios</div>`;
+      compiledHtml += generalDirectory.map((item, idx) => generateCardHtml(item, idx)).join('');
+    } else if (newEntrepreneurs.length === 0) {
+      compiledHtml = sorted.map((item, idx) => generateCardHtml(item, idx)).join('');
+    }
+    grid.innerHTML = compiledHtml;
   } else {
-    featuredToShow = allBusinesses.filter(b => (b.plan || '').toLowerCase().includes('premium') || (b.plan || '').toLowerCase().includes('pro')).slice(0, 3);
+    grid.innerHTML = sorted.map((item, idx) => generateCardHtml(item, idx)).join('');
   }
-  
-  renderBusinessGrid('featuredGrid', featuredToShow);
-  renderBusinessGrid('allBusinessesGrid', allBusinesses);
-  renderCartCount();
 }
 
-function displayPromotions(promos) {
-  const banner = document.getElementById('promotionsBanner');
-  const promo = document.getElementById('currentPromotion');
-  
-  if (!promos || promos.length === 0) {
-    banner.style.display = 'none';
-    return;
+async function loadData() {
+  try {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .neq('estado', 'Rechazado')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    allData = (data && data.length) ? data : SAMPLE_DATA;
+    if (!data || !data.length) showDataWarning('El directorio está vacío o no se pudo conectar — mostrando un negocio de ejemplo.');
+  } catch (e) {
+    console.warn('Using sample data:', e);
+    allData = SAMPLE_DATA;
+    showDataWarning('No se pudo conectar con la base de datos (' + (e.message || 'error desconocido') + '). Mostrando datos de ejemplo — recarga la página o avisa al administrador.');
   }
-
-  banner.style.display = 'block';
-  let currentIndex = 0;
-
-  function showPromo() {
-    const p = promos[currentIndex];
-    let html = `<h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 8px;">${p.title}</h2>`;
-    if (p.description) html += `<p style="font-size: 1rem;">${p.description}</p>`;
-    promo.innerHTML = html;
-  }
-
-  showPromo();
-  setInterval(() => {
-    currentIndex = (currentIndex + 1) % promos.length;
-    showPromo();
-  }, 5000);
+  filtered = [...allData];
+  renderStats(); renderCategories(); renderPills(); renderCards(); renderSearchChips();
 }
 
-// Expose window functions
-window.toggleCart = toggleCart;
-window.closeCart = closeCart;
-window.displayPromotions = displayPromotions;
-window.sendOrderViaWhatsApp = sendOrderViaWhatsApp;
-window.executeSearch = executeSearch;
-window.applyFilters = applyFilters;
-window.filterByCategory = filterByCategory;
-window.openProductsModal = openProductsModal;
-window.closeProductsModal = closeProductsModal;
-window.registerUser = registerUser;
-window.loginUser = loginUser;
-window.logoutUser = logoutUser;
-window.checkLogin = checkLogin;
-window.trackEvent = trackEvent;
-window.openLoginGateModal = openLoginGateModal;
-window.closeLoginGateModal = closeLoginGateModal;
-window.switchAuthTab = switchAuthTab;
+function showDataWarning(msg) {
+  let el = document.getElementById('dataWarningBanner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'dataWarningBanner';
+    el.style.cssText = 'background:#fde8e8;color:#b91c1c;font-size:0.8rem;font-weight:600;text-align:center;padding:8px 16px;';
+    document.querySelector('.stats-bar').insertAdjacentElement('afterend', el);
+  }
+  el.textContent = '⚠️ ' + msg;
+}
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-});
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diffMs = new Date(dateStr) - new Date();
+  return Math.ceil(diffMs / 86400000);
+}
+
+async function loadPromotions() {
+  try {
+    const { data, error } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('activo', true)
+      .order('orden', { ascending: true });
+    if (error) throw error;
+    if (!data || !data.length) return;
+
+    document.getElementById('promoSection').style.display = 'block';
+    document.getElementById('promoGrid').innerHTML = data.map(p => {
+      const days = daysUntil(p.expira_at);
+      const expiryHtml = (days !== null && days >= 0)
+        ? `<div class="promo-expiry">⏱ Expira en ${days} día${days!==1?'s':''}</div>`
+        : '';
+      return `<div class="promo-card">
+        ${p.imagen_url ? `<img class="promo-img" src="${p.imagen_url}" alt="${p.titulo || ''}" loading="lazy">` : ''}
+        <div class="promo-body">
+          <div class="promo-title">${p.titulo || ''}</div>
+          ${p.negocio_nombre ? `<div class="promo-biz">${p.negocio_nombre}</div>` : ''}
+          ${expiryHtml}
+          <a class="promo-cta" href="${p.cta_url || '#'}" target="${p.cta_url ? '_blank' : '_self'}">${p.cta_text || 'Ver Promoción'}</a>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('No se pudieron cargar promociones:', e);
+  }
+}
+
+// Expose the functions used by inline onclick= handlers in the HTML above.
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.switchToLoginLayout = switchToLoginLayout;
+window.closeLoginModal = closeLoginModal;
+window.executeNeighborLogin = executeNeighborLogin;
+window.executePasswordRecoveryRequest = executePasswordRecoveryRequest;
+window.openProfileEditModal = openProfileEditModal;
+window.closeProfileEditModal = closeProfileEditModal;
+window.dispatchProfileOverwrites = dispatchProfileOverwrites;
+window.executeNavbarSessionLogout = executeNavbarSessionLogout;
+window.doSearch = doSearch;
+window.renderCards = renderCards;
+
+document.addEventListener('click', function (e) {
+  const actionButton = e.target.closest('.btn-call, .btn-wa');
+  if (actionButton) {
+    const targetCard = actionButton.closest('.biz-card');
+    const targetedBusiness = targetCard ? targetCard.getAttribute('data-name') : 'Desconocido';
+    const contextActionType = actionButton.classList.contains('btn-call') ? 'Click_Llamar' : 'Click_WhatsApp';
+
+    if (!currentProfile) {
+      e.preventDefault();
+      e.stopPropagation();
+      openAuthModal();
+    } else {
+      logUserEvent(contextActionType, '', targetedBusiness);
+    }
+  }
+}, true);
+
+document.getElementById('sortSelect').addEventListener('change', renderCards);
+
+supabase.auth.onAuthStateChange((_event, _session) => { evaluateUserSession(); });
+
+document.addEventListener('DOMContentLoaded', evaluateUserSession);
+loadData();
+loadPromotions();
 </script>
-
 </body>
 </html>
