@@ -430,7 +430,7 @@
     </div>
     <div class="filter-selects">
       <select class="sort-select" id="fCat" onchange="window.filterByCategory(this.value)"><option value="Todos">📂 Todas las categorías</option></select>
-      <select class="sort-select" id="fBarrio" onchange="window.setBarrioFilter(this.value)"><option value="">📍 Todos los barrios</option></select>
+      <select class="sort-select" id="fBarrio" onchange="window.setBarrioFilter(this.value)"><option value="">📍 Todas las zonas</option></select>
     </div>
     <button class="fchip-clear" id="fClear" style="display:none" onclick="window.clearFilters()">Limpiar filtros</button>
   </div>
@@ -938,13 +938,12 @@ function refreshFilterUi() {
   const fc = document.getElementById('fCat'); if (fc) fc.value = activeFilter;
 }
 window.toggleFilter = (k) => { filterState[k] = !filterState[k]; if (filterState[k]) logUserEvent('Filtro', k === 'open' ? 'abierto_ahora' : k === 'products' ? 'con_productos' : '4_estrellas'); refreshFilterUi(); applyFilters(true); };
-window.setBarrioFilter = (v) => { filterState.barrio = v; if (v) logUserEvent('Filtro', 'barrio: ' + v); refreshFilterUi(); applyFilters(true); };
+window.setBarrioFilter = (v) => { filterState.barrio = v; if (v) logUserEvent('Filtro', 'zona: ' + v); refreshFilterUi(); applyFilters(true); };
 window.clearFilters = () => { Object.assign(filterState, { open: false, products: false, stars4: false, barrio: '' }); if (activeFilter !== 'Todos') window.filterByCategory('Todos'); refreshFilterUi(); applyFilters(true); };
 window.toggleFilterPanel = () => { const p = document.getElementById('filterPanel'); p.classList.toggle('open'); if (p.classList.contains('open')) logUserEvent('Filtro', 'abrir_panel'); };
 function fillBarrioFilter() {
   const sel = document.getElementById('fBarrio'), cur = filterState.barrio;
-  const barrios = [...new Set(allData.map(r => (r.barrio || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  sel.innerHTML = '<option value="">📍 Todos los barrios</option>' + barrios.map(b => `<option value="${shopEsc(b)}">${shopEsc(b)}</option>`).join('');
+  sel.innerHTML = '<option value="">📍 Todas las zonas</option><option value="Marsella 1">Marsella 1</option><option value="Marsella 2">Marsella 2</option>';
   sel.value = cur;
   const fc = document.getElementById('fCat');
   const cats = [...new Set(allData.map(r => r.categoria).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -969,7 +968,7 @@ function applyFilters(skipLog) {
     if (matchCat && filterState.open) { const st = openStatus(r); matchCat = !!(st && st.open); }
     if (matchCat && filterState.products) matchCat = (productsByBiz[r.id] || []).length > 0;
     if (matchCat && filterState.stars4) matchCat = (parseFloat(r.estrellas) || 0) >= 4;
-    if (matchCat && filterState.barrio) matchCat = (r.barrio || '').trim() === filterState.barrio;
+    if (matchCat && filterState.barrio) matchCat = (r.barrio || '').includes(filterState.barrio);
     if (!tokens.length) return matchCat;
     const hay = norm([r.nombre, r.categoria, r.sub_categoria, r.barrio, r.descripcion, r.horario].join(' '));
     // every word must match, either directly or through a synonym (taxis -> taxi -> transporte)
@@ -1319,7 +1318,7 @@ window.sendOrder = function(bizId) {
   const msg = `🛒 *Hola ${biz.nombre}, quiero hacer este pedido:*\n\n` +
     items.map(x => `• ${x.p.name} x${x.qty}: ${money((Number(x.p.price) || 0) * x.qty)}`).join('\n') +
     `\n\n💰 *Total: ${money(total)}*` + (who ? `\n👤 ${who}` : '') + `\n🔗 Marsella Conecta`;
-  logUserEvent('Pedido_WhatsApp', money(total), biz.nombre);
+  logUserEvent('Pedido_WhatsApp', items.map(x => `${x.qty}× ${x.p.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, total);
   window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(msg)}`, '_blank');
   cart = cart.filter(i => !(productsById[i.id] && String(productsById[i.id].business_id) === String(bizId)));
   saveCart(); renderCartCount(); renderCart();
