@@ -1119,7 +1119,6 @@ function generateCardHtml(r, index) {
     ${(() => { const st = openStatus(r); return st ? `<div class="biz-open ${st.open ? 'is-open' : 'is-closed'}">${st.open ? '🟢' : '🔴'} ${st.label}</div>` : ''; })()}
     ${starsHtml ? `<div class="biz-stars">${starsHtml} ${stars}/5</div>` : ''}
     <div class="biz-actions">
-      <a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>
       <button class="btn-share" onclick="window.shareBiz('${name.replace(/'/g,"\\'")}','${tel}')" title="Compartir">⬆️</button>
     </div>
     ${nProducts ? `<button class="btn-products" onclick="window.openProducts('${r.id}')">🛍️ Ver ${nProducts} producto${nProducts!==1?'s':''}</button>` : ''}
@@ -1279,11 +1278,7 @@ window.openBizDetail = function(bizId, promo) {
       ${r.descripcion ? `<div class="bd-row">${shopEsc(r.descripcion)}</div>` : ''}
       ${r.horario ? `<div class="bd-row">🕐 ${shopEsc(r.horario)}</div>` : ''}
       ${r.barrio ? `<div class="bd-row">📍 ${shopEsc(r.barrio)}, Colonia Marsella</div>` : ''}
-      ${tel ? `<div class="bd-row">📱 ${shopEsc(r.telefono)}</div>` : ''}
       ${starsHtml ? `<div class="bd-row biz-stars">${starsHtml} ${stars}/5</div>` : ''}
-      <div class="biz-actions" style="margin-top:12px">
-        ${tel ? `<a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>` : ''}
-      </div>
       ${prods.length ? `<div class="bd-prods"><h4>🛍️ Productos (${prods.length})</h4>
         ${prods.slice(0, 6).map(p => `<div class="bd-prod"><span>${shopEsc(p.name)}</span><b>${p.price != null ? money(p.price) : ''}</b></div>`).join('')}
         <button class="btn-products" style="margin-top:10px" onclick="window.closeBizDetail();window.openProducts('${r.id}')">Ver todos y pedir</button></div>` : ''}
