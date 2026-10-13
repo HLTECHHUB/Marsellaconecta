@@ -112,6 +112,9 @@
 
 <div class="form-shell">
   <form id="neighborForm" onsubmit="event.preventDefault();">
+    <button type="button" id="googleBtn" onclick="signInWithGoogle()" style="width:100%;padding:13px;border:1.5px solid #dadce0;background:#fff;color:#3c4043;border-radius:12px;font:inherit;font-weight:700;cursor:pointer;margin-bottom:6px">Registrarme con Google en un toque</button>
+    <div style="text-align:center;font-size:.8rem;color:#6b6560;margin:6px 0 14px">— o llena tus datos —</div>
+
     
     <div class="form-card active" id="card1">
       <div class="card-eyebrow">Paso 1 de 2</div>
@@ -299,6 +302,11 @@ async function dispatchNeighborToSheets() {
 window.validateAndNext = validateAndNext;
 window.goToStep = goToStep;
 window.dispatchNeighborToSheets = dispatchNeighborToSheets;
+
+window.signInWithGoogle = async function () {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/' } });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+};
 </script>
 </body>
 </html>
