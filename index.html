@@ -1475,7 +1475,7 @@ window.togglePush = async function() {
     } else {
       if ((await Notification.requestPermission()) !== 'granted') { refreshPushBtn(); return; }
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(CONFIG.vapidPublicKey) });
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(CONFIG.vapidPublicKey || 'BE050g6DLdrcEqjsSqPfLWzB7seV8eN_OP9YeDXLXUPbWz1eicR6f_A__jNDu7xyV4LaeM8nungqj0PU86c27Yw') });
       const j = sub.toJSON();
       const { error } = await supabase.rpc('save_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
       if (error) { await sub.unsubscribe(); throw error; }
