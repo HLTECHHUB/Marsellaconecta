@@ -83,6 +83,7 @@
       <label>Descripción</label><textarea id="pdesc" maxlength="500" placeholder="Ingredientes, tamaño, detalles..."></textarea>
       <div class="row">
         <div><label>¿Disponible?</label><select id="pstock"><option value="true">✓ Disponible</option><option value="false">✗ Agotado</option></select></div>
+        <div><label>Inventario (opcional)</label><input id="pqty" type="number" min="0" placeholder="Ej: 20 — baja solo con cada pedido aceptado"></div>
         <div><label>Foto (opcional)</label><input id="pfile" type="file" accept="image/*"></div>
       </div>
       <div id="preview"></div>
@@ -143,7 +144,7 @@ async function load() {
   const cname = id => (cats.find(c => c.id === id) || {}).name || '';
   $('list').innerHTML = products.length ? products.map(p => `<div class="prod">
       ${p.image_url ? `<img class="thumb" src="${esc(p.image_url)}" alt="">` : '<div class="thumb">📦</div>'}
-      <div class="pinfo"><div class="pname">${esc(p.name)}</div><div class="pmeta">$${Number(p.price || 0).toFixed(2)}${cname(p.product_category_id) ? ' · ' + esc(cname(p.product_category_id)) : ''} · <span class="badge ${p.in_stock ? 'in' : 'out'}">${p.in_stock ? 'Disponible' : 'Agotado'}</span></div></div>
+      <div class="pinfo"><div class="pname">${esc(p.name)}</div><div class="pmeta">$${Number(p.price || 0).toFixed(2)}${cname(p.product_category_id) ? ' · ' + esc(cname(p.product_category_id)) : ''} · <span class="badge ${p.in_stock ? 'in' : 'out'}">${p.in_stock ? 'Disponible' : 'Agotado'}</span>${p.stock_qty != null ? ' · 📦 ' + p.stock_qty + ' en inventario' : ''}</div></div>
       <div class="pact"><button class="btn btn-l" onclick="toggleStock(${p.id},${!p.in_stock})">${p.in_stock ? 'Agotado' : 'Disponible'}</button><button class="btn btn-l" onclick="editProduct(${p.id})">Editar</button><button class="btn btn-d" onclick="delProduct(${p.id})">Eliminar</button></div>
     </div>`).join('') : '<div class="empty">Todavía no tienes productos. Pulsa “＋ Agregar producto” o “📋 Agregar varios”.</div>';
 }
@@ -152,7 +153,7 @@ window.openForm = (p) => {
   $('bulkCard').style.display = 'none'; $('formCard').style.display = 'block';
   $('pid').value = p ? p.id : ''; $('pname').value = p ? p.name : ''; $('pprice').value = p ? p.price : '';
   $('pcat').value = p && p.product_category_id ? p.product_category_id : (cats[0] || {}).id; $('pdesc').value = p ? (p.description || '') : '';
-  $('pstock').value = p ? String(!!p.in_stock) : 'true'; $('pfile').value = ''; existingImg = p ? p.image_url : null;
+  $('pstock').value = p ? String(!!p.in_stock) : 'true'; $('pqty').value = p && p.stock_qty != null ? p.stock_qty : ''; $('pfile').value = ''; existingImg = p ? p.image_url : null;
   $('preview').innerHTML = existingImg ? `<img src="${esc(existingImg)}" alt="">` : '';
   $('formTitle').textContent = p ? 'Editar producto' : 'Nuevo producto';
   $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -176,6 +177,7 @@ window.saveProduct = async () => {
       image_url = supabase.storage.from('marsella-products').getPublicUrl(path).data.publicUrl;
     }
     const row = { business_id: biz.id, name, price, product_category_id: parseInt($('pcat').value) || null, description: $('pdesc').value.trim() || null, in_stock: $('pstock').value === 'true', image_url };
+    { const q = $('pqty').value.trim(); row.stock_qty = q === '' ? null : Math.max(0, parseInt(q) || 0); if (row.stock_qty !== null) row.in_stock = row.stock_qty > 0; }
     const id = $('pid').value;
     const { error } = id ? await supabase.from('products').update(row).eq('id', id) : await supabase.from('products').insert(row);
     if (error) throw error;

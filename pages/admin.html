@@ -308,6 +308,7 @@
         <div class="field"><label>Descripción</label><textarea id="ap_desc" placeholder="Detalle opcional..."></textarea></div>
         <div class="field-row">
           <div class="field"><label>Disponibilidad</label><select id="ap_stock"><option value="true">✓ En stock</option><option value="false">✗ Agotado</option></select></div>
+          <div class="field"><label>Inventario (opcional)</label><input type="number" min="0" id="ap_qty" placeholder="Vacío = sin control"></div>
           <div class="field"><label>Foto (opcional)</label><input type="file" id="ap_file" accept="image/*"><input type="hidden" id="ap_img"></div>
         </div>
         <button class="btn btn-primary" id="apSaveBtn" onclick="saveProdAdmin()">Guardar producto</button>
@@ -949,7 +950,7 @@ window.renderProductsAdmin = function() {
         ${ps.map(p => `<tr><td>${p.image_url ? `<img class="prod-thumb" src="${escH(p.image_url)}" alt="">` : '<span class="prod-thumb">📦</span>'}</td>
           <td class="wrap">${escH(p.name)}${p.description ? `<div class="row-meta" style="font-weight:400;white-space:normal">${escH(p.description.slice(0, 80))}</div>` : ''}</td>
           <td>${escH(adminProdCats[p.product_category_id] || '—')}</td><td><b>$${Number(p.price || 0).toFixed(2)}</b></td>
-          <td><span class="badge ${p.in_stock ? 'badge-active' : 'badge-rejected'}">${p.in_stock ? 'En stock' : 'Agotado'}</span></td>
+          <td><span class="badge ${p.in_stock ? 'badge-active' : 'badge-rejected'}">${p.in_stock ? 'En stock' : 'Agotado'}</span>${p.stock_qty != null ? ' <span class="row-meta">· ' + p.stock_qty + ' uds</span>' : ''}</td>
           <td>${fmtDay(p.created_at)}</td><td><b>${addCount[p.id] || 0}</b>${addLast[p.id] ? `<div class="row-meta">${timeAgo(addLast[p.id])}</div>` : ''}</td>
           <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:.72rem" onclick="openProdForm(${p.id})">Editar</button>
               <button class="btn btn-ghost" style="padding:5px 10px;font-size:.72rem" onclick="toggleProdStock(${p.id},${!p.in_stock})">${p.in_stock ? 'Marcar agotado' : 'Marcar en stock'}</button>
@@ -965,7 +966,7 @@ window.openProdForm = function(id) {
   document.getElementById('ap_biz').value = p ? p.business_id : (document.getElementById('prodBiz').value || businesses[0]?.id || '');
   document.getElementById('ap_name').value = p ? p.name : ''; document.getElementById('ap_price').value = p ? p.price : '';
   document.getElementById('ap_cat').value = p && p.product_category_id ? p.product_category_id : '';
-  document.getElementById('ap_desc').value = p ? (p.description || '') : ''; document.getElementById('ap_stock').value = p ? String(!!p.in_stock) : 'true';
+  document.getElementById('ap_desc').value = p ? (p.description || '') : ''; document.getElementById('ap_stock').value = p ? String(!!p.in_stock) : 'true'; document.getElementById('ap_qty').value = p && p.stock_qty != null ? p.stock_qty : '';
   document.getElementById('ap_img').value = p ? (p.image_url || '') : ''; document.getElementById('ap_file').value = '';
   document.getElementById('prodFormTitle').textContent = p ? '✏️ Editando: ' + p.name : '+ Nuevo producto';
   document.getElementById('apError').style.display = 'none';
@@ -987,6 +988,7 @@ window.saveProdAdmin = async function() {
       image_url = supabase.storage.from('marsella-products').getPublicUrl(path).data.publicUrl;
     }
     const row = { business_id: biz, name, price, product_category_id: parseInt(document.getElementById('ap_cat').value) || null, description: document.getElementById('ap_desc').value.trim() || null, in_stock: document.getElementById('ap_stock').value === 'true', image_url };
+    { const q = document.getElementById('ap_qty').value.trim(); row.stock_qty = q === '' ? null : Math.max(0, parseInt(q) || 0); if (row.stock_qty !== null) row.in_stock = row.stock_qty > 0; }
     const id = document.getElementById('ap_id').value;
     const { error } = id ? await supabase.from('products').update(row).eq('id', id) : await supabase.from('products').insert(row);
     if (error) throw error;

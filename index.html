@@ -1299,7 +1299,7 @@ function renderProductsGrid(bizId) {
   const list = productsByBiz[bizId] || [];
   document.getElementById('productsGrid').dataset.biz = bizId;
   document.getElementById('productsGrid').innerHTML = list.map(p => {
-    const inCart = cart.some(i => i.id === p.id);
+    const inLine = cart.find(i => i.id === p.id); const inCart = !!inLine;
     return `<div class="prod-card ${inCart ? 'added' : ''}">
       ${p.image_url ? `<img class="prod-img" src="${shopEsc(p.image_url)}" alt="${shopEsc(p.name)}" loading="lazy">` : '<div class="prod-img"></div>'}
       <div class="prod-info">
@@ -1307,8 +1307,8 @@ function renderProductsGrid(bizId) {
         <div class="prod-cat">${shopEsc(productCats[p.product_category_id] || 'Otros')}</div>
         ${p.description ? `<div style="font-size:0.74rem;color:var(--ink-muted);margin-bottom:6px">${shopEsc(p.description)}</div>` : ''}
         <div class="prod-price">${money(p.price)}</div>
-        <div class="prod-stock ${p.in_stock ? '' : 'out'}">${p.in_stock ? '✓ Disponible' : 'Agotado'}</div>
-        <button class="prod-add" onclick="window.addToCart(${p.id})" ${p.in_stock ? '' : 'disabled'}>${inCart ? '✓ Agregado (+1)' : 'Agregar'}</button>
+        <div class="prod-stock ${p.in_stock ? '' : 'out'}">${p.in_stock ? (p.stock_qty != null && p.stock_qty <= 5 ? '⚠️ Quedan ' + p.stock_qty : '✓ Disponible') : 'Agotado'}</div>
+        <button class="prod-add" onclick="window.addToCart(${p.id})" ${p.in_stock && !(p.stock_qty != null && inLine && inLine.qty >= p.stock_qty) ? '' : 'disabled'}>${inCart ? (p.stock_qty != null && inLine.qty >= p.stock_qty ? 'Máximo disponible' : '✓ Agregado (+1)') : 'Agregar'}</button>
       </div>
     </div>`;
   }).join('');
@@ -1323,6 +1323,7 @@ function renderCartCount() {
 window.addToCart = function(id) {
   const p = productsById[id]; if (!p || !p.in_stock) return;
   const line = cart.find(i => i.id === id);
+  if (p.stock_qty != null && line && line.qty >= p.stock_qty) { alert('Solo quedan ' + p.stock_qty + ' disponibles.'); return; }
   { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : '', null, null, p.id, Number(p.price) || 0); }
   if (line) line.qty += 1; else cart.push({ id, qty: 1 });
   saveCart(); renderCartCount();
