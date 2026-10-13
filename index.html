@@ -562,13 +562,24 @@ let activeFilter = 'Todos';
 let searchDebounceTimer = null;
 let currentProfile = null; // cached profile row of the signed-in neighbor
 
-async function logUserEvent(eventType, searchVal = '', bizName = '') {
+function getSessionId() {
+  try {
+    let id = localStorage.getItem('marsella-sid');
+    if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); localStorage.setItem('marsella-sid', id); }
+    return id;
+  } catch (e) { return null; }
+}
+
+async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null) {
   try {
     await supabase.from('events_log').insert({
       profile_id: currentProfile?.id || null,
       evento_tipo: eventType,
       valor_busqueda: searchVal,
-      negocio_nombre: bizName
+      negocio_nombre: bizName,
+      session_id: getSessionId(),
+      categoria: categoria || (activeFilter && activeFilter !== 'Todos' ? activeFilter : null),
+      pagina: location.pathname.split('/').pop() || 'index.html'
     });
   } catch (err) {
     console.warn('Analytics logger failed:', err);
@@ -762,6 +773,7 @@ function renderPills() {
 
 window.filterByCategory = function(cat) {
   activeFilter = cat;
+  if (cat !== 'Todos') logUserEvent('Click_Categoria', '', '', cat);
   document.querySelectorAll('.cat-card').forEach(el => el.classList.toggle('active', el.dataset.cat === cat));
   applyFilters();
   renderPills();
@@ -1019,6 +1031,7 @@ async function loadShopData() {
 
 window.openProducts = function(bizId) {
   const biz = allData.find(b => String(b.id) === String(bizId));
+  logUserEvent('Ver_Productos', '', biz ? biz.nombre : '');
   const list = productsByBiz[bizId] || [];
   document.getElementById('productsTitle').textContent = biz ? biz.nombre : 'Productos';
   document.getElementById('productsSub').textContent = `${list.length} producto${list.length!==1?'s':''}`;
@@ -1055,6 +1068,7 @@ function renderCartCount() {
 window.addToCart = function(id) {
   const p = productsById[id]; if (!p || !p.in_stock) return;
   const line = cart.find(i => i.id === id);
+  { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : ''); }
   if (line) line.qty += 1; else cart.push({ id, qty: 1 });
   saveCart(); renderCartCount();
   const grid = document.getElementById('productsGrid');
@@ -1179,6 +1193,7 @@ document.addEventListener('click', function (e) {
 document.getElementById('sortSelect').addEventListener('change', renderCards);
 
 supabase.auth.onAuthStateChange((_event, _session) => { evaluateUserSession(); });
+setTimeout(() => logUserEvent('Visita'), 2000);
 
 document.addEventListener('DOMContentLoaded', evaluateUserSession);
 loadData().then(loadShopData);
