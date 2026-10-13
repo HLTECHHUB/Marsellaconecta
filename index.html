@@ -199,6 +199,13 @@
 
   .biz-desc { padding: 10px 16px; font-size: 0.82rem; color: var(--ink-muted); line-height: 1.5; }
   .biz-hours { padding: 0 16px 6px; font-size: 0.78rem; color: var(--ink-muted); }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: -6px 0 16px; }
+  .fchip { border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 20px; padding: 7px 14px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+  .fchip:hover { border-color: var(--accent); }
+  .fchip.on { background: #1b6b4a; border-color: #1b6b4a; color: #fff; }
+  .fchip-clear { background: none; border: none; color: var(--accent); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
+  .biz-open { padding: 0 16px 6px; font-size: 0.78rem; font-weight: 700; }
+  .biz-open.is-open { color: #1b6b4a; } .biz-open.is-closed { color: #b91c1c; }
   .biz-hours span { color: var(--accent2); font-weight: 600; }
   .biz-stars { padding: 0 16px 12px; font-size: 0.8rem; color: var(--gold); }
 
@@ -425,6 +432,13 @@
 
 <div class="section">
   <div class="pills" id="pillRow"></div>
+  <div class="filter-bar" id="filterBar">
+    <button class="fchip" id="fOpen" onclick="window.toggleFilter('open')">🟢 Abierto ahora</button>
+    <button class="fchip" id="fProducts" onclick="window.toggleFilter('products')">🛍️ Con productos</button>
+    <button class="fchip" id="fStars" onclick="window.toggleFilter('stars4')">⭐ 4+ estrellas</button>
+    <select class="sort-select" id="fBarrio" onchange="window.setBarrioFilter(this.value)"><option value="">📍 Todos los barrios</option></select>
+    <button class="fchip-clear" id="fClear" style="display:none" onclick="window.clearFilters()">Limpiar filtros</button>
+  </div>
   <div class="listings-header">
     <div class="results-count" id="resultsCount">Cargando...</div>
     <select class="sort-select" id="sortSelect" onchange="renderCards()">
@@ -823,11 +837,95 @@ const SEARCH_SYNONYMS = {
   pelo: ['belleza'], salon: ['belleza'], medicina: ['farmacia'], ropa: ['lavanderia'],
 };
 
-function applyFilters() {
+// ---- Opening hours: parse free text like "Lun-Vie 6am-9pm, Sáb-Dom 7am-8pm" (El Salvador time) ----
+const SCHED_TZ = 'America/El_Salvador';
+const DOW_KEYS = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+const DOW_LABEL = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+const schedCache = {};
+function parseSchedule(text) {
+  if (text in schedCache) return schedCache[text];
+  const out = [];
+  const t = norm(text || '');
+  t.split(/[,;\n]+/).forEach(seg => {
+    seg = seg.trim().replace(/\bl\s*-\s*v\b/, 'lun-vie').replace(/\bl\s*-\s*s\b/, 'lun-sab').replace(/\bl\s*-\s*d\b/, 'lun-dom');
+    if (!seg || /emergenc/.test(seg)) return;
+    // days
+    let days = new Set();
+    if (/todos los dias|diario|todos dias|siempre/.test(seg)) DOW_KEYS.forEach((_, i) => days.add(i));
+    else {
+      const range = seg.match(/\b(lun|mar|mie|jue|vie|sab|dom)[a-z]*\s*(?:-|–|a|al)\s*(lun|mar|mie|jue|vie|sab|dom)[a-z]*/);
+      if (range) {
+        let a = DOW_KEYS.indexOf(range[1]), b = DOW_KEYS.indexOf(range[2]);
+        for (let i = a, n = 0; n < 8; n++, i = (i + 1) % 7) { days.add(i); if (i === b) break; }
+      } else {
+        (seg.match(/\b(lun|mar|mie|jue|vie|sab|dom)[a-z]*/g) || []).forEach(d => days.add(DOW_KEYS.indexOf(d.slice(0, 3))));
+      }
+    }
+    if (!days.size && /24\s*\/\s*7|24\s*horas/.test(seg)) DOW_KEYS.forEach((_, i) => days.add(i));
+    if (!days.size) return;
+    if (/24\s*\/\s*7|24\s*horas|24h/.test(seg)) { out.push({ days, start: 0, end: 1440 }); return; }
+    // times: "6am-9pm", "8:00 - 17:00", "7 a.m. a 5 p.m."
+    const tm = seg.match(/(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\s*(?:-|–|a|hasta)\s*(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/);
+    if (!tm) return;
+    const toMin = (h, m, ap) => { h = parseInt(h); m = parseInt(m || 0); if (ap) { ap = ap[0]; if (ap === 'p' && h < 12) h += 12; if (ap === 'a' && h === 12) h = 0; } return h * 60 + m; };
+    let ap1 = tm[3], ap2 = tm[6];
+    if (!ap1 && ap2) ap1 = ap2; // "9-5pm" -> approximate
+    let start = toMin(tm[1], tm[2], ap1), end = toMin(tm[4], tm[5], ap2);
+    if (tm[3] === undefined && tm[6] && start >= end) start = toMin(tm[1], tm[2], 'a');
+    if (!tm[3] && !tm[6] && end <= start && end <= 720) end += 720; // "8-5" means 8am-5pm
+    out.push({ days, start, end });
+  });
+  return (schedCache[text] = out.length ? out : null);
+}
+function nowInSV() {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: SCHED_TZ, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(new Date());
+  const get = k => parts.find(p => p.type === k).value;
+  const dow = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(get('weekday'));
+  return { dow, min: parseInt(get('hour')) * 60 + parseInt(get('minute')) };
+}
+const fmtMin = m => { m = m % 1440; const h = Math.floor(m / 60), mm = m % 60, ap = h >= 12 ? 'pm' : 'am', h12 = h % 12 || 12; return h12 + (mm ? ':' + String(mm).padStart(2, '0') : '') + ap; };
+// -> { open: bool, label } or null when the schedule can't be understood
+function openStatus(r) {
+  const wins = parseSchedule(r.horario);
+  if (!wins) return null;
+  const { dow, min } = nowInSV();
+  for (const w of wins) {
+    const overnight = w.end <= w.start;
+    if (w.days.has(dow) && (overnight ? min >= w.start : (min >= w.start && min < w.end))) return { open: true, label: `Abierto · cierra ${fmtMin(w.end)}` };
+    if (overnight && w.days.has((dow + 6) % 7) && min < w.end) return { open: true, label: `Abierto · cierra ${fmtMin(w.end)}` };
+  }
+  for (let d = 0; d < 8; d++) {
+    const day = (dow + d) % 7;
+    const cands = wins.filter(w => w.days.has(day) && (d > 0 || w.start > min)).sort((a, b) => a.start - b.start);
+    if (cands.length) return { open: false, label: `Cerrado · abre ${d === 0 ? 'hoy' : d === 1 ? 'mañana' : DOW_LABEL[day]} ${fmtMin(cands[0].start)}` };
+  }
+  return { open: false, label: 'Cerrado' };
+}
+
+// ---- Extra filters (open now, with products, 4+ stars, neighborhood) ----
+const filterState = { open: false, products: false, stars4: false, barrio: '' };
+function refreshFilterUi() {
+  document.getElementById('fOpen').classList.toggle('on', filterState.open);
+  document.getElementById('fProducts').classList.toggle('on', filterState.products);
+  document.getElementById('fStars').classList.toggle('on', filterState.stars4);
+  document.getElementById('fBarrio').value = filterState.barrio;
+  document.getElementById('fClear').style.display = (filterState.open || filterState.products || filterState.stars4 || filterState.barrio) ? 'inline' : 'none';
+}
+window.toggleFilter = (k) => { filterState[k] = !filterState[k]; if (filterState[k]) logUserEvent('Filtro', k === 'open' ? 'abierto_ahora' : k === 'products' ? 'con_productos' : '4_estrellas'); refreshFilterUi(); applyFilters(true); };
+window.setBarrioFilter = (v) => { filterState.barrio = v; if (v) logUserEvent('Filtro', 'barrio: ' + v); refreshFilterUi(); applyFilters(true); };
+window.clearFilters = () => { Object.assign(filterState, { open: false, products: false, stars4: false, barrio: '' }); refreshFilterUi(); applyFilters(true); };
+function fillBarrioFilter() {
+  const sel = document.getElementById('fBarrio'), cur = filterState.barrio;
+  const barrios = [...new Set(allData.map(r => (r.barrio || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="">📍 Todos los barrios</option>' + barrios.map(b => `<option value="${shopEsc(b)}">${shopEsc(b)}</option>`).join('');
+  sel.value = cur;
+}
+
+function applyFilters(skipLog) {
   const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
 
   clearTimeout(searchDebounceTimer);
-  if (q.length > 2) {
+  if (q.length > 2 && skipLog !== true) {
     searchDebounceTimer = setTimeout(() => logUserEvent('Busqueda_Palabra', q, ''), 1200);
   }
 
@@ -836,7 +934,11 @@ function applyFilters() {
 
   const tokens = norm(q).split(/\s+/).filter(Boolean).map(stem);
   filtered = allData.filter(r => {
-    const matchCat = activeFilter === 'Todos' || r.categoria === activeFilter;
+    let matchCat = activeFilter === 'Todos' || r.categoria === activeFilter;
+    if (matchCat && filterState.open) { const st = openStatus(r); matchCat = !!(st && st.open); }
+    if (matchCat && filterState.products) matchCat = (productsByBiz[r.id] || []).length > 0;
+    if (matchCat && filterState.stars4) matchCat = (parseFloat(r.estrellas) || 0) >= 4;
+    if (matchCat && filterState.barrio) matchCat = (r.barrio || '').trim() === filterState.barrio;
     if (!tokens.length) return matchCat;
     const hay = norm([r.nombre, r.categoria, r.sub_categoria, r.barrio, r.descripcion, r.horario].join(' '));
     // every word must match, either directly or through a synonym (taxis -> taxi -> transporte)
@@ -934,6 +1036,7 @@ function generateCardHtml(r, index) {
     </div>
     ${desc ? `<div class="biz-desc">${desc}</div>` : ''}
     ${hours ? `<div class="biz-hours">🕐 <span>${hours}</span></div>` : ''}
+    ${(() => { const st = openStatus(r); return st ? `<div class="biz-open ${st.open ? 'is-open' : 'is-closed'}">${st.open ? '🟢' : '🔴'} ${st.label}</div>` : ''; })()}
     ${starsHtml ? `<div class="biz-stars">${starsHtml} ${stars}/5</div>` : ''}
     <div class="biz-actions">
       <a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a>
@@ -968,7 +1071,8 @@ function renderCards() {
   const grid = document.getElementById('listingsGrid');
 
   if (!sorted.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No se encontraron negocios con ese criterio.</p></div>';
+    const anyF = filterState.open || filterState.products || filterState.stars4 || filterState.barrio;
+    grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No se encontraron negocios con ese criterio.</p>${anyF ? '<p><button class="fchip-clear" onclick="window.clearFilters()">Quitar filtros</button></p>' : ''}</div>`;
     return;
   }
 
@@ -1010,7 +1114,7 @@ async function loadData() {
     showDataWarning('No se pudo conectar con la base de datos (' + (e.message || 'error desconocido') + '). Mostrando datos de ejemplo — recarga la página o avisa al administrador.');
   }
   filtered = [...allData];
-  renderStats(); renderCategories(); renderPills(); renderCards(); renderSearchChips();
+  renderStats(); renderCategories(); fillBarrioFilter(); renderPills(); renderCards(); renderSearchChips();
 }
 
 function showDataWarning(msg) {
@@ -1285,6 +1389,8 @@ document.addEventListener('click', function (e) {
 }, true);
 
 document.getElementById('sortSelect').addEventListener('change', renderCards);
+// keep "open now" and the open/closed labels fresh while the page stays open
+setInterval(() => { if (allData.length) applyFilters(true); }, 120000);
 
 supabase.auth.onAuthStateChange((_event, _session) => { evaluateUserSession(); });
 setTimeout(() => logUserEvent('Visita'), 2000);
