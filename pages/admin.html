@@ -556,7 +556,7 @@ function renderBusinesses() {
           <div class="field"><label>Categoría</label><input type="text" id="biz_categoria_${b.id}" value="${(b.categoria||'').replace(/"/g,'&quot;')}"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Barrio</label><input type="text" id="biz_barrio_${b.id}" value="${(b.barrio||'').replace(/"/g,'&quot;')}"></div>
+          <div class="field"><label>Zona de servicio</label><select id="biz_barrio_${b.id}">${['Marsella 1', 'Marsella 2', 'Marsella 1 y 2'].concat(b.barrio && !['Marsella 1', 'Marsella 2', 'Marsella 1 y 2'].includes(b.barrio) ? [b.barrio] : []).map(v => `<option value="${escH(v)}" ${v === b.barrio ? 'selected' : ''}>${escH(v)}</option>`).join('')}</select></div>
           <div class="field"><label>Teléfono</label><input type="text" id="biz_telefono_${b.id}" value="${(b.telefono||'').replace(/"/g,'&quot;')}"></div>
         </div>
         <div class="field"><label>Descripción</label><textarea id="biz_descripcion_${b.id}">${b.descripcion || ''}</textarea></div>
@@ -775,13 +775,14 @@ const adds = () => cartEvents.filter(e => e.evento_tipo === 'Agregar_Carrito');
 
 window.renderProductsAdmin = function() {
   if (!prodLoaded) return;
-  document.getElementById('prodSeg').innerHTML = [['catalog', '📦 Catálogo'], ['cart', '🛒 Carrito (estadísticas)'], ['users', '👥 Carrito por usuario']].map(([k, l]) => `<button class="${k === prodView ? 'on' : ''}" onclick="setProdView('${k}')">${l}</button>`).join('');
+  document.getElementById('prodSeg').innerHTML = [['catalog', '📦 Catálogo'], ['cart', '🛒 Carrito (estadísticas)'], ['users', '👥 Carrito por usuario'], ['orders', '🧾 Pedidos enviados']].map(([k, l]) => `<button class="${k === prodView ? 'on' : ''}" onclick="setProdView('${k}')">${l}</button>`).join('');
   const addCount = {}, addLast = {};
   adds().forEach(e => { if (e.product_id) { addCount[e.product_id] = (addCount[e.product_id] || 0) + 1; addLast[e.product_id] ||= e.created_at; } });
   const sum = document.getElementById('prodSummary'), body = document.getElementById('prodBody');
   const bizName = id => (businesses.find(b => b.id === id) || {}).nombre || 'Negocio eliminado';
   document.getElementById('prodBiz').parentElement.style.display = prodView === 'catalog' ? 'flex' : 'none';
   if (prodView === 'users') { renderCartUsersView(sum, body); return; }
+  if (prodView === 'orders') { renderOrdersView(sum, body); return; }
 
   if (prodView === 'cart') {
     const a = adds(), week = a.filter(e => Date.now() - new Date(e.created_at) < 7 * 86400000).length;
@@ -875,6 +876,53 @@ window.setCatalogUrl = async function(bizId) {
   if (error) return alert('Error: ' + error.message);
   b.whatsapp_catalog_url = v || null; renderProductsAdmin();
 };
+const fmtFull = d => new Date(d).toLocaleString('es-SV', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+let ordRange = '30', ordZona = '', ordQ = '', lastOrderRows = [];
+function renderOrdersView(sum, body) {
+  sum.innerHTML = '';
+  body.innerHTML = `<div class="filter-row" style="margin-bottom:12px">
+      <select class="search-mini" id="orRange" style="min-width:150px"><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="0">Todo el historial</option></select>
+      <select class="search-mini" id="orZona" style="min-width:150px"><option value="">Todas las zonas</option>${Object.keys(ZONAS).map(z => `<option value="${z}">${z}</option>`).join('')}</select>
+      <input class="search-mini" id="orQ" placeholder="Buscar usuario, negocio o producto...">
+      <button class="btn btn-ghost" onclick="exportOrdersCsv()">⬇️ Exportar CSV</button></div>
+    <div id="ordersOut"></div>`;
+  const r = document.getElementById('orRange'), z = document.getElementById('orZona'), q = document.getElementById('orQ');
+  r.value = ordRange; z.value = ordZona; q.value = ordQ;
+  r.onchange = () => { ordRange = r.value; renderOrders(); }; z.onchange = () => { ordZona = z.value; renderOrders(); }; q.oninput = () => { ordQ = q.value; renderOrders(); };
+  renderOrders();
+}
+function renderOrders() {
+  const out = document.getElementById('ordersOut'); if (!out) return;
+  const since = ordRange === '0' ? 0 : Date.now() - parseInt(ordRange) * 86400000;
+  const ql = ordQ.toLowerCase().trim();
+  const rows = cartEvents.filter(e => e.evento_tipo === 'Pedido_WhatsApp' && new Date(e.created_at).getTime() >= since).map(e => {
+    const prof = e.profile_id ? profiles.find(p => p.id === e.profile_id) : null;
+    const total = e.valor != null ? Number(e.valor) : (parseFloat(String(e.valor_busqueda || '').replace('$', '')) || 0);
+    const items = /^\$?\d+(\.\d+)?$/.test(String(e.valor_busqueda || '').trim()) ? '' : (e.valor_busqueda || '');
+    return { at: e.created_at, prof, user: prof ? (`${prof.nombre || ''} ${prof.apellido || ''}`.trim() || prof.email) : 'Visitante', zq: prof ? [prof.zona, prof.quartier].filter(Boolean).join(' · ') : '', biz: e.negocio_nombre || '', items, total };
+  }).filter(o => (!ordZona || (o.prof && o.prof.zona === ordZona)) && (!ql || `${o.user} ${o.biz} ${o.items}`.toLowerCase().includes(ql)));
+  lastOrderRows = rows;
+  const tot = rows.reduce((a, o) => a + o.total, 0), buyers = new Set(rows.map(o => o.prof ? o.prof.id : o.user)).size;
+  const days = [...Array(14)].map((_, k) => new Date(Date.now() - (13 - k) * 86400000).toLocaleDateString('en-CA', { timeZone: TZ }));
+  const perDay = days.map(d => rows.filter(o => new Date(o.at).toLocaleDateString('en-CA', { timeZone: TZ }) === d).length), mx = Math.max(1, ...perDay);
+  out.innerHTML = `<div class="stat-cards">
+      <div class="stat-card"><div class="stat-card-num">${rows.length}</div><div class="stat-card-label">Pedidos enviados</div></div>
+      <div class="stat-card"><div class="stat-card-num">${money2(tot)}</div><div class="stat-card-label">Valor total</div></div>
+      <div class="stat-card"><div class="stat-card-num">${rows.length ? money2(tot / rows.length) : '$0.00'}</div><div class="stat-card-label">Pedido promedio</div></div>
+      <div class="stat-card"><div class="stat-card-num">${buyers}</div><div class="stat-card-label">Clientes</div></div></div>
+    <div class="chart-card"><div class="panel-title" style="font-size:.95rem;margin-bottom:8px">Pedidos por día — últimos 14 días</div>
+      <div class="bars" style="height:120px">${perDay.map((n, k) => `<div class="bar-col" title="${days[k]}: ${n}"><div class="bar-num">${n || ''}</div><div class="bar peak" style="height:${Math.max(2, n / mx * 85)}px"></div></div>`).join('')}</div>
+      <div class="bar-lbl">${days.map(d => `<span>${d.slice(8)}</span>`).join('')}</div></div>
+    ${rows.length ? `<div class="promo-table-wrap"><table class="promo-table" style="min-width:820px"><thead><tr><th>Fecha y hora</th><th>Cliente</th><th>Zona · Quartier</th><th>Negocio</th><th>Productos</th><th>Total</th></tr></thead><tbody>
+      ${rows.map(o => `<tr><td>${fmtFull(o.at)}</td><td class="wrap">${escH(o.user)}</td><td>${escH(o.zq || '—')}</td><td>${escH(o.biz)}</td><td class="wrap" style="font-weight:400">${escH(o.items || '—')}</td><td><b>${money2(o.total)}</b></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">Aún no hay pedidos enviados en este período.</div>'}
+    <div class="row-meta">Un pedido se cuenta cuando el cliente pulsa “Enviar pedido por WhatsApp”. Los pedidos anteriores a hoy no guardan el detalle de productos.</div>`;
+}
+window.exportOrdersCsv = () => {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const lines = [['Fecha', 'Cliente', 'Zona y quartier', 'Negocio', 'Productos', 'Total USD'].map(q).join(',')];
+  lastOrderRows.forEach(o => lines.push([o.at, o.user, o.zq, o.biz, o.items, o.total.toFixed(2)].map(q).join(',')));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv' })); a.download = 'pedidos.csv'; a.click();
+};
 let cartRange = '30', cartZona = '', cartUserQ = '', cartOpenUser = null, lastCartRows = [];
 const money2 = n => '$' + (Number(n) || 0).toFixed(2);
 function renderCartUsersView(sum, body) {
@@ -901,6 +949,7 @@ function renderCartUsers() {
     const u = users[key] ||= { key, prof, anon: !e.profile_id, sid: e.session_id, n: 0, total: 0, days: new Set(), last: null, items: {} };
     const val = priceOf(e), day = new Date(e.created_at).toLocaleDateString('en-CA', { timeZone: TZ });
     u.n++; u.total += val; u.days.add(day); if (!u.last) u.last = e.created_at;
+    (u.events ||= []).push({ at: e.created_at, name: e.valor_busqueda || (adminProducts.find(p => String(p.id) === String(e.product_id)) || {}).name || 'Producto', biz: e.negocio_nombre || '', val });
     const ik = e.product_id || e.valor_busqueda;
     const it = u.items[ik] ||= { name: e.valor_busqueda || (adminProducts.find(p => String(p.id) === String(e.product_id)) || {}).name || 'Producto', biz: e.negocio_nombre || '', qty: 0, total: 0, last: e.created_at };
     it.qty++; it.total += val;
@@ -925,7 +974,9 @@ function renderCartUsers() {
     ${rows.length ? `<div class="promo-table-wrap"><table class="promo-table" style="min-width:820px"><thead><tr><th>Usuario</th><th>Zona · Quartier</th><th>Agregados</th><th>Productos distintos</th><th>Total $</th><th>Días activos</th><th>Última vez</th></tr></thead><tbody>
       ${rows.map(u => `<tr style="cursor:pointer" onclick="toggleCartUser('${escH(u.key)}')"><td class="wrap">${label(u)}</td><td>${zq(u)}</td><td><b>${u.n}</b></td><td>${Object.keys(u.items).length}</td><td><b>${money2(u.total)}</b></td><td>${u.days.size}</td><td>${timeAgo(u.last)}</td></tr>
         ${cartOpenUser === u.key ? `<tr><td colspan="7" style="background:var(--bg);white-space:normal"><b>Lo que agregó:</b>
-          <table class="promo-table" style="min-width:0;margin-top:6px"><thead><tr><th>Producto</th><th>Negocio</th><th>Veces</th><th>Subtotal</th></tr></thead><tbody>${Object.values(u.items).sort((a, b) => b.qty - a.qty).map(i => `<tr><td class="wrap">${escH(i.name)}</td><td>${escH(i.biz)}</td><td>${i.qty}</td><td>${money2(i.total)}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('')}
+          <table class="promo-table" style="min-width:0;margin-top:6px"><thead><tr><th>Producto</th><th>Negocio</th><th>Veces</th><th>Subtotal</th></tr></thead><tbody>${Object.values(u.items).sort((a, b) => b.qty - a.qty).map(i => `<tr><td class="wrap">${escH(i.name)}</td><td>${escH(i.biz)}</td><td>${i.qty}</td><td>${money2(i.total)}</td></tr>`).join('')}</tbody></table>
+          <b style="display:block;margin-top:12px">Fechas de cada producto agregado:</b>
+          <table class="promo-table" style="min-width:0;margin-top:6px"><thead><tr><th>Fecha y hora</th><th>Producto</th><th>Negocio</th><th>Valor</th></tr></thead><tbody>${(u.events || []).map(ev => `<tr><td>${fmtFull(ev.at)}</td><td class="wrap">${escH(ev.name)}</td><td>${escH(ev.biz)}</td><td>${money2(ev.val)}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('')}
       </tbody></table></div>` : '<div class="empty-note">Sin productos agregados con estos filtros.</div>'}
     <div class="row-meta">Tocar una fila muestra lo que agregó. El valor es el precio del producto cada vez que se agregó (en agregados anteriores se usa el precio actual).</div>`;
 }
