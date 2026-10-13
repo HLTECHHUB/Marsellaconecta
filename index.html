@@ -313,6 +313,16 @@
   .hero-slide h2 { font-family: 'Syne', sans-serif; font-weight: 800; color: #fff; font-size: clamp(1.4rem, 4.5vw, 2.2rem); line-height: 1.1; margin-bottom: 12px; }
   .hero-slide p { color: rgba(255,255,255,0.9); font-size: 1rem; max-width: 520px; margin: 0 auto 16px; }
   .hero-slide a.promo-cta-btn { background: #fff; color: var(--accent); font-weight: 700; font-size: 0.85rem; padding: 10px 22px; border-radius: 10px; text-decoration: none; }
+  /* Generic promo look (no image uploaded): warm festive card, clearly different from the hero */
+  .promo-banner.no-img { background: radial-gradient(circle at 12% 20%, rgba(255,255,255,.55) 0 3px, transparent 4px) 0 0 / 46px 46px, radial-gradient(circle at 70% 70%, rgba(198,93,59,.18) 0 4px, transparent 5px) 0 0 / 62px 62px, linear-gradient(135deg, #fff1d6 0%, #ffd9a0 55%, #f7b98a 100%); border: 2px dashed #c65d3b; padding-top: 52px; }
+  .promo-banner.no-img::before { content: '🔥 PROMOCIÓN'; position: absolute; top: 12px; left: 14px; background: #c65d3b; color: #fff; font-weight: 800; font-size: .7rem; letter-spacing: 1.2px; padding: 4px 12px; border-radius: 20px; }
+  .promo-banner.no-img::after { content: '🎉'; position: absolute; right: 18px; top: 10px; font-size: 2rem; opacity: .9; }
+  .promo-banner.no-img .hero-slide h2 { color: #2d2622; }
+  .promo-banner.no-img .hero-slide p { color: #6b3f2c; }
+  .promo-banner.no-img .promo-biz-tag { background: #1b6b4a; border-color: #1b6b4a; color: #fff; }
+  .promo-banner.no-img a.promo-cta-btn { background: #1b6b4a !important; color: #fff !important; }
+  .promo-banner.no-img .promo-dots button { background: rgba(45,38,34,.3); }
+  .promo-banner.no-img .promo-dots button.active { background: #c65d3b; }
   .promo-banner .promo-dots { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; }
   /* PRODUCTS + CART */
   .nav-cart { position: relative; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; background: #f5e6e0; border-radius: 9px; border: none; font-size: 1.05rem; }
@@ -1166,6 +1176,7 @@ async function loadPromotions() {
       document.querySelectorAll('.hero-slide').forEach((el, k) => el.classList.toggle('active', k === n));
       dots.querySelectorAll('button').forEach((el, k) => el.classList.toggle('active', k === n));
       const img = promos[n].imagen_url;
+      hero.classList.toggle('no-img', !img);
       hero.style.background = img
         ? `linear-gradient(rgba(45,38,34,0.62), rgba(45,38,34,0.62)), url('${String(img).replace(/'/g, '%27')}') center / cover no-repeat`
         : defaultBg;
