@@ -1375,7 +1375,7 @@ window.orderWhatsApp = function(orderId, direct) {
 async function loadMyOrders() {
   const el = document.getElementById('cartOrders');
   if (!el || !currentProfile) return;
-  const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(8);
+  const { data } = await supabase.from('orders').select('*').eq('customer_profile_id', currentProfile.id).order('created_at', { ascending: false }).limit(8);
   window._myOrders = data || [];
   if (!data || !data.length) { el.innerHTML = ''; return; }
   setTimeout(() => markUnread(data), 0);
@@ -1426,7 +1426,7 @@ function showModPopup(o) {
 }
 async function checkModifications() {
   if (!currentProfile || document.getElementById('modOverlay').classList.contains('active')) return;
-  const { data } = await supabase.from('orders').select('*').eq('status', 'modificado').order('modified_at', { ascending: true }).limit(5);
+  const { data } = await supabase.from('orders').select('*').eq('customer_profile_id', currentProfile.id).eq('status', 'modificado').order('modified_at', { ascending: true }).limit(5);
   const o = (data || []).find(x => !modShown.has(x.id));
   if (o) { modShown.add(o.id); showModPopup(o); }
 }
