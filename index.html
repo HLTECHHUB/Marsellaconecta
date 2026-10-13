@@ -406,9 +406,22 @@
   .prod-stock { font-size: 0.72rem; color: var(--accent2); font-weight: 700; }
   .prod-stock.out { color: #d84040; }
   .prod-add { width: 100%; margin-top: 8px; padding: 8px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .prod-step { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 8px; background: #fff; border: 1.5px solid var(--accent2); border-radius: 10px; padding: 3px; }
+  .prod-step button { width: 34px; height: 34px; border: none; border-radius: 8px; background: var(--accent2); color: #fff; font-size: 1.2rem; font-weight: 800; cursor: pointer; line-height: 1; }
+  .prod-step button:disabled { opacity: .35; cursor: not-allowed; }
+  .prod-step span { font-size: .78rem; text-align: center; flex: 1; } .prod-step span b { font-size: 1rem; color: var(--accent2); }
+  .prod-sub { font-size: .72rem; color: var(--accent2); font-weight: 700; margin-top: 4px; text-align: center; }
   .prod-add:disabled { opacity: 0.45; cursor: not-allowed; }
   .cart-drawer { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: flex-end; z-index: 600; }
   .cart-drawer.active { display: flex; }
+  .orders-drawer { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: flex-end; z-index: 620; }
+  .orders-drawer.active { display: flex; }
+  .orders-panel { background: var(--surface); width: 100%; max-width: 440px; height: 100%; display: flex; flex-direction: column; transition: max-width .2s; }
+  .orders-panel.wide { max-width: 100%; }
+  .orders-panel iframe { flex: 1; width: 100%; border: 0; background: var(--bg, #faf7f2); }
+  .orders-tools { display: flex; gap: 6px; }
+  .orders-strip { display: none !important; }
+  @media (max-width: 640px) { .orders-strip.show { display: block !important; } .orders-panel { max-width: 100%; } .orders-panel .exp-btn { display: none; } }
   .cart-panel { background: var(--surface); width: 100%; max-width: 400px; height: 100%; display: flex; flex-direction: column; }
   .cart-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
   .cart-group { border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
@@ -431,7 +444,7 @@
   </div>
   <div class="nav-actions">
     <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
-    <a class="nav-orders" id="navOrders" href="pages/mis-pedidos.html" title="Mis pedidos" style="display:none">📦<span class="nav-orders-t"> Mis pedidos</span><span class="count" id="ordersCount"></span></a>
+    <a class="nav-orders" id="navOrders" href="pages/mis-pedidos.html" onclick="event.preventDefault();window.openOrders()" title="Mis pedidos" style="display:none">📦<span class="nav-orders-t"> Mis pedidos</span><span class="count" id="ordersCount"></span></a>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
     <button class="nav-login" id="navLoginBtn" onclick="openAuthModal()">Entrar</button>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
@@ -439,6 +452,7 @@
   </div>
 </nav>
 <div class="app-strip" id="appStrip">
+    <button class="nav-install orders-strip" id="ordersStripBtn" onclick="window.openOrders()">📦 <span>Mis pedidos</span> <b id="ordersStripCount" style="background:#d84040;color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;display:none"></b></button>
     <button class="nav-install" id="pushBtn" style="display:none" onclick="window.togglePush()">🔔 <span>Notificaciones</span></button>
     <button class="nav-install" id="installAppBtn" style="display:none" onclick="window.installApp()">📲 <span>Agregar app</span></button>
 </div>
@@ -610,6 +624,12 @@
   <div class="shop-modal" style="max-width:420px">
     <div class="shop-head"><h3>✏️ Cambios en tu pedido</h3></div>
     <div class="install-steps" id="modBody"></div>
+  </div>
+</div>
+<div class="orders-drawer" id="ordersDrawer" onclick="if(event.target===this) window.closeOrders()">
+  <div class="orders-panel" id="ordersPanel">
+    <div class="shop-head"><h3>📦 Mis pedidos</h3><div class="orders-tools"><button class="shop-x exp-btn" id="ordersExp" title="Ampliar" onclick="window.toggleOrdersWide()">⤢</button><button class="shop-x" onclick="window.closeOrders()">✕</button></div></div>
+    <iframe id="ordersFrame" title="Mis pedidos"></iframe>
   </div>
 </div>
 <div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
@@ -1303,7 +1323,9 @@ function renderProductsGrid(bizId) {
         ${p.description ? `<div style="font-size:0.74rem;color:var(--ink-muted);margin-bottom:6px">${shopEsc(p.description)}</div>` : ''}
         <div class="prod-price">${money(p.price)}</div>
         <div class="prod-stock ${p.in_stock ? '' : 'out'}">${p.in_stock ? (p.stock_qty != null && p.stock_qty <= 5 ? '⚠️ Quedan ' + p.stock_qty : '✓ Disponible') : 'Agotado'}</div>
-        <button class="prod-add" onclick="window.addToCart(${p.id})" ${p.in_stock && !(p.stock_qty != null && inLine && inLine.qty >= p.stock_qty) ? '' : 'disabled'}>${inCart ? (p.stock_qty != null && inLine.qty >= p.stock_qty ? 'Máximo disponible' : '✓ Agregado (+1)') : 'Agregar'}</button>
+        ${!p.in_stock ? '<button class="prod-add" disabled>Agotado</button>'
+          : inCart ? `<div class="prod-step"><button onclick="window.cartQty(${p.id},-1)" aria-label="Quitar uno">−</button><span><b>${inLine.qty}</b> en tu pedido</span><button onclick="window.addToCart(${p.id})" ${p.stock_qty != null && inLine.qty >= p.stock_qty ? 'disabled' : ''} aria-label="Agregar uno">+</button></div><div class="prod-sub">${p.stock_qty != null && inLine.qty >= p.stock_qty ? 'Máximo disponible · ' : ''}Subtotal ${money((Number(p.price) || 0) * inLine.qty)}</div>`
+          : `<button class="prod-add" onclick="window.addToCart(${p.id})">Agregar</button>`}
       </div>
     </div>`;
   }).join('');
@@ -1330,7 +1352,18 @@ window.cartQty = function(id, d) {
   line.qty += d;
   if (line.qty <= 0) cart = cart.filter(i => i.id !== id);
   saveCart(); renderCartCount(); renderCart();
+  const grid = document.getElementById('productsGrid');
+  if (grid.dataset.biz) renderProductsGrid(grid.dataset.biz);
 };
+window.openOrders = function() {
+  const f = document.getElementById('ordersFrame');
+  if (!currentProfile) { openAuthModal(); return; }
+  f.src = 'pages/mis-pedidos.html?embed=1&t=' + Date.now();
+  document.getElementById('ordersDrawer').classList.add('active');
+};
+window.closeOrders = function() { document.getElementById('ordersDrawer').classList.remove('active'); document.getElementById('ordersFrame').removeAttribute('src'); loadMyOrders(); };
+window.toggleOrdersWide = function() { const w = document.getElementById('ordersPanel').classList.toggle('wide'); document.getElementById('ordersExp').textContent = w ? '⤡' : '⤢'; document.getElementById('ordersExp').title = w ? 'Reducir' : 'Ampliar'; };
+window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data === 'orders-changed') loadMyOrders(); });
 window.openCart = function() { renderCart(); document.getElementById('cartDrawer').classList.add('active'); };
 window.closeCart = () => document.getElementById('cartDrawer').classList.remove('active');
 
@@ -1357,11 +1390,13 @@ function renderCart() {
 async function loadMyOrders() {
   // Orders now live in their own page (pages/mis-pedidos.html); here we only refresh the nav badge.
   const btn = document.getElementById('navOrders');
-  if (!currentProfile) { if (btn) btn.style.display = 'none'; return; }
+  if (!currentProfile) { if (btn) btn.style.display = 'none'; const sb0 = document.getElementById('ordersStripBtn'); if (sb0) sb0.classList.remove('show'); return; }
   if (btn) btn.style.display = '';
   const { data } = await supabase.from('orders').select('id,status').eq('customer_profile_id', currentProfile.id).in('status', ['pendiente', 'aceptado', 'modificado']);
   const n = (data || []).length, c = document.getElementById('ordersCount');
   if (c) { c.textContent = n; c.style.display = n ? 'grid' : 'none'; }
+  const sb = document.getElementById('ordersStripBtn'); if (sb) sb.classList.add('show');
+  const sc = document.getElementById('ordersStripCount'); if (sc) { sc.textContent = n; sc.style.display = n ? 'inline' : 'none'; }
 }
 window.answerMod = async (id, accept) => {
   if (!accept && !confirm('¿Cancelar este pedido?')) return;
