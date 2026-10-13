@@ -58,8 +58,9 @@
 </div>
 
 <div class="ov" id="modOv" onclick="if(event.target===this)this.classList.remove('on')"><div class="sheet">
-  <b style="font-size:1.05rem">✏️ Proponer cambios al pedido</b>
-  <div class="muted" style="margin:4px 0 12px">El vecino recibirá tu mensaje y decidirá si acepta los cambios o cancela.</div>
+  <b style="font-size:1.05rem">✏️ Modificar el pedido</b>
+  <div class="muted" style="margin:4px 0 12px">Baja la cantidad o pon 0 en lo que no tengas. El vecino verá el pedido actualizado y decidirá si lo acepta.</div>
+  <div id="modItems" style="margin-bottom:10px"></div>
   <select id="modPreset"></select>
   <textarea id="modExtra" rows="2" maxlength="200" placeholder="Detalle adicional (opcional). No incluyas teléfonos."></textarea>
   <div class="actions"><button class="btn btn-ghost" onclick="document.getElementById('modOv').classList.remove('on')">Cancelar</button><button class="btn btn-main" style="width:auto" onclick="sendMod()">Enviar al vecino</button></div>
@@ -74,8 +75,8 @@ import { openOrderChat, unreadCount } from '../assets/js/chat.js';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => '$' + Number(n || 0).toFixed(2);
 const fmt = (d) => new Date(d).toLocaleString('es-SV', { timeZone: 'America/El_Salvador', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-let bizNames = {}, myBiz = [], modId = null;
-const MODS = ['No tenemos disponible uno o más productos de tu pedido.', 'Podemos entregar solo una parte de tu pedido hoy.', 'Tu pedido tendrá un costo adicional de entrega.', 'Podemos entregarlo más tarde de lo normal.', 'Solo podemos entregarlo mañana.', 'Necesitamos confirmar el precio de algún producto.', 'Podemos ofrecerte un producto sustituto, ¿te parece bien?', 'Otro (escribe el detalle abajo)'];
+let bizNames = {}, myBiz = [], modId = null, ordersById = {};
+const MODS = ['No tenemos disponible uno o más productos de tu pedido.', 'No tenemos toda la cantidad que pediste.', 'Podemos entregar solo una parte de tu pedido hoy.', 'Tu pedido tendrá un costo adicional de entrega.', 'Podemos entregarlo más tarde de lo normal.', 'Solo podemos entregarlo mañana.', 'Necesitamos confirmar el precio de algún producto.', 'Podemos ofrecerte un producto sustituto, ¿te parece bien?', 'Otro (escribe el detalle abajo)'];
 const SLAS = [[5, '5 minutos'], [10, '10 minutos'], [15, '15 minutos'], [30, '30 minutos'], [60, '1 hora'], [120, '2 horas'], [240, '4 horas']];
 
 async function boot() {
@@ -124,7 +125,7 @@ function orderCard(o) {
   const items = (o.items || []).map((i) => `• ${esc(i.name)} ×${esc(i.qty)} — ${money((i.price || 0) * i.qty)}`).join('<br>');
   const left = o.due_at ? Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000) : null;
   const sla = o.status === 'pendiente' && left !== null ? (left >= 0 ? `<div class="sla ok">⏱️ Responde antes de las ${new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' })} (quedan ${left} min)</div>` : `<div class="sla late">⚠️ Vencido hace ${-left} min. Responde lo antes posible.</div>`) : '';
-  const note = o.status === 'modificado' ? `<div class="sla" style="color:#9a5b00">✏️ Esperando respuesta del vecino: “${esc(o.business_note || '')}”</div>` : '';
+  const note = o.status === 'modificado' ? `<div class="sla" style="color:#9a5b00">✏️ Esperando respuesta del vecino: “${esc(o.business_note || '')}”${o.proposed_items ? '<br>Nuevo pedido: ' + o.proposed_items.map((i) => esc(i.name) + ' ×' + esc(i.qty)).join(', ') + ' — ' + money(o.proposed_total) : ''}</div>` : '';
   const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-mod" onclick="openMod('${o.id}')">✏️ Modificar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>`
     : o.status === 'aceptado' ? `<div class="actions"><button class="btn btn-ok" onclick="completeOrder('${o.id}')">📦 Marcar como entregado</button></div>` : '';
   return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
@@ -135,6 +136,7 @@ function orderCard(o) {
 async function loadOrders() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
   if (error) { document.getElementById('pending').innerHTML = '<div class="err">No se pudieron cargar los pedidos.</div>'; return; }
+  ordersById = Object.fromEntries((data || []).map((o) => [o.id, o]));
   const pend = (data || []).filter((o) => o.status === 'pendiente'), active = (data || []).filter((o) => ['aceptado', 'modificado'].includes(o.status)), done = (data || []).filter((o) => ['rechazado', 'completado', 'cancelado'].includes(o.status));
   document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
   document.getElementById('active').innerHTML = active.length ? '<h2>🚚 En curso (' + active.length + ')</h2>' + active.map(orderCard).join('') : '';
@@ -147,16 +149,27 @@ async function loadOrders() {
   if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }
 window.openChat = (id, name) => openOrderChat(id, name);
+window.modCalc = () => {
+  const o = ordersById[modId]; if (!o) return; let t = 0;
+  (o.items || []).forEach((i, k) => { const v = Math.max(0, Math.min(Number(i.qty), Number(document.getElementById('mq' + k).value || 0))); t += (Number(i.price) || 0) * v; });
+  document.getElementById('modTotal').textContent = 'Nuevo total: ' + money(t) + '  (antes ' + money(o.total) + ')';
+};
 window.openMod = (id) => {
-  modId = id; document.getElementById('modErr').textContent = ''; document.getElementById('modExtra').value = '';
+  modId = id; const o = ordersById[id] || { items: [] };
+  document.getElementById('modItems').innerHTML = (o.items || []).map((i, k) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--border);align-items:center"><span>${esc(i.name)} <span class="muted">(pidió ${esc(i.qty)} · ${money(i.price)})</span></span><input id="mq${k}" type="number" min="0" max="${esc(i.qty)}" value="${esc(i.qty)}" oninput="modCalc()" style="width:72px;margin:0;padding:8px"></div>`).join('') + '<div class="sla" id="modTotal" style="margin-top:8px"></div>';
+  modCalc(); document.getElementById('modErr').textContent = ''; document.getElementById('modExtra').value = '';
   document.getElementById('modPreset').innerHTML = MODS.map((m) => `<option>${esc(m)}</option>`).join('');
   document.getElementById('modOv').classList.add('on');
 };
 window.sendMod = async () => {
   const preset = document.getElementById('modPreset').value, extra = document.getElementById('modExtra').value.trim();
   const note = preset.startsWith('Otro') ? extra : (preset + (extra ? ' ' + extra : ''));
-  if (!note) { document.getElementById('modErr').textContent = 'Escribe el detalle del cambio.'; return; }
-  const { error } = await supabase.rpc('modify_order', { p_order_id: modId, p_note: note });
+  const o = ordersById[modId] || { items: [] };
+  const items = (o.items || []).map((i, k) => ({ product_id: i.product_id, qty: Math.max(0, Math.min(Number(i.qty), Number(document.getElementById('mq' + k).value || 0))) }));
+  const changed = items.some((x, k) => x.qty !== Number(o.items[k].qty));
+  if (!changed && preset.startsWith('Otro') && !extra) { document.getElementById('modErr').textContent = 'Cambia una cantidad o escribe el detalle.'; return; }
+  if (items.every((x) => x.qty === 0)) { document.getElementById('modErr').textContent = 'Si no puedes con nada del pedido, usa Rechazar.'; return; }
+  const { error } = await supabase.rpc('modify_order', { p_order_id: modId, p_note: note, p_items: changed ? items : null });
   if (error) { document.getElementById('modErr').textContent = error.message; return; }
   document.getElementById('modOv').classList.remove('on');
   supabase.functions.invoke('order-push', { body: { order_id: modId, event: 'modify' } }).catch(() => {});
