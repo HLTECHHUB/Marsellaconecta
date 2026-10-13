@@ -117,8 +117,8 @@
   }
   .search-dropdown-item:last-child { border-bottom: none; }
   .search-dropdown-item:hover { background: var(--bg); }
-  .search-dropdown-icon { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; background: #f5e6e0; color: var(--accent); display: grid; place-items: center; }
-  .search-dropdown-icon svg { width: 16px; height: 16px; }
+  .search-dropdown-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; background: linear-gradient(145deg, var(--c1, #f5e6e0), var(--c2, #f5e6e0)); display: grid; place-items: center; }
+  .search-dropdown-icon .emo { font-size: 1.1rem; }
   .search-dropdown-name { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
   .search-dropdown-meta { font-size: 0.72rem; color: var(--ink-muted); }
 
@@ -149,19 +149,22 @@
   /* CATEGORIES */
   .section { padding: 28px 20px; }
   .section-title { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 14px; }
-  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(90px, 100%), 1fr)); gap: 10px; }
-  .cat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 8px; text-align: center; cursor: pointer; transition: all 0.2s; user-select: none; }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(112px, 100%), 1fr)); gap: 12px; }
+  .cat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 16px 8px 12px; text-align: center; cursor: pointer; transition: all 0.2s; user-select: none; }
   .cat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--card-shadow); }
   .cat-card.active { border-color: var(--accent); background: #f5e6e0; }
-  .cat-icon { width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 50%; background: #f5e6e0; color: var(--accent); display: grid; place-items: center; }
-  .cat-icon svg { width: 20px; height: 20px; }
-  .cat-card.active .cat-icon { background: var(--accent); color: #fff; }
-  .cat-name { font-size: 0.7rem; font-weight: 600; color: var(--ink); }
+  .cat-icon { width: 62px; height: 62px; margin: 0 auto 10px; border-radius: 18px; background: linear-gradient(145deg, var(--c1, #f5e6e0), var(--c2, #f5e6e0)); display: grid; place-items: center; box-shadow: 0 4px 12px rgba(45,38,34,0.10), inset 0 1px 0 rgba(255,255,255,0.6); transition: transform .2s; }
+  .cat-icon .emo { font-size: 1.9rem; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.12)); }
+  .cat-card:hover .cat-icon { transform: scale(1.08) rotate(-3deg); }
+  .cat-card.active .cat-icon { box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(45,38,34,0.12); }
+  .emo { font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif; }
+  .cat-name { font-size: 0.78rem; font-weight: 700; color: var(--ink); line-height: 1.2; }
 
   /* PILLS */
   .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
   .pill { padding: 7px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.18s; white-space: nowrap; }
   .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill .emo { margin-right: 4px; }
   .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
   /* LISTINGS & HOMEPAGE SECTIONS */
@@ -181,8 +184,8 @@
   @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
   .biz-header { padding: 16px 16px 0; display: flex; align-items: flex-start; gap: 12px; }
-  .biz-avatar { width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%); display: grid; place-items: center; overflow: hidden; }
-  .biz-avatar svg { width: 22px; height: 22px; color: #fff; }
+  .biz-avatar { width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0; background: linear-gradient(145deg, var(--c1, #f5e6e0), var(--c2, #f5e6e0)); display: grid; place-items: center; overflow: hidden; }
+  .biz-avatar .emo { font-size: 1.6rem; line-height: 1; }
   .biz-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .biz-meta { flex: 1; min-width: 0; }
   .biz-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -518,27 +521,36 @@ const CATEGORY_ICONS = {
 };
 const FALLBACK_ICON = '📦';
 
-// Clean line-icon SVGs (24x24, stroke-based) used in place of emoji
-// wherever we want a more polished, consistent visual — category
-// cards, the search dropdown, and business avatars without a photo.
-const CATEGORY_SVG = {
-  'Transporte': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 4 0M5 17a2 2 0 1 1 4 0M15 17a2 2 0 1 0 4 0M15 17a2 2 0 1 1 4 0M3 17V10l2-5h10l4 5v7"/><path d="M3 10h16"/></svg>',
-  'Alimentacion': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v6a2 2 0 0 0 4 0V2M9 8v14M18 2c-2 1-3 3-3 6s1 5 3 6v6"/></svg>',
-  'Servicios Otros': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2z"/></svg>',
-  'Bebidas': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12l-1.2 9a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 10Z"/><path d="M8 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/></svg>',
-  'Instalacion AC': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"/></svg>',
-  'Plomería': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s5 5.5 5 9.5a5 5 0 0 1-10 0C7 8.5 12 3 12 3Z"/></svg>',
-  'Electricidad': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>',
-  'Mecánica': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2z"/></svg>',
-  'Belleza': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="m20 4-14 8 14 8M8.5 12h11.5"/></svg>',
-  'Farmacia': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>',
-  'Tienda': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8 5.5 3h13L20 8M4 8v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8M4 8h16M9 12a3 3 0 0 0 6 0"/></svg>',
-  'Médico': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 13.6 12 22l-8.8-8.4a5.5 5.5 0 0 1 8-7.6l.8.8.8-.8a5.5 5.5 0 0 1 8 7.6Z"/></svg>',
-  'Servicios Tecnicos/ Hogar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>',
-};
-const FALLBACK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>';
-
-function getCategorySvg(cat) { return CATEGORY_SVG[cat] || FALLBACK_SVG; }
+// Colorful category icons: a large emoji on a soft gradient tile. Each category
+// gets its own hue; unknown categories get a stable color based on their name.
+const CAT_RULES = [
+  [/transp|taxi|flete|moto(?!r)|bus/, '🚕', '#fff3cd', '#ffd966'],
+  [/aliment|comida|pupus|comedor|restaur|panader/, '🍽️', '#ffe3d6', '#ffb48f'],
+  [/bebida|agua|refresc|jugo/, '🥤', '#d9f1ff', '#8fd3f5'],
+  [/\bac\b|aire|clima|refriger/, '❄️', '#dff3fb', '#9ad8f0'],
+  [/plomer|tuberi/, '🚰', '#d6ecff', '#8fc3f0'],
+  [/electric|luz/, '⚡', '#fff4c2', '#ffd84d'],
+  [/mecanic|taller|auto/, '🔧', '#e6e6ea', '#b7b9c4'],
+  [/belleza|salon|estetic|barber/, '💇‍♀️', '#fde0ee', '#f7a8cf'],
+  [/farmac|medic|salud|clinic/, '💊', '#e1f5e8', '#92d8ab'],
+  [/tienda|abarrot|mercado|super/, '🛒', '#ffe9d1', '#ffc48a'],
+  [/tecnic|hogar|constru|reparac/, '🛠️', '#f3e4d2', '#d9b48a'],
+  [/lavander|ropa/, '🧺', '#e3e9ff', '#a9b8f5'],
+  [/mascota|veterin|perro|gato/, '🐾', '#f3e6ff', '#cfa6f5'],
+  [/educ|clase|escuela|tutor/, '📚', '#e3f1ff', '#9cc7f5'],
+  [/otro|servicio/, '🧰', '#e8f0e4', '#aecf9d'],
+];
+const CAT_FALLBACK_HUES = [['#ffe3d6','#ffb48f'],['#e1f5e8','#92d8ab'],['#fff3cd','#ffd966'],['#d9f1ff','#8fd3f5'],['#f3e6ff','#cfa6f5']];
+const normCat = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function getCategoryStyle(cat) {
+  const n = normCat(cat);
+  for (const [re, emoji, c1, c2] of CAT_RULES) if (re.test(n)) return { emoji, c1, c2 };
+  let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const [c1, c2] = CAT_FALLBACK_HUES[h % CAT_FALLBACK_HUES.length];
+  return { emoji: '🏪', c1, c2 };
+}
+const catTileStyle = (cat) => { const t = getCategoryStyle(cat); return `--c1:${t.c1};--c2:${t.c2}`; };
+function getCategorySvg(cat) { return `<span class="emo">${getCategoryStyle(cat).emoji}</span>`; }
 
 const SAMPLE_DATA = [
   { nombre: 'VIP Taxi Marsella', categoria: 'Transporte', barrio: 'Colonia Marsella', telefono: '75404955', descripcion: 'Servicio de taxi 24/7 para toda la zona', estado: 'Activo', estrellas: 5, horario: 'Todos los días 6am-10pm', plan: 'Gratuito' }
@@ -737,7 +749,7 @@ function renderCategories() {
   const grid = document.getElementById('catGrid');
   grid.innerHTML = cats.map(c => `
     <div class="cat-card" data-cat="${c}" onclick="window.filterByCategory('${c.replace(/'/g,"\\'")}')">
-      <div class="cat-icon">${getCategorySvg(c)}</div>
+      <div class="cat-icon" style="${catTileStyle(c)}">${getCategorySvg(c)}</div>
       <div class="cat-name">${c}</div>
     </div>`).join('');
 }
@@ -745,7 +757,7 @@ function renderCategories() {
 function renderPills() {
   const cats = ['Todos', ...new Set(allData.map(r => r.categoria).filter(Boolean))];
   const row = document.getElementById('pillRow');
-  row.innerHTML = cats.map(c => `<button class="pill ${c===activeFilter?'active':''}" onclick="window.filterByCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('');
+  row.innerHTML = cats.map(c => `<button class="pill ${c===activeFilter?'active':''}" onclick="window.filterByCategory('${c.replace(/'/g,"\\'")}')">${c==='Todos' ? '' : getCategorySvg(c)}${c}</button>`).join('');
 }
 
 window.filterByCategory = function(cat) {
@@ -802,7 +814,7 @@ function renderSearchDropdown(q) {
 
   dropdown.innerHTML = matches.map(r => `
     <div class="search-dropdown-item" onclick="window.selectSearchResult('${(r.nombre || '').replace(/'/g,"\\'")}')">
-      <div class="search-dropdown-icon">${getCategorySvg(r.categoria)}</div>
+      <div class="search-dropdown-icon" style="${catTileStyle(r.categoria)}">${getCategorySvg(r.categoria)}</div>
       <div>
         <div class="search-dropdown-name">${r.nombre || ''}</div>
         <div class="search-dropdown-meta">${r.categoria || ''}${r.barrio ? ' · ' + r.barrio : ''}</div>
@@ -870,7 +882,7 @@ function generateCardHtml(r, index) {
 
   return `<div class="biz-card" data-name="${name}" style="animation-delay:${index*0.03}s">
     <div class="biz-header">
-      <div class="biz-avatar">${avatarContent}</div>
+      <div class="biz-avatar" style="${catTileStyle(cat)}">${avatarContent}</div>
       <div class="biz-meta">
         <div class="biz-name">${name}</div>
         <div class="biz-cat-barrio">${cat}${barrio ? ' · ' + barrio : ''}</div>
