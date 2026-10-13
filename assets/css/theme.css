@@ -1,0 +1,7 @@
+:root{
+  --blue:#0d67a7; --nav:#1c74b3; --green:#159957; --orange:#e48727; --gold:#c9a84c;
+  --bg:#f4f6f9; --ink:#101828; --muted:#667085; --border:#e3e7ee;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+h1,h2,h3{font-family:'Syne',sans-serif}

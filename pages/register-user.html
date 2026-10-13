@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Vecinos — Marsella Conecta</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9; --surface: #ffffff; --ink: #101828; --ink-muted: #667085;
+    --accent: #0d67a7; --accent2: #159957; --border: #e3e7ee;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); overflow-x: hidden; max-width: 100vw; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 56px;
+  }
+  .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
+  .nav-logo span { color: var(--accent); }
+  .nav-back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.82rem; }
+  .nav-back:hover { color: #fff; }
+
+  /* PROGRESS BAR */
+  .progress-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 24px; }
+  .progress-steps { display: flex; align-items: center; justify-content: space-between; max-width: 500px; margin: 0 auto; }
+  .step { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600; color: var(--ink-muted); }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+    display: grid; place-items: center; font-weight: 700; font-size: 0.78rem; transition: all 0.3s;
+  }
+  .step.active .step-num { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .step.done .step-num { border-color: var(--accent2); background: var(--accent2); color: #fff; }
+  .step.active { color: var(--ink); }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 12px; }
+  .step-line.done { background: var(--accent2); }
+
+  /* FORM LAYOUT */
+  .form-shell { max-width: 540px; margin: 0 auto; padding: 32px 20px 60px; }
+  .form-card {
+    background: var(--surface); border-radius: 16px; border: 1.5px solid var(--border); padding: 32px;
+    box-shadow: 0 4px 20px rgba(26,23,20,0.07); display: none;
+  }
+  .form-card.active { display: block; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } }
+
+  .card-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; margin-bottom: 6px; }
+  .card-sub { font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 28px; }
+
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
+  .field label .req { color: var(--accent); }
+  .field input, .field select {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; background: var(--bg); outline: none; transition: all 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); background: #fff; }
+  .field .hint { font-size: 0.73rem; color: var(--ink-muted); margin-top: 5px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* INTERACTION CONTROLS */
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; }
+  .btn-prev { padding: 12px 22px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .btn-prev:hover { border-color: var(--ink); }
+  .btn-next { padding: 12px 28px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+  .btn-next:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-next:disabled { background: var(--ink-muted); cursor: not-allowed; opacity: 0.6; }
+
+  /* SUCCESS CARD DISPLAY */
+  .success-card { text-align: center; padding: 48px 32px; background: var(--surface); border-radius: 16px; border: 1.5px solid var(--border); display: none; }
+  .success-card.active { display: block; animation: slideIn 0.4s ease; }
+  .success-icon { font-size: 3.8rem; margin-bottom: 16px; }
+  .success-card h2 { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; margin-bottom: 12px; color: var(--accent2); }
+  .success-card p { color: var(--ink-muted); font-size: 0.92rem; max-width: 420px; margin: 0 auto 20px; line-height: 1.5; }
+  
+  .user-badge-info {
+    background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 28px; text-align: left; font-size: 0.85rem;
+  }
+  .badge-line { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .badge-line:last-child { margin-bottom: 0; }
+  .badge-line strong { color: var(--ink); }
+
+  .success-actions { display: flex; gap: 12px; justify-content: center; }
+  .success-actions .btn-primary { 
+    display: inline-block; padding: 12px 24px; border-radius: 10px; font-weight: 700; 
+    font-size: 0.88rem; text-decoration: none; background: var(--accent); color: #fff; transition: opacity 0.2s;
+  }
+  .success-actions .btn-primary:hover { opacity: 0.9; }
+
+  @media (max-width: 500px) { .form-card { padding: 22px 18px; } .field-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Marsella<span>Conecta</span></div>
+  <a href="../index.html" class="nav-back">← Ir al directorio</a>
+</nav>
+
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-steps">
+    <div class="step active" id="step1-indicator"><div class="step-num">1</div><span>Datos Personales</span></div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2-indicator"><div class="step-num">2</div><span>Ubicación y Seguridad</span></div>
+  </div>
+</div>
+
+<div class="form-shell">
+  <form id="neighborForm" onsubmit="event.preventDefault();">
+    
+    <div class="form-card active" id="card1">
+      <div class="card-eyebrow">Paso 1 de 2</div>
+      <div class="card-title">Únete como Vecino</div>
+      <div class="card-sub">Crea tu perfil comunitario para conectar con los servicios de tu colonia.</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Nombre <span class="req">*</span></label>
+          <input type="text" id="f_nombre" required placeholder="Tu primer nombre">
+        </div>
+        <div class="field">
+          <label>Apellido <span class="req">*</span></label>
+          <input type="text" id="f_apellido" required placeholder="Tus apellidos">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Correo Electrónico <span class="req">*</span></label>
+        <input type="email" id="f_email" required placeholder="ejemplo@correo.com">
+        <div class="hint">Usado estrictamente para avisos importantes y recuperación de acceso.</div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-next" onclick="validateAndNext(1)">Continuar →</button>
+      </div>
+    </div>
+
+    <div class="form-card" id="card2">
+      <div class="card-eyebrow">Paso 2 de 2</div>
+      <div class="card-title">Seguridad y Ubicación</div>
+      <div class="card-sub">Establece tu contraseña para resguardar tu sesión permanente.</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Número de WhatsApp <span class="req">*</span></label>
+          <input type="tel" id="f_whatsapp" required maxlength="9" placeholder="7123-4567">
+        </div>
+        <div class="field">
+          <label>Quartier (Senda / Etapa / Zona) <span class="req">*</span></label>
+          <input type="text" id="f_quartier" required placeholder="Ej: Senda 4, Pol. H">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Asigna tu Contraseña <span class="req">*</span></label>
+        <input type="password" id="f_password" required minlength="6" placeholder="••••••••">
+        <div class="hint">Mínimo 6 caracteres. Guárdala bien — es tu acceso real y seguro a la plataforma.</div>
+      </div>
+
+      <div class="field">
+        <label>¿Dónde nos encontraste? <span class="req">*</span></label>
+        <select id="f_source" required>
+          <option value="">Seleccionar...</option>
+          <option value="Facebook">Facebook</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Referido">Referido por un vecino</option>
+          <option value="Flyer">Flyer / Volante impreso</option>
+          <option value="Google">Búsqueda en Google</option>
+          <option value="Otro">Otro medio</option>
+        </select>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-prev" onclick="goToStep(1)">← Atrás</button>
+        <button type="button" class="btn-next" id="submitBtn" onclick="dispatchNeighborToSheets()">✓ Completar Registro y Entrar</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="success-card" id="successCard">
+    <div class="success-icon">🎉</div>
+    <h2>¡Gracias por Registrarte!</h2>
+    <p>Tu cuenta comunitaria ha sido creada de manera exitosa y tu sesión ha quedado guardada de forma segura.</p>
+    
+    <div class="user-badge-info">
+      <div class="badge-line"><span>Vecino:</span> <strong id="outName">—</strong></div>
+      <div class="badge-line"><span>ID Comunitario:</span> <strong id="outId">—</strong></div>
+      <div class="badge-line"><span>Ubicación:</span> <strong id="outZone">—</strong></div>
+      <div class="badge-line"><span>Acceso de Seguridad:</span> <strong>Clave configurada correctamente</strong></div>
+    </div>
+
+    <div class="success-actions">
+      <a href="../index.html" class="btn-primary">Ingresar al Directorio Local →</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase.js';
+
+function validateAndNext(step) {
+  if (step === 1) {
+    if (!document.getElementById('f_nombre').value.trim() || !document.getElementById('f_apellido').value.trim() || !document.getElementById('f_email').value.trim()) {
+      alert('Por favor completa todos los campos obligatorios para continuar.');
+      return;
+    }
+    goToStep(2);
+  }
+}
+
+function goToStep(n) {
+  document.querySelectorAll('.form-card').forEach((card, i) => card.className = 'form-card' + (i + 1 === n ? ' active' : ''));
+  document.getElementById('step1-indicator').classList.toggle('active', n >= 1);
+  document.getElementById('step1-indicator').classList.toggle('done', n > 1);
+  document.getElementById('line1').classList.toggle('done', n > 1);
+  document.getElementById('step2-indicator').classList.toggle('active', n === 2);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function dispatchNeighborToSheets() {
+  const targetBtn = document.getElementById('submitBtn');
+
+  const whatsappInput = document.getElementById('f_whatsapp').value.trim().replace(/\D/g, '');
+  const quartier = document.getElementById('f_quartier').value.trim();
+  const password = document.getElementById('f_password').value;
+  const source = document.getElementById('f_source').value;
+  const emailInput = document.getElementById('f_email').value.trim().toLowerCase();
+  const neighborFirst = document.getElementById('f_nombre').value.trim();
+  const neighborLast = document.getElementById('f_apellido').value.trim();
+
+  if (!whatsappInput || !quartier || !password || !source) {
+    alert('Por favor completa todos los campos obligatorios de seguridad y contacto.');
+    return;
+  }
+  if (password.length < 6) {
+    alert('Tu contraseña debe tener al menos 6 caracteres.');
+    return;
+  }
+
+  targetBtn.disabled = true;
+  targetBtn.textContent = 'Creando tu cuenta...';
+
+  // All profile fields ride along as auth metadata, so the trigger on the
+  // database side can populate (or link to) your profile row immediately —
+  // this works whether or not email confirmation is required.
+  const { data, error } = await supabase.auth.signUp({
+    email: emailInput,
+    password,
+    options: {
+      data: {
+        nombre: neighborFirst,
+        apellido: neighborLast,
+        whatsapp: whatsappInput,
+        quartier,
+        source,
+      }
+    }
+  });
+
+  if (error) {
+    if (error.message?.toLowerCase().includes('already registered')) {
+      alert('Ese correo ya tiene una cuenta. Si ya te registraste antes, usa "Iniciar Sesión" en el directorio.');
+    } else {
+      alert('No se pudo crear tu cuenta: ' + error.message);
+    }
+    targetBtn.disabled = false;
+    targetBtn.textContent = '✓ Completar Registro y Entrar';
+    return;
+  }
+
+  document.getElementById('neighborForm').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+
+  document.getElementById('outName').textContent = neighborFirst + ' ' + neighborLast;
+  document.getElementById('outId').textContent = (data.user?.id || '').slice(0, 8).toUpperCase();
+  document.getElementById('outZone').textContent = quartier;
+
+  document.getElementById('successCard').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (!data.session) {
+    // Email confirmation is turned on in Supabase Auth settings — let them know.
+    document.querySelector('#successCard p').textContent = 'Tu cuenta fue creada. Revisa tu correo y confirma tu dirección para poder iniciar sesión.';
+  }
+}
+
+window.validateAndNext = validateAndNext;
+window.goToStep = goToStep;
+window.dispatchNeighborToSheets = dispatchNeighborToSheets;
+</script>
+</body>
+</html>
