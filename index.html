@@ -602,6 +602,12 @@
     <div class="install-steps" id="installSteps"></div>
   </div>
 </div>
+<div class="shop-overlay" id="modOverlay" style="z-index:950">
+  <div class="shop-modal" style="max-width:420px">
+    <div class="shop-head"><h3>✏️ Cambios en tu pedido</h3></div>
+    <div class="install-steps" id="modBody"></div>
+  </div>
+</div>
 <div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
   <div class="cart-panel">
     <div class="shop-head"><h3>Mi pedido 🛒</h3><button class="shop-x" onclick="window.closeCart()">✕</button></div>
@@ -1396,8 +1402,27 @@ window.answerMod = async (id, accept) => {
   const { error } = await supabase.rpc('answer_modification', { p_order_id: id, p_accept: accept });
   if (error) { alert('No se pudo responder: ' + error.message); return; }
   supabase.functions.invoke('order-push', { body: { order_id: id, event: 'answer' } }).catch(() => {});
+  document.getElementById('modOverlay').classList.remove('active');
   loadMyOrders();
 };
+const modShown = new Set();
+function showModPopup(o) {
+  const biz = allData.find(b => String(b.id) === String(o.business_id)) || {};
+  document.getElementById('modBody').innerHTML = `<p><b>${shopEsc(biz.nombre || 'El negocio')}</b> propone cambios en tu pedido:</p>
+    <div style="background:#fff4e5;border-radius:12px;padding:12px 14px;margin:10px 0;font-size:.95rem">${shopEsc(o.business_note || '')}</div>
+    <div style="font-size:.82rem;color:var(--ink-muted);margin-bottom:12px">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
+    <button class="cart-send" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button>
+    <button class="cart-send" style="background:#fff;color:#b3261e;border:1.5px solid #e6b8b4;margin-top:8px" onclick="window.answerMod('${o.id}', false)">✖ No acepto (cancelar pedido)</button>
+    <button style="background:none;border:none;color:var(--ink-muted);margin-top:10px;width:100%;cursor:pointer;font:inherit;font-size:.82rem" onclick="document.getElementById('modOverlay').classList.remove('active')">Decidir después</button>`;
+  document.getElementById('modOverlay').classList.add('active');
+}
+async function checkModifications() {
+  if (!currentProfile || document.getElementById('modOverlay').classList.contains('active')) return;
+  const { data } = await supabase.from('orders').select('*').eq('status', 'modificado').order('modified_at', { ascending: true }).limit(5);
+  const o = (data || []).find(x => !modShown.has(x.id));
+  if (o) { modShown.add(o.id); showModPopup(o); }
+}
+window.addEventListener('load', () => { setTimeout(checkModifications, 3500); setInterval(checkModifications, 20000); });
 window.completeMyOrder = async (id) => {
   if (!confirm('¿Ya recibiste tu pedido? Se cerrará el chat de este pedido.')) return;
   const { error } = await supabase.rpc('complete_order', { p_order_id: id });
