@@ -547,6 +547,7 @@
     <div class="mc-modal-title">Únete a nuestra comunidad enseguida</div>
     <div class="mc-modal-text">Para proteger la seguridad de los vecinos y acceder a los canales directos de comunicación con los negocios, debes formar parte activa de nuestra red vecinal.</div>
     <button class="mc-modal-cta mc-google" onclick="signInWithGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:8px"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.2 7-10.3 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar con Google</button>
+    <button class="mc-modal-cta mc-google" style="margin-top:8px" onclick="openPhoneLogin()">📱 Entrar con mi número de teléfono</button>
     <div style="text-align:center;font-size:.72rem;color:var(--ink-muted);margin:8px 0">— o —</div>
     <button class="mc-modal-cta" style="border:none;cursor:pointer;width:100%" onclick="switchToLoginLayout()">Ya tengo cuenta — Iniciar Sesión</button>
     <a href="pages/register-user.html" class="mc-modal-cta" style="background:#fff;color:var(--accent,#c65d3b);border:2px solid var(--accent,#c65d3b);margin-top:8px">Soy nuevo — Unirme como Vecino</a>
@@ -561,6 +562,7 @@
     <div class="mc-modal-text">Ingresa tus credenciales registradas para reanudar tu sesión permanente.</div>
     
     <button class="mc-modal-cta mc-google" onclick="signInWithGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:8px"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.2 7-10.3 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar con Google</button>
+    <button class="mc-modal-cta mc-google" style="margin-top:8px" onclick="openPhoneLogin()">📱 Entrar con mi número de teléfono</button>
     <div style="text-align:center;font-size:.72rem;color:var(--ink-muted);margin:8px 0">— o —</div>
     <div class="modal-form-group">
       <label>Correo Electrónico</label>
@@ -574,6 +576,25 @@
     <button class="mc-modal-cta" id="loginSubmitBtn" onclick="executeNeighborLogin()">Iniciar Sesión</button>
     <div class="modal-switch-text" style="font-size:0.75rem">¿Olvidaste tu contraseña? <span onclick="executePasswordRecoveryRequest()">Recuperar Clave</span></div>
     <button class="mc-modal-close" style="margin-top:10px" onclick="closeLoginModal()">Cancelar</button>
+  </div>
+</div>
+
+<div class="mc-modal-overlay" id="phoneLoginModal">
+  <div class="mc-modal-card">
+    <div class="mc-modal-icon">📱</div>
+    <div class="mc-modal-title">Entrar con tu número</div>
+    <div class="mc-modal-text" id="phoneHelp">Te enviaremos un código por mensaje de texto. Sin contraseñas.</div>
+    <div id="phoneStep1">
+      <div class="modal-form-group"><label>Tu número (El Salvador)</label>
+        <div style="display:flex;gap:6px;align-items:center"><span style="padding:12px 10px;background:#f4f0ea;border-radius:10px;font-weight:700">+503</span><input type="tel" id="ph_num" inputmode="numeric" maxlength="9" placeholder="7000 0000" style="flex:1"></div></div>
+      <button class="mc-modal-cta" id="phSendBtn" onclick="sendPhoneCode()">Enviar código</button>
+    </div>
+    <div id="phoneStep2" style="display:none">
+      <div class="modal-form-group"><label>Código de 6 dígitos</label><input type="text" id="ph_code" inputmode="numeric" maxlength="6" placeholder="••••••" style="text-align:center;letter-spacing:.4em;font-size:1.3rem"></div>
+      <button class="mc-modal-cta" id="phVerifyBtn" onclick="verifyPhoneCode()">Verificar y entrar</button>
+      <button class="mc-modal-close" style="margin-top:6px" onclick="sendPhoneCode()">Reenviar código</button>
+    </div>
+    <button class="mc-modal-close" style="margin-top:10px" onclick="closePhoneLogin()">Cancelar</button>
   </div>
 </div>
 
@@ -785,6 +806,32 @@ async function executeNavbarSessionLogout() {
   }
 }
 
+let phoneE164 = '';
+window.openPhoneLogin = function() { closeAuthModal(); closeLoginModal(); document.getElementById('phoneStep1').style.display = ''; document.getElementById('phoneStep2').style.display = 'none'; document.getElementById('phoneLoginModal').classList.add('active'); };
+window.closePhoneLogin = function() { document.getElementById('phoneLoginModal').classList.remove('active'); };
+window.sendPhoneCode = async function() {
+  const num = document.getElementById('ph_num').value.replace(/\D/g, '');
+  if (num.length !== 8) { alert('Escribe tu número de 8 dígitos.'); return; }
+  phoneE164 = '+' + COUNTRY_CODE + num;
+  const b = document.getElementById('phSendBtn'); b.disabled = true; b.textContent = 'Enviando…';
+  const { error } = await supabase.auth.signInWithOtp({ phone: phoneE164 });
+  b.disabled = false; b.textContent = 'Enviar código';
+  if (error) { alert('No se pudo enviar el código: ' + error.message); return; }
+  document.getElementById('phoneHelp').textContent = 'Enviamos un código a ' + phoneE164 + '. Escríbelo aquí.';
+  document.getElementById('phoneStep1').style.display = 'none'; document.getElementById('phoneStep2').style.display = '';
+  document.getElementById('ph_code').focus();
+};
+window.verifyPhoneCode = async function() {
+  const token = document.getElementById('ph_code').value.replace(/\D/g, '');
+  if (token.length < 4) { alert('Escribe el código que recibiste.'); return; }
+  const b = document.getElementById('phVerifyBtn'); b.disabled = true; b.textContent = 'Verificando…';
+  const { error } = await supabase.auth.verifyOtp({ phone: phoneE164, token, type: 'sms' });
+  b.disabled = false; b.textContent = 'Verificar y entrar';
+  if (error) { alert('Código incorrecto o vencido: ' + error.message); return; }
+  closePhoneLogin();
+  location.reload();
+};
+const isPhoneEmail = (e) => /@phone\.conectamarsella\.local$/i.test(e || '');
 async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/' } });
   if (error) alert('No se pudo iniciar con Google: ' + error.message);
@@ -844,7 +891,7 @@ async function openProfileEditModal() {
   if (!currentProfile) return;
   document.getElementById('edit_nombre').value = currentProfile.nombre || '';
   document.getElementById('edit_apellido').value = currentProfile.apellido || '';
-  document.getElementById('edit_email').value = currentProfile.email || '';
+  document.getElementById('edit_email').value = isPhoneEmail(currentProfile.email) ? '' : (currentProfile.email || '');
   bindZonaPicker(document.getElementById('edit_zona'), document.getElementById('edit_quartier'), { zona: currentProfile.zona || '', quartier: currentProfile.quartier || '' });
   document.getElementById('edit_whatsapp').value = currentProfile.whatsapp || '';
   document.getElementById('edit_password').value = '';
@@ -862,7 +909,7 @@ async function dispatchProfileOverwrites() {
   const whatsapp = document.getElementById('edit_whatsapp').value.trim();
   const password = document.getElementById('edit_password').value;
 
-  if (!nombre || !apellido || !email || !zona || !quartier) {
+  if (!nombre || !apellido || (!email && !isPhoneEmail(currentProfile.email)) || !zona || !quartier) {
     alert('Por favor rellena todos los campos obligatorios.');
     return;
   }
@@ -877,7 +924,7 @@ async function dispatchProfileOverwrites() {
 
   const authUpdates = {};
   if (password) authUpdates.password = password;
-  if (email && email.toLowerCase() !== (currentProfile.email || '').toLowerCase()) authUpdates.email = email;
+  if (email && email.toLowerCase() !== (currentProfile.email || '').toLowerCase() && !isPhoneEmail(email)) authUpdates.email = email;
 
   let authErr = null;
   if (Object.keys(authUpdates).length) {
