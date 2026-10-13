@@ -1333,7 +1333,7 @@ window.closeCart = () => document.getElementById('cartDrawer').classList.remove(
 
 function renderCart() {
   const body = document.getElementById('cartBody');
-  if (!cart.length) { body.innerHTML = '<div class="cart-empty"><div style="font-size:2.4rem">🛒</div><p>Tu pedido está vacío.</p><p style="font-size:0.8rem;margin-top:6px">Abre un negocio con productos y toca “Agregar”.</p></div>'; return; }
+  if (!cart.length) { body.innerHTML = '<div class="cart-empty"><div style="font-size:2.4rem">🛒</div><p>Tu pedido está vacío.</p><p style="font-size:0.8rem;margin-top:6px">Abre un negocio con productos y toca “Agregar”.</p></div><div id="cartOrders"></div>'; loadMyOrders(); return; }
   const groups = {};
   cart.forEach(i => { const p = productsById[i.id]; if (p) (groups[p.business_id] ||= []).push({ p, qty: i.qty }); });
   body.innerHTML = Object.entries(groups).map(([bizId, items]) => {
@@ -1344,28 +1344,77 @@ function renderCart() {
       ${items.map(x => `<div class="cart-line"><span>${shopEsc(x.p.name)}<br><small style="color:var(--ink-muted)">${money(x.p.price)}</small></span>
         <span class="cart-qty"><button onclick="window.cartQty(${x.p.id},-1)">−</button><span>${x.qty}</span><button onclick="window.cartQty(${x.p.id},1)">+</button></span></div>`).join('')}
       <div style="display:flex;justify-content:space-between;font-weight:800;margin-top:8px"><span>Total</span><span>${money(total)}</span></div>
-      <button class="cart-send" onclick="window.sendOrder('${bizId}')">💬 Enviar pedido por WhatsApp</button>
+      <button class="cart-send" onclick="window.sendOrder('${bizId}')">📨 Enviar solicitud al negocio</button>
+      <div style="font-size:.74rem;color:var(--ink-muted);margin-top:6px">El negocio debe aceptar tu pedido. Después podrás enviarlo por WhatsApp.</div>
     </div>`;
+  }).join('') + '<div id="cartOrders"></div>';
+  loadMyOrders();
+}
+
+const orderMsg = (biz, o) => `🛒 *Hola ${biz.nombre}, este es mi pedido (ya aceptado en Marsella Conecta):*\n\n` +
+  (o.items || []).map(i => `• ${i.name} x${i.qty}: ${money((Number(i.price) || 0) * i.qty)}`).join('\n') +
+  `\n\n💰 *Total: ${money(o.total)}*` + (o.customer_name ? `\n👤 ${o.customer_name}` : '') + `\n🔗 Marsella Conecta`;
+
+window.orderWhatsApp = function(orderId) {
+  const o = (window._myOrders || []).find(x => x.id === orderId); if (!o) return;
+  const biz = allData.find(b => String(b.id) === String(o.business_id));
+  const tel = cleanPhone(biz && biz.telefono);
+  if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
+  logUserEvent('Pedido_WhatsApp', (o.items || []).map(i => `${i.qty}× ${i.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, Number(o.total) || 0);
+  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, o))}`, '_blank');
+};
+
+async function loadMyOrders() {
+  const el = document.getElementById('cartOrders');
+  if (!el || !currentProfile) return;
+  const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(8);
+  window._myOrders = data || [];
+  if (!data || !data.length) { el.innerHTML = ''; return; }
+  const pill = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'] };
+  el.innerHTML = '<h4 style="margin:18px 0 8px">📦 Mis solicitudes</h4>' + data.map(o => {
+    const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
+    return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
+      <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
+      ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}</div>`;
   }).join('');
 }
 
-window.sendOrder = function(bizId) {
+let sendingOrder = false;
+window.sendOrder = async function(bizId) {
   if (!currentProfile) { window.closeCart(); openAuthModal(); return; }
+  if (sendingOrder) return;
   const biz = allData.find(b => String(b.id) === String(bizId));
-  const tel = cleanPhone(biz && biz.telefono);
-  if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
   const items = cart.map(i => ({ p: productsById[i.id], qty: i.qty })).filter(x => x.p && String(x.p.business_id) === String(bizId));
-  if (!items.length) return;
+  if (!biz || !items.length) return;
   const total = items.reduce((s, x) => s + (Number(x.p.price) || 0) * x.qty, 0);
-  const who = [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ');
-  const msg = `🛒 *Hola ${biz.nombre}, quiero hacer este pedido:*\n\n` +
-    items.map(x => `• ${x.p.name} x${x.qty}: ${money((Number(x.p.price) || 0) * x.qty)}`).join('\n') +
-    `\n\n💰 *Total: ${money(total)}*` + (who ? `\n👤 ${who}` : '') + `\n🔗 Marsella Conecta`;
-  logUserEvent('Pedido_WhatsApp', items.map(x => `${x.qty}× ${x.p.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, total);
-  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(msg)}`, '_blank');
-  cart = cart.filter(i => !(productsById[i.id] && String(productsById[i.id].business_id) === String(bizId)));
-  saveCart(); renderCartCount(); renderCart();
+  sendingOrder = true;
+  try {
+    const payload = items.map(x => ({ product_id: x.p.id, name: x.p.name, qty: x.qty, price: Number(x.p.price) || 0 }));
+    const { data: orderId, error } = await supabase.rpc('create_order', { p_business_id: bizId, p_items: payload, p_total: total });
+    if (error) throw error;
+    logUserEvent('Pedido_Solicitado', items.map(x => `${x.qty}× ${x.p.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, total);
+    cart = cart.filter(i => !(productsById[i.id] && String(productsById[i.id].business_id) === String(bizId)));
+    saveCart(); renderCartCount(); renderCart();
+    let notified = 0;
+    try { const r = await supabase.functions.invoke('order-push', { body: { order_id: orderId, event: 'new' } }); notified = (r.data && r.data.notified) || 0; } catch (_) {}
+    if (notified > 0) {
+      alert('✅ ¡Solicitud enviada! ' + biz.nombre + ' recibió una notificación. Cuando la acepten podrás enviar tu pedido por WhatsApp desde aquí.');
+    } else if (confirm(biz.nombre + ' aún no tiene las notificaciones activas, así que no vio tu solicitud.\n\n¿Quieres avisarle ahora por WhatsApp?')) {
+      const tel = cleanPhone(biz.telefono);
+      if (tel) window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, { items: payload, total, customer_name: [currentProfile.nombre, currentProfile.apellido].filter(Boolean).join(' ') }).replace(' (ya aceptado en Marsella Conecta)', ''))}`, '_blank');
+    }
+    // So the neighbor also hears back, offer alerts on this device.
+    if (pushSupported && !(isIOS && !isStandalone()) && Notification.permission === 'default' && confirm('¿Quieres que te avisemos aquí cuando el negocio acepte tu pedido?')) { await window.togglePush(); }
+  } catch (e) {
+    console.warn('Pedido:', e); alert('No se pudo enviar la solicitud. Intenta de nuevo.\n\n' + (e.message || ''));
+  } finally { sendingOrder = false; }
 };
+
+// Deep link from a notification: ?pedido=<id> opens the cart drawer with the order status.
+(function() {
+  if (!new URLSearchParams(location.search).get('pedido')) return;
+  let tries = 0; const t = setInterval(() => { if ((currentProfile && allData.length) || ++tries > 30) { clearInterval(t); if (currentProfile) window.openCart(); } }, 500);
+})();
 
 // ---- Promo banner carousel ----
 let promoTimer = null;
