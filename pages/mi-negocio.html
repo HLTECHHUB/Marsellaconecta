@@ -65,10 +65,6 @@
   .current-photo { width: 100%; max-width: 220px; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; margin-bottom: 8px; display: block; }
   .upload-status { font-size: 0.78rem; color: var(--ink-muted); margin-top: 6px; }
 
-  .claim-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .claim-row:last-child { border-bottom: none; }
-  .claim-form { display: none; margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 10px; }
-  .claim-form.active { display: block; }
   .empty-note { text-align: center; color: var(--ink-muted); font-size: 0.85rem; padding: 24px 0; }
   .search-mini { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 14px; }
   .search-mini:focus { border-color: var(--accent); }
@@ -81,7 +77,7 @@
   <nav><a href="../index.html" class="nav-logo">Marsella<span>Conecta</span></a><div></div></nav>
   <div class="login-shell">
     <h1>🏪 Mi Negocio</h1>
-    <p>Inicia sesión con tu cuenta de vecino para reclamar y administrar tu ficha de negocio.</p>
+    <p>Inicia sesión con tu cuenta de vecino para administrar tus negocios.</p>
     <div class="field"><label>Correo</label><input type="email" id="loginEmail" placeholder="tu@correo.com"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
     <button class="btn btn-primary full" id="loginBtn" onclick="doLogin()">Ingresar</button>
@@ -97,15 +93,11 @@
   </nav>
   <div class="shell">
     <div class="page-title">Mi Negocio</div>
-    <div class="page-sub">Administra tus fichas o reclama un negocio que ya registraste.</div>
+    <div class="page-sub">Administra las fichas de tus negocios.</div>
 
     <div class="section-title">📋 Mis Negocios</div>
     <div id="myBizList"><div class="loading">Cargando...</div></div>
 
-    <div class="section-title">🔍 Reclamar un Negocio</div>
-    <p style="font-size:0.82rem;color:var(--ink-muted);margin-bottom:12px">Si registraste tu negocio antes de tener una cuenta de vecino, búscalo aquí y confirma el correo que usaste al registrarlo para vincularlo a tu cuenta.</p>
-    <input type="text" class="search-mini" id="claimSearch" placeholder="Buscar el nombre de tu negocio..." oninput="renderClaimable()">
-    <div id="claimList"><div class="loading">Cargando negocios...</div></div>
   </div>
 </div>
 
@@ -114,9 +106,7 @@ import { supabase } from '../assets/js/supabase.js';
 
 let myProfile = null;
 let myBusinesses = [];
-let unclaimedBusinesses = [];
 let expandedManageId = null;
-let expandedClaimId = null;
 
 // Resize + re-encode any uploaded photo so nobody can accidentally
 // ship a multi-MB image to every visitor of the directory.
@@ -193,14 +183,11 @@ async function loadAll() {
   myBusinesses = mine || [];
   renderMyBusinesses();
 
-  const { data: all } = await supabase.from('businesses').select('id,nombre,categoria,barrio,owner_profile_id').is('owner_profile_id', null).order('nombre');
-  unclaimedBusinesses = all || [];
-  renderClaimable();
 }
 
 function renderMyBusinesses() {
   const el = document.getElementById('myBizList');
-  if (!myBusinesses.length) { el.innerHTML = '<div class="empty-note">Aún no administras ningún negocio. Reclama uno abajo, o <a href="register.html" style="color:var(--accent)">registra uno nuevo</a>.</div>'; return; }
+  if (!myBusinesses.length) { el.innerHTML = '<div class="empty-note">Aún no administras ningún negocio. <a href="register.html" style="color:var(--accent)">registra uno nuevo</a>.</div>'; return; }
 
   el.innerHTML = myBusinesses.map(b => {
     const isOpen = expandedManageId === b.id;
@@ -261,57 +248,6 @@ window.saveMyBiz = async function(id) {
   if (error) { alert('Error guardando: ' + error.message); return; }
   await loadAll();
   alert('¡Cambios guardados!');
-};
-
-function renderClaimable() {
-  const q = (document.getElementById('claimSearch').value || '').toLowerCase().trim();
-  const list = q ? unclaimedBusinesses.filter(b => (b.nombre || '').toLowerCase().includes(q)) : unclaimedBusinesses.slice(0, 15);
-
-  const el = document.getElementById('claimList');
-  if (!list.length) { el.innerHTML = `<div class="empty-note">${q ? 'No se encontraron negocios con ese nombre.' : 'No hay negocios sin reclamar en este momento.'}</div>`; return; }
-
-  el.innerHTML = list.map(b => {
-    const isOpen = expandedClaimId === b.id;
-    return `<div class="claim-row-wrap">
-      <div class="claim-row">
-        <div>
-          <div class="biz-card-name" style="font-size:0.88rem">${b.nombre}</div>
-          <div class="biz-card-meta">${b.categoria || ''}${b.barrio ? ' · ' + b.barrio : ''}</div>
-        </div>
-        <button class="btn btn-ghost" onclick="window.toggleClaim('${b.id}')">${isOpen ? 'Cancelar' : 'Reclamar'}</button>
-      </div>
-      <div class="claim-form ${isOpen ? 'active' : ''}">
-        <div class="field">
-          <label>Correo usado al registrar este negocio</label>
-          <input type="email" id="claim_email_${b.id}" placeholder="correo@ejemplo.com">
-        </div>
-        <button class="btn btn-primary" onclick="window.submitClaim('${b.id}')">Confirmar y Reclamar</button>
-        <div class="error-text" id="claim_error_${b.id}"></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.toggleClaim = function(id) {
-  expandedClaimId = expandedClaimId === id ? null : id;
-  renderClaimable();
-};
-
-window.submitClaim = async function(id) {
-  const email = document.getElementById(`claim_email_${id}`).value.trim();
-  const errEl = document.getElementById(`claim_error_${id}`);
-  errEl.style.display = 'none';
-
-  if (!email) { errEl.textContent = 'Ingresa el correo usado al registrar el negocio.'; errEl.style.display = 'block'; return; }
-
-  const { data, error } = await supabase.rpc('claim_business', { p_business_id: id, p_claim_email: email });
-
-  if (error) { errEl.textContent = 'Error: ' + error.message; errEl.style.display = 'block'; return; }
-  if (!data) { errEl.textContent = 'El correo no coincide con el registrado para este negocio, o ya fue reclamado.'; errEl.style.display = 'block'; return; }
-
-  expandedClaimId = null;
-  await loadAll();
-  alert('¡Negocio reclamado con éxito! Ya puedes administrarlo arriba.');
 };
 
 checkLoginAndBoot();
