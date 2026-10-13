@@ -91,7 +91,7 @@
   .promo-admin-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--bg); display: block; }
   .promo-admin-body { padding: 12px 14px; }
   .promo-admin-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; }
-  .promo-admin-actions { display: flex; gap: 6px; }
+  .promo-admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
   .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; box-shadow: var(--card-shadow); }
   .form-card h3 { font-family: 'Syne', sans-serif; font-size: 1rem; margin-bottom: 14px; }
@@ -216,18 +216,22 @@
         <input type="hidden" id="promo_id">
         <div class="field-row">
           <div class="field"><label>Título *</label><input type="text" id="promo_titulo" placeholder="2x1 en Pupusas de Maíz"></div>
-          <div class="field"><label>Negocio</label><input type="text" id="promo_negocio" placeholder="Pupusería El Esfuerzo"></div>
+          <div class="field"><label>Negocio registrado</label>
+            <select id="promo_business" onchange="onPromoBusinessChange()"><option value="">— Promo general (sin negocio) —</option></select>
+            <input type="text" id="promo_negocio" placeholder="Nombre del negocio (se llena solo)" style="margin-top:6px">
+          </div>
         </div>
         <div class="field"><label>Descripción</label><textarea id="promo_descripcion" placeholder="Detalle opcional de la promoción..."></textarea></div>
         <div class="field">
-          <label>Imagen del banner: 1200×300px (formato ancho 4:1), Imagen (800×600px recomendado, &lt;300KB)lt;300KB</label>
+          <label>Imagen del banner: 1200×300px (formato ancho 4:1), &lt;300KB</label>
           <input type="file" id="promo_imagen_file" accept="image/*">
           <div class="upload-status" id="promo_upload_status"></div>
           <input type="hidden" id="promo_imagen_url">
         </div>
         <div class="field-row">
           <div class="field"><label>Texto del botón</label><input type="text" id="promo_cta_text" value="Ver Promoción"></div>
-          <div class="field"><label>Enlace del botón (WhatsApp, tel, etc.)</label><input type="text" id="promo_cta_url" placeholder="https://wa.me/50370000000"></div>
+          <div class="field"><label>Enlace del botón (con negocio: se llena solo con su WhatsApp)</label><input type="text" id="promo_cta_url" placeholder="https://wa.me/50370000000">
+            <div class="upload-status" id="promo_link_hint"></div></div>
         </div>
         <div class="field-row">
           <div class="field"><label>Expira el (opcional)</label><input type="datetime-local" id="promo_expira"></div>
@@ -324,6 +328,7 @@ function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) 
 
 let profiles = [];
 let promotions = [];
+let promoStats = {};
 let bizFilter = 'Todos';
 let expandedBizId = null;
 let expandedUserId = null;
@@ -667,6 +672,17 @@ async function loadPromotions() {
   const { data, error } = await supabase.from('promotions').select('*').order('orden', { ascending: true });
   if (error) { document.getElementById('promoGridAdmin').innerHTML = `<div class="empty-note">Error: ${error.message}</div>`; return; }
   promotions = data || [];
+  try {
+    promoStats = {};
+    for (let from = 0; from < 50000; from += 1000) {
+      const { data: ev, error: e2 } = await supabase.from('events_log').select('promotion_id,evento_tipo,created_at').not('promotion_id', 'is', null).order('created_at', { ascending: false }).range(from, from + 999);
+      if (e2) throw e2;
+      ev.forEach(e => { const s = (promoStats[e.promotion_id] ||= { v: 0, c: 0, last: null });
+        if (e.evento_tipo === 'Promo_Vista') s.v++; else if (e.evento_tipo === 'Promo_Click') { s.c++; if (!s.last) s.last = e.created_at; } });
+      if (ev.length < 1000) break;
+    }
+  } catch (err) { console.warn('promo stats', err); }
+  fillPromoBusinessSelect();
   renderPromoGrid();
 }
 
@@ -677,9 +693,12 @@ function renderPromoGrid() {
     <div class="promo-admin-card">
       ${p.imagen_url ? `<img class="promo-admin-img" src="${p.imagen_url}" alt="">` : '<div class="promo-admin-img"></div>'}
       <div class="promo-admin-body">
-        <div class="promo-admin-title">${p.titulo}</div>
+        <div class="promo-admin-title">${escH(p.titulo)}</div>
+        ${p.negocio_nombre ? `<div class="row-meta" style="margin-bottom:6px">🏪 ${escH(p.negocio_nombre)}</div>` : ''}
         <div class="row-badges" style="margin-bottom:10px">
           <span class="badge ${p.activo ? 'badge-active' : 'badge-rejected'}">${p.activo ? 'Activo' : 'Oculto'}</span>
+          ${(() => { const s = promoStats[p.id] || { v: 0, c: 0, last: null }; const ctr = s.v ? Math.round(s.c / s.v * 100) : 0;
+            return `<span class="badge badge-idle">👁 ${s.v} vistas</span><span class="badge badge-live">👆 ${s.c} clics · ${ctr}%</span>${s.last ? `<span class="badge badge-idle">Último clic: ${timeAgo(s.last)}</span>` : ''}`; })()}
         </div>
         <div class="promo-admin-actions">
           <button class="btn btn-ghost" onclick="window.editPromo('${p.id}')">Editar</button>
@@ -695,7 +714,10 @@ window.editPromo = function(id) {
   if (!p) return;
   document.getElementById('promo_id').value = p.id;
   document.getElementById('promo_titulo').value = p.titulo || '';
+  fillPromoBusinessSelect();
+  document.getElementById('promo_business').value = p.business_id || '';
   document.getElementById('promo_negocio').value = p.negocio_nombre || '';
+  document.getElementById('promo_negocio').readOnly = !!p.business_id;
   document.getElementById('promo_descripcion').value = p.descripcion || '';
   document.getElementById('promo_imagen_url').value = p.imagen_url || '';
   document.getElementById('promo_upload_status').textContent = p.imagen_url ? 'Imagen actual conservada (sube un archivo nuevo para reemplazarla).' : '';
@@ -713,7 +735,10 @@ window.editPromo = function(id) {
 window.resetPromoForm = function() {
   document.getElementById('promo_id').value = '';
   document.getElementById('promo_titulo').value = '';
+  document.getElementById('promo_business').value = '';
   document.getElementById('promo_negocio').value = '';
+  document.getElementById('promo_negocio').readOnly = false;
+  document.getElementById('promo_link_hint').textContent = '';
   document.getElementById('promo_descripcion').value = '';
   document.getElementById('promo_imagen_url').value = '';
   document.getElementById('promo_imagen_file').value = '';
@@ -726,6 +751,26 @@ window.resetPromoForm = function() {
   document.getElementById('promoFormTitle').textContent = '+ Nueva Promoción';
   document.getElementById('promoSubmitBtn').textContent = 'Guardar Promoción';
   document.getElementById('promoCancelBtn').style.display = 'none';
+};
+
+const PROMO_WA_TEXT = 'Clic promocional desde Marsella Conecta';
+function fillPromoBusinessSelect() {
+  const sel = document.getElementById('promo_business'); if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Promo general (sin negocio) —</option>' +
+    [...businesses].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
+      .map(b => `<option value="${b.id}">${escH(b.nombre)}${b.estado && b.estado !== 'Activo' ? ' (' + escH(b.estado) + ')' : ''}</option>`).join('');
+  sel.value = cur;
+}
+window.onPromoBusinessChange = function() {
+  const id = document.getElementById('promo_business').value;
+  const nameEl = document.getElementById('promo_negocio'), urlEl = document.getElementById('promo_cta_url'), hint = document.getElementById('promo_link_hint');
+  const b = businesses.find(x => x.id === id);
+  if (!b) { nameEl.readOnly = false; hint.textContent = ''; return; }
+  nameEl.value = b.nombre || ''; nameEl.readOnly = true;
+  const tel = (b.telefono || '').replace(/\D/g, '');
+  if (tel) { urlEl.value = `https://wa.me/503${tel}?text=${encodeURIComponent(PROMO_WA_TEXT)}`; hint.textContent = '✓ Enlace de WhatsApp creado con el mensaje: "' + PROMO_WA_TEXT + '"'; }
+  else { hint.textContent = '⚠️ Este negocio no tiene teléfono; escribe el enlace manualmente.'; }
 };
 
 window.togglePromoActive = async function(id, activo) {
@@ -773,6 +818,7 @@ window.submitPromotion = async function() {
 
   const payload = {
     titulo,
+    business_id: document.getElementById('promo_business').value || null,
     negocio_nombre: document.getElementById('promo_negocio').value.trim() || null,
     descripcion: document.getElementById('promo_descripcion').value.trim() || null,
     imagen_url: imagenUrl || null,
@@ -821,6 +867,8 @@ const EVENT_LABELS = {
   'Ver_Productos': '🛍️ Vio productos',
   'Click_Categoria': '🗂️ Abrió categoría',
   'Visita': '👀 Visita',
+  'Promo_Vista': '🔥 Promo vista',
+  'Promo_Click': '👆 Clic en promo',
 };
 const TYPE_GROUPS = {
   all:   { label: 'Todo', types: null },
@@ -829,6 +877,7 @@ const TYPE_GROUPS = {
   order: { label: '🛒 Carrito y pedidos', types: ['Agregar_Carrito','Pedido_WhatsApp'] },
   browse:{ label: '🗂️ Navegación', types: ['Click_Categoria','Ver_Productos'] },
   visit: { label: '👀 Visitas', types: ['Visita'] },
+  promo: { label: '🔥 Promociones', types: ['Promo_Vista','Promo_Click'] },
   session:{ label: '🔑 Sesiones', types: ['Login_Exitoso','Cierre_Sesion'] },
 };
 const TZ = 'America/El_Salvador';

@@ -570,7 +570,7 @@ function getSessionId() {
   } catch (e) { return null; }
 }
 
-async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null) {
+async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null, promotionId = null) {
   try {
     await supabase.from('events_log').insert({
       profile_id: currentProfile?.id || null,
@@ -579,7 +579,8 @@ async function logUserEvent(eventType, searchVal = '', bizName = '', categoria =
       negocio_nombre: bizName,
       session_id: getSessionId(),
       categoria: categoria || (activeFilter && activeFilter !== 'Todos' ? activeFilter : null),
-      pagina: location.pathname.split('/').pop() || 'index.html'
+      pagina: location.pathname.split('/').pop() || 'index.html',
+      promotion_id: promotionId
     });
   } catch (err) {
     console.warn('Analytics logger failed:', err);
@@ -1128,12 +1129,26 @@ async function loadPromotions() {
     const now = Date.now();
     const promos = (data || []).filter(p => !p.expira_at || new Date(p.expira_at).getTime() >= now);
     if (!promos.length) return;
+    // Promos linked to a business get a WhatsApp link to that business with a tracking message.
+    const bizIds = [...new Set(promos.map(p => p.business_id).filter(Boolean))];
+    const bizTel = {};
+    if (bizIds.length) {
+      const { data: bs } = await supabase.from('businesses').select('id,telefono').in('id', bizIds);
+      (bs || []).forEach(b => { bizTel[b.id] = cleanPhone(b.telefono); });
+    }
+    const promoLink = (p) => {
+      const tel = p.business_id && bizTel[p.business_id];
+      return tel ? `https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent('Clic promocional desde Marsella Conecta')}` : (p.cta_url || '');
+    };
+    const seenPromo = new Set();
+    window.promoClick = (i) => { const p = promos[i]; if (p) logUserEvent('Promo_Click', p.titulo, p.negocio_nombre || '', null, p.id); };
     const hero = document.querySelector('.hero');
     const defaultBg = hero.style.background;
     document.getElementById('heroDefault').style.display = 'none';
     document.getElementById('heroPromo').style.display = 'flex';
     document.getElementById('promoSlides').innerHTML = promos.map((p, i) => {
-      const link = p.cta_url ? `<a class="promo-cta-btn" href="${shopEsc(p.cta_url)}" target="_blank" rel="noopener">${shopEsc(p.cta_text || 'Ver Promoción')}</a>` : '';
+      const href = promoLink(p);
+      const link = href ? `<a class="promo-cta-btn" href="${shopEsc(href)}" target="_blank" rel="noopener" onclick="window.promoClick(${i})">${shopEsc(p.cta_text || 'Ver Promoción')}</a>` : '';
       return `<div class="hero-slide ${i === 0 ? 'active' : ''}">
         ${p.negocio_nombre ? `<div class="promo-biz-tag">${shopEsc(p.negocio_nombre)}</div>` : ''}
         <h2>${shopEsc(p.titulo)}</h2>
@@ -1146,6 +1161,7 @@ async function loadPromotions() {
     let idx = 0;
     window.goPromo = (n) => {
       idx = n;
+      if (!seenPromo.has(n)) { seenPromo.add(n); logUserEvent('Promo_Vista', promos[n].titulo, promos[n].negocio_nombre || '', null, promos[n].id); }
       document.querySelectorAll('.hero-slide').forEach((el, k) => el.classList.toggle('active', k === n));
       dots.querySelectorAll('button').forEach((el, k) => el.classList.toggle('active', k === n));
       const img = promos[n].imagen_url;
