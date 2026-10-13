@@ -56,6 +56,7 @@
   /* Desktop: small floating pills bottom-left. Phones: full-width row under the nav (see media query). */
   .app-strip { position: fixed; left: 18px; bottom: 18px; z-index: 90; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .app-strip .nav-install { box-shadow: 0 4px 14px rgba(0,0,0,.18); padding: 10px 16px; }
+  .nav-login { border: 1.5px solid var(--accent, #c65d3b); background: #fff; color: var(--accent, #c65d3b); border-radius: 20px; padding: 8px 14px; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
   .nav-install.on { background: #e7f4ec; }
   .nav-install:hover { background: #1b6b4a; color: #fff; }
   @media (max-width: 640px) { .app-strip { position: static; flex-direction: row; align-items: stretch; padding: 0 12px; background: #fff; } .app-strip .nav-install { flex: 1; margin: 8px 0; box-shadow: none; padding: 9px 8px; font-size: 0.8rem; text-align: center; } }
@@ -428,6 +429,7 @@
   <div class="nav-actions">
     <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
+    <button class="nav-login" id="navLoginBtn" onclick="openAuthModal()">Entrar</button>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
     <a href="pages/register.html" id="navMerchantCta" class="nav-cta">+ Agregar <span class="cta-long">Negocio</span></a>
   </div>
@@ -524,8 +526,8 @@
     <div class="mc-modal-icon">🏡</div>
     <div class="mc-modal-title">Únete a nuestra comunidad enseguida</div>
     <div class="mc-modal-text">Para proteger la seguridad de los vecinos y acceder a los canales directos de comunicación con los negocios, debes formar parte activa de nuestra red vecinal.</div>
-    <a href="pages/register-user.html" class="mc-modal-cta">Unirme como Vecino</a>
-    <div class="modal-switch-text">¿Ya tienes cuenta comunitaria? <span onclick="switchToLoginLayout()">Inicia Sesión aquí</span></div>
+    <button class="mc-modal-cta" style="border:none;cursor:pointer;width:100%" onclick="switchToLoginLayout()">Ya tengo cuenta — Iniciar Sesión</button>
+    <a href="pages/register-user.html" class="mc-modal-cta" style="background:#fff;color:var(--accent,#c65d3b);border:2px solid var(--accent,#c65d3b);margin-top:8px">Soy nuevo — Unirme como Vecino</a>
     <button class="mc-modal-close" style="margin-top:10px" onclick="closeAuthModal()">Volver al directorio</button>
   </div>
 </div>
@@ -705,6 +707,7 @@ async function evaluateUserSession() {
   if (!session) {
     currentProfile = null;
     if (navJoinBtn) navJoinBtn.style.display = 'block';
+    { const lb = document.getElementById('navLoginBtn'); if (lb) lb.style.display = ''; }
     if (navMerchantCta) navMerchantCta.style.display = 'block';
     if (navPublicLinks) navPublicLinks.style.display = 'flex';
     if (bottomBanner) bottomBanner.style.display = 'flex';
@@ -721,6 +724,7 @@ async function evaluateUserSession() {
   currentProfile = profile;
 
   if (navJoinBtn) navJoinBtn.style.display = 'none';
+  { const lb = document.getElementById('navLoginBtn'); if (lb) lb.style.display = 'none'; }
   if (navMerchantCta) navMerchantCta.style.display = 'none';
   if (navPublicLinks) navPublicLinks.style.display = 'none';
   if (bottomBanner) bottomBanner.style.display = 'none';
