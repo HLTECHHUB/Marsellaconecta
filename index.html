@@ -53,6 +53,7 @@
   /* AUTH COMPONENT NAVIGATION CONTAINER */
   .nav-actions { display: flex; align-items: center; gap: 10px; }
   .nav-install { border: 1.5px solid #1b6b4a; background: #fff; color: #1b6b4a; border-radius: 20px; padding: 7px 14px; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .nav-install.on { background: #e7f4ec; }
   .nav-install:hover { background: #1b6b4a; color: #fff; }
   @media (max-width: 640px) { .nav-install { padding: 8px 10px; } .nav-install span { display: none; } }
   .install-steps { padding: 18px 22px 22px; font-size: .95rem; line-height: 1.7; }
@@ -413,6 +414,7 @@
   <div class="nav-actions">
     <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
+    <button class="nav-install" id="pushBtn" style="display:none" onclick="window.togglePush()">🔔 <span>Notificaciones</span></button>
     <button class="nav-install" id="installAppBtn" style="display:none" onclick="window.installApp()">📲 <span>Agregar app</span></button>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
     <a href="pages/register.html" id="navMerchantCta" class="nav-cta">+ Agregar Negocio</a>
@@ -595,6 +597,7 @@
 
 import { supabase } from './assets/js/supabase.js';
 import { bindZonaPicker } from './assets/js/zonas.js';
+import { CONFIG } from './assets/js/config.js';
 const COUNTRY_CODE = '503';
 
 const CATEGORY_ICONS = {
@@ -1428,6 +1431,41 @@ window.installApp = async function() {
 };
 refreshInstallBtn();
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+// ---- Push notifications (opt-in) ----
+const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64ToU8 = (b) => { const p = '='.repeat((4 - b.length % 4) % 4); const r = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...r].map((c) => c.charCodeAt(0))); };
+async function pushSub() { const reg = await navigator.serviceWorker.ready; return reg.pushManager.getSubscription(); }
+async function refreshPushBtn() {
+  const b = document.getElementById('pushBtn'); if (!b) return;
+  // iPhone/iPad only allow web push from the installed home-screen app.
+  if (!pushSupported || (isIOS && !isStandalone()) || Notification.permission === 'denied') { b.style.display = 'none'; return; }
+  let on = false; try { on = !!(await pushSub()); } catch (_) {}
+  b.style.display = ''; b.classList.toggle('on', on);
+  b.querySelector('span').textContent = on ? 'Notificaciones activas' : 'Activar notificaciones';
+}
+window.togglePush = async function() {
+  try {
+    const existing = await pushSub();
+    if (existing) {
+      await supabase.rpc('delete_push_subscription', { p_endpoint: existing.endpoint });
+      await existing.unsubscribe(); logUserEvent('Notificaciones_Desactivadas');
+    } else {
+      if ((await Notification.requestPermission()) !== 'granted') { refreshPushBtn(); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(CONFIG.vapidPublicKey) });
+      const j = sub.toJSON();
+      const { error } = await supabase.rpc('save_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+      if (error) { await sub.unsubscribe(); throw error; }
+      logUserEvent('Notificaciones_Activadas');
+      reg.showNotification('Marsella Conecta', { body: '¡Listo! Te avisaremos de promociones y novedades del barrio.', icon: './assets/icons/icon-192.png' });
+    }
+  } catch (e) { console.warn('Notificaciones:', e); alert('No se pudo cambiar las notificaciones. Intenta de nuevo.'); }
+  refreshPushBtn();
+};
+// A signed-in neighbor's device gets linked to their profile (so admin can target by zona).
+async function relinkPush() { try { const s = await pushSub(); if (s) { const j = s.toJSON(); await supabase.rpc('save_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }); } } catch (_) {} }
+window.addEventListener('load', () => { refreshPushBtn(); setTimeout(relinkPush, 3000); });
 
 // Expose the functions used by inline onclick= handlers in the HTML above.
 window.openAuthModal = openAuthModal;
