@@ -37,7 +37,7 @@ The function code is in `supabase/functions/notify-new-business/index.ts`.
 Codespace you used for the migration script):
 ```bash
 npx supabase login
-npx supabase link --project-ref kydazssjktgsagayuupo
+npx supabase link --project-ref tlvnolvfrujhlrffdmeb
 npx supabase functions deploy notify-new-business
 ```
 
