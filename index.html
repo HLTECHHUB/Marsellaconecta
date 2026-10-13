@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marsella Conecta — Directorio Local</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c65d3b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Marsella">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -44,6 +52,11 @@
   
   /* AUTH COMPONENT NAVIGATION CONTAINER */
   .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .nav-install { border: 1.5px solid #1b6b4a; background: #fff; color: #1b6b4a; border-radius: 20px; padding: 7px 14px; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .nav-install:hover { background: #1b6b4a; color: #fff; }
+  @media (max-width: 640px) { .nav-install { padding: 8px 10px; } .nav-install span { display: none; } }
+  .install-steps { padding: 18px 22px 22px; font-size: .95rem; line-height: 1.7; }
+  .install-steps ol { margin: 10px 0 0 20px; }
   .btn-join-nav {
     background: transparent; color: var(--accent2); text-decoration: none;
     font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border: 1.5px solid var(--accent2);
@@ -400,6 +413,7 @@
   <div class="nav-actions">
     <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
+    <button class="nav-install" id="installAppBtn" style="display:none" onclick="window.installApp()">📲 <span>Agregar app</span></button>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
     <a href="pages/register.html" id="navMerchantCta" class="nav-cta">+ Agregar Negocio</a>
   </div>
@@ -560,6 +574,12 @@
   <div class="shop-modal">
     <div class="shop-head"><h3 id="bizDetailTitle">Negocio</h3><button class="shop-x" onclick="window.closeBizDetail()">✕</button></div>
     <div id="bizDetailBody"></div>
+  </div>
+</div>
+<div class="shop-overlay" id="installOverlay" onclick="if(event.target===this) this.classList.remove('active')">
+  <div class="shop-modal" style="max-width:420px">
+    <div class="shop-head"><h3>📲 Agregar la app</h3><button class="shop-x" onclick="document.getElementById('installOverlay').classList.remove('active')">✕</button></div>
+    <div class="install-steps" id="installSteps"></div>
   </div>
 </div>
 <div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
@@ -1386,6 +1406,28 @@ async function loadPromotions() {
     window.goPromo(0);
   } catch (e) { console.warn('No se pudieron cargar promociones:', e); }
 }
+
+// ---- Install as an app (PWA): "Agregar app" button ----
+let deferredInstall = null;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isMobileUA = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) || isIOS;
+function refreshInstallBtn() {
+  const b = document.getElementById('installAppBtn'); if (!b) return;
+  b.style.display = !isStandalone() && (deferredInstall || isMobileUA) ? '' : 'none';
+}
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; refreshInstallBtn(); });
+window.addEventListener('appinstalled', () => { deferredInstall = null; refreshInstallBtn(); logUserEvent('App_Instalada'); });
+window.installApp = async function() {
+  logUserEvent('Instalar_App_Clic');
+  if (deferredInstall) { deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; refreshInstallBtn(); return; }
+  document.getElementById('installSteps').innerHTML = isIOS
+    ? 'En iPhone/iPad (con <b>Safari</b>):<ol><li>Toca el botón <b>Compartir</b> ⬆️ (abajo en la pantalla).</li><li>Elige <b>“Añadir a pantalla de inicio”</b>.</li><li>Toca <b>Añadir</b>. ¡Listo! Verás el ícono de Marsella Conecta.</li></ol>'
+    : 'En Android (con <b>Chrome</b>):<ol><li>Toca el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>“Instalar app”</b> o <b>“Añadir a pantalla de inicio”</b>.</li><li>Confirma. ¡Listo! Verás el ícono de Marsella Conecta.</li></ol>';
+  document.getElementById('installOverlay').classList.add('active');
+};
+refreshInstallBtn();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
 // Expose the functions used by inline onclick= handlers in the HTML above.
 window.openAuthModal = openAuthModal;
