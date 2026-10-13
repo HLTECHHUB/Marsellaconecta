@@ -305,15 +305,15 @@
     .stat-item:nth-child(2n) { border-right: none; }
   }
   /* PROMO INSIDE HERO (replaces the default headline) */
-  .hero-promo { position: relative; max-width: 760px; margin: 0 auto 26px; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .promo-banner { position: relative; width: calc(100% - 32px); max-width: 1100px; margin: 20px auto 0; min-height: 190px; padding: 26px 20px 34px; border-radius: 16px; overflow: hidden; background: linear-gradient(120deg, #c65d3b, #1b6b4a); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 6px 20px rgba(45,38,34,.15); }
   .hero-slide { display: none; flex-direction: column; align-items: center; text-align: center; animation: heroFade .5s ease; }
   .hero-slide.active { display: flex; }
   @keyframes heroFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .hero-slide .promo-biz-tag { display: inline-block; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; }
-  .hero-slide h2 { font-family: 'Syne', sans-serif; font-weight: 800; color: #fff; font-size: clamp(1.8rem, 6vw, 3rem); line-height: 1.1; margin-bottom: 12px; }
+  .hero-slide h2 { font-family: 'Syne', sans-serif; font-weight: 800; color: #fff; font-size: clamp(1.4rem, 4.5vw, 2.2rem); line-height: 1.1; margin-bottom: 12px; }
   .hero-slide p { color: rgba(255,255,255,0.9); font-size: 1rem; max-width: 520px; margin: 0 auto 16px; }
   .hero-slide a.promo-cta-btn { background: #fff; color: var(--accent); font-weight: 700; font-size: 0.85rem; padding: 10px 22px; border-radius: 10px; text-decoration: none; }
-  .hero-promo .promo-dots { position: static; margin-top: 16px; }
+  .promo-banner .promo-dots { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; }
   /* PRODUCTS + CART */
   .nav-cart { position: relative; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; background: #f5e6e0; border-radius: 9px; border: none; font-size: 1.05rem; }
   .nav-cart .count { position: absolute; top: -6px; right: -6px; background: #d84040; color: #fff; min-width: 20px; height: 20px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; display: none; place-items: center; padding: 0 4px; }
@@ -373,10 +373,6 @@
     <h1>Descubre negocios en<br><em>Marsella</em></h1>
     <p>El directorio de tu colonia. Encuentra servicios locales verificados, con horarios y contacto directo.</p>
   </div>
-  <div id="heroPromo" class="hero-promo" style="display:none">
-    <div id="promoSlides"></div>
-    <div class="promo-dots" id="promoDots"></div>
-  </div>
   <div class="search-wrap">
     <input type="text" id="searchInput" placeholder="¿Qué buscas hoy? Ej. Electricista, Pupusas, Taxi..." autocomplete="off">
     <button onclick="doSearch()">
@@ -392,6 +388,12 @@
   <div class="stat-item"><div class="stat-num" id="totalCat">—</div><div class="stat-label">Categorías</div></div>
   <div class="stat-item"><div class="stat-num" id="totalVer">—</div><div class="stat-label">Verificados</div></div>
   <div class="stat-item"><div class="stat-num">🇸🇻</div><div class="stat-label">El Salvador</div></div>
+</div>
+
+<!-- Promo banner: sits below the stats bar, above categories -->
+<div id="promoBanner" class="promo-banner" style="display:none">
+  <div id="promoSlides"></div>
+  <div class="promo-dots" id="promoDots"></div>
 </div>
 
 
@@ -1142,10 +1144,9 @@ async function loadPromotions() {
     };
     const seenPromo = new Set();
     window.promoClick = (i) => { const p = promos[i]; if (p) logUserEvent('Promo_Click', p.titulo, p.negocio_nombre || '', null, p.id); };
-    const hero = document.querySelector('.hero');
-    const defaultBg = hero.style.background;
-    document.getElementById('heroDefault').style.display = 'none';
-    document.getElementById('heroPromo').style.display = 'flex';
+    const hero = document.getElementById('promoBanner');
+    const defaultBg = '';
+    hero.style.display = 'flex';
     document.getElementById('promoSlides').innerHTML = promos.map((p, i) => {
       const href = promoLink(p);
       const link = href ? `<a class="promo-cta-btn" href="${shopEsc(href)}" target="_blank" rel="noopener" onclick="window.promoClick(${i})">${shopEsc(p.cta_text || 'Ver Promoción')}</a>` : '';
