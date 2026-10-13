@@ -132,6 +132,12 @@
 </div>
 
 <div class="form-shell">
+  <div id="authGate" style="display:none;background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center">
+    <h2 style="font-family:'Syne',sans-serif;margin-bottom:8px">Primero crea tu cuenta de vecino</h2>
+    <p style="color:var(--ink-muted);font-size:0.9rem;margin-bottom:18px">Para registrar un negocio necesitas una cuenta. Así podrás administrar tu ficha después.</p>
+    <a href="register-user.html" style="display:inline-block;text-decoration:none;margin:4px;padding:11px 22px;border-radius:10px;font-weight:600;font-size:0.88rem;background:var(--accent);color:#fff">Crear cuenta</a>
+    <a href="../index.html" style="display:inline-block;text-decoration:none;margin:4px;padding:11px 22px;border-radius:10px;font-weight:600;font-size:0.88rem;background:var(--bg);color:var(--accent);border:1.5px solid var(--border)">Ya tengo cuenta · Iniciar sesión</a>
+  </div>
   <form id="registrationForm" onsubmit="event.preventDefault();">
     
     <div class="form-card active" id="card1">
@@ -294,6 +300,24 @@
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
 
+let myProfile = null;
+(async function requireAccount() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    const { data } = await supabase.from('profiles').select('id,nombre,apellido,email').eq('auth_user_id', session.user.id).maybeSingle();
+    myProfile = data;
+  }
+  if (!myProfile) {
+    document.getElementById('registrationForm').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+    document.getElementById('authGate').style.display = 'block';
+    return;
+  }
+  const o = document.getElementById('f_owner'), e = document.getElementById('f_email');
+  if (o && !o.value) o.value = [myProfile.nombre, myProfile.apellido].filter(Boolean).join(' ');
+  if (e && !e.value) e.value = myProfile.email || '';
+})();
+
 function validateAndNext(step) {
   if (step === 1) {
     if (!document.getElementById('f_nombre').value.trim() || !document.getElementById('f_cat').value || !document.getElementById('f_barrio').value.trim() || !document.getElementById('f_tel').value.trim()) {
@@ -375,6 +399,7 @@ async function dispatchDirectToSheets() {
     targetBtn.textContent = 'Guardando ficha...';
   }
 
+  if (!myProfile) { alert('Inicia sesión para registrar tu negocio.'); targetBtn.disabled = false; return; }
   const { data: biz, error: bizErr } = await supabase
     .from('businesses')
     .insert({
@@ -387,6 +412,7 @@ async function dispatchDirectToSheets() {
       origen: document.getElementById('f_source').value || null,
       plan: selectedTier,
       imagen_url: imagenUrl,
+      owner_profile_id: myProfile ? myProfile.id : null,
     })
     .select('id')
     .single();
