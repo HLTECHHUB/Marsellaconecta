@@ -1485,7 +1485,7 @@ window.togglePush = async function() {
     if (/permission|denied|NotAllowed/i.test(m)) why = 'Las notificaciones están bloqueadas. Actívalas en los ajustes del navegador para este sitio.';
     else if (/push service|AbortError|registration failed/i.test(m)) why = 'Tu navegador no pudo registrar el servicio de notificaciones. Abre la página en Chrome (no dentro de WhatsApp/Facebook) y revisa que tengas internet; algunos navegadores (Brave, modo ahorro) lo bloquean.';
     else if (/save_push_subscription|rpc|function|schema/i.test(m)) why = 'El servidor no pudo guardar tu dispositivo (' + m + ').';
-    alert('No se pudieron activar las notificaciones.\n\n' + why);
+    alert('No se pudieron activar las notificaciones.\n\n' + why + '\n\nDetalle técnico: ' + (e && e.name ? e.name + ': ' : '') + m.slice(0, 200));
   }
   refreshPushBtn();
 };
