@@ -12,6 +12,8 @@
 //   FROM_EMAIL        — sender address (see deployment guide for the
 //                        sandbox-vs-verified-domain distinction)
 
+const esc = (v: unknown) => String(v || '—').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] as string));
+
 Deno.serve(async (req) => {
   try {
     const payload = await req.json();
@@ -30,17 +32,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing configuration' }), { status: 500 });
     }
 
-    const subject = `🆕 Nuevo negocio pendiente: ${record.nombre || 'Sin nombre'}`;
+    const subject = `🆕 Nuevo negocio pendiente: ${String(record.nombre || 'Sin nombre').slice(0, 120)}`;
     const html = `
       <div style="font-family:sans-serif;max-width:480px">
         <h2 style="margin:0 0 12px">Nuevo negocio registrado</h2>
-        <p><strong>Nombre:</strong> ${record.nombre || '—'}</p>
-        <p><strong>Categoría:</strong> ${record.categoria || '—'}</p>
-        <p><strong>Barrio:</strong> ${record.barrio || '—'}</p>
-        <p><strong>Teléfono:</strong> ${record.telefono || '—'}</p>
-        <p><strong>Estado:</strong> ${record.estado || 'Pendiente Validacion'}</p>
+        <p><strong>Nombre:</strong> ${esc(record.nombre)}</p>
+        <p><strong>Categoría:</strong> ${esc(record.categoria)}</p>
+        <p><strong>Barrio:</strong> ${esc(record.barrio)}</p>
+        <p><strong>Teléfono:</strong> ${esc(record.telefono)}</p>
+        <p><strong>Estado:</strong> ${esc(record.estado || 'Pendiente Validacion')}</p>
         <p style="margin-top:20px">
-          <a href="https://marsella.hl-techhub.com/admin.html"
+          <a href="https://hltechhub.github.io/Marsellaconecta/pages/admin.html"
              style="background:#0d67a7;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">
             Revisar en el Panel Admin
           </a>
