@@ -218,6 +218,12 @@ function renderMyBusinesses() {
           <div class="upload-status" id="mb_upload_status_${b.id}"></div>
         </div>
         <button class="btn btn-primary" onclick="window.saveMyBiz('${b.id}')">Guardar Cambios</button>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid #e5e5e5">
+          <label style="font-weight:700">🔔 ¿Quién recibe los pedidos y notificaciones?</label>
+          <div style="font-size:.82rem;color:#666;margin:4px 0 8px">Escribe el correo de otra persona registrada en Conecta Marsella (por ejemplo tu empleado). Esa persona recibirá las alertas, podrá aceptar, modificar o rechazar pedidos y chatear con el vecino. Déjalo vacío para recibirlos tú.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="email" id="mb_notify_${b.id}" placeholder="correo@ejemplo.com" style="flex:1;min-width:200px"><button class="btn btn-ghost" onclick="window.saveNotify('${b.id}')">Guardar</button></div>
+          <div class="upload-status" id="mb_notify_status_${b.id}">Cargando…</div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -226,6 +232,24 @@ function renderMyBusinesses() {
 window.toggleManage = function(id) {
   expandedManageId = expandedManageId === id ? null : id;
   renderMyBusinesses();
+  if (expandedManageId) loadNotify(id);
+};
+async function loadNotify(id) {
+  const st = document.getElementById('mb_notify_status_' + id), inp = document.getElementById('mb_notify_' + id);
+  if (!st || !inp) return;
+  const { data, error } = await supabase.rpc('get_business_notify', { p_business_id: id });
+  if (error) { st.textContent = 'Aún no disponible: ' + error.message; return; }
+  const r = data && data[0];
+  if (r) { inp.value = r.email || ''; st.textContent = '✓ Actualmente recibe los pedidos: ' + (r.nombre || r.email); }
+  else st.textContent = 'Actualmente los pedidos te llegan a ti.';
+}
+window.saveNotify = async function(id) {
+  const st = document.getElementById('mb_notify_status_' + id), email = document.getElementById('mb_notify_' + id).value.trim();
+  if (email && !confirm('Esa persona recibirá los pedidos de este negocio y tú dejarás de recibirlos. ¿Continuar?')) return;
+  const { data, error } = await supabase.rpc('set_business_notify', { p_business_id: id, p_email: email });
+  if (error) { st.textContent = ''; alert(error.message); return; }
+  await loadNotify(id);
+  alert(data || 'Guardado');
 };
 
 window.saveMyBiz = async function(id) {
