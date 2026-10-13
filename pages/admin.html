@@ -819,6 +819,8 @@ window.loadOrderStats = async function() {
   const reasons = {}; orders.filter(o => o.modified_at).forEach(o => { const r = (o.business_note || '').split(/(?<=\.)\s/)[0] || '—'; const x = reasons[r] ||= { n: 0, can: 0 }; x.n++; if (o.status === 'cancelado') x.can++; });
   const reasonRows = Object.entries(reasons).sort((a, b) => b[1].n - a[1].n).map(([r, x]) => `<tr><td>${escH(r)}</td><td>${x.n}</td><td>${x.can}</td><td>${pct(x.can, x.n)}</td></tr>`).join('');
   const cancelList = orders.filter(o => o.status === 'cancelado').slice(0, 30).map(o => `<tr><td>${fmtDT(o.answered_at || o.created_at)}</td><td>${escH(bn[o.business_id] || '—')}</td><td>${escH(o.customer_name || '—')}</td><td>$${Number(o.total || 0).toFixed(2)}</td><td>${escH(o.business_note || '')}</td></tr>`).join('');
+  const chatAgg = {}; msgs.forEach(m => { const c = chatAgg[m.order_id] ||= { n: 0, last: m.created_at, rep: 0 }; c.n++; if (m.created_at > c.last) c.last = m.created_at; if (m.reported) c.rep++; });
+  const chatRows = Object.entries(chatAgg).sort((a, b) => (b[1].last > a[1].last ? 1 : -1)).map(([oid, c]) => { const o = byOrder[oid]; if (!o) return ''; return `<tr><td>${fmtDT(c.last)}</td><td>${escH(bn[o.business_id] || '—')}</td><td>${escH(o.customer_name || '—')}</td><td>${escH(o.status)} · $${Number(o.total || 0).toFixed(2)}</td><td>${c.n}${c.rep ? ' · ⚑ ' + c.rep : ''}</td><td><button class="btn" onclick="viewChat('${oid}')">Ver chat</button></td></tr>`; }).join('');
   box.innerHTML = `
     <div class="stat-cards">${card(total, 'Solicitudes')}${card(st('pendiente'), 'Pendientes')}${card(st('aceptado') + st('completado'), 'Aceptados')}${card(st('rechazado'), 'Rechazados')}${card(modified, 'Con modificación')}${card(cancelledMod, 'Cancelados tras modificar')}${card(pct(cancelledMod, modified), '% cancelan al modificar')}${card(st('completado'), 'Completados')}</div>
     <div class="stat-cards">${card(fmtMin(avgResp), 'Tiempo medio de respuesta')}${card(pct(onTime, withSla.length), 'Respondidos a tiempo')}${card(lateNow, 'Pendientes vencidos ahora')}${card(msgs.length, 'Mensajes de chat')}${card(chatOrders.size, 'Pedidos con chat')}${card(pct(chatOrders.size, total), '% pedidos con chat')}${card(chatOrders.size ? (msgs.length / chatOrders.size).toFixed(1) : '—', 'Mensajes por chat')}${card(msgs.filter(m => m.reported).length, 'Mensajes reportados')}</div>
@@ -826,8 +828,24 @@ window.loadOrderStats = async function() {
     <div class="promo-table-wrap"><table class="promo-table" style="min-width:760px"><thead><tr><th>Negocio</th><th>Pedidos</th><th>Aceptados</th><th>Rechazados</th><th>Modificados</th><th>Cancelados</th><th>Completados</th><th>Resp. media</th><th>A tiempo</th><th>Mensajes</th></tr></thead><tbody>${rows || '<tr><td colspan="10">Sin pedidos en este período.</td></tr>'}</tbody></table></div>
     <div class="panel-title" style="font-size:1rem;margin:18px 0 8px">Motivos de modificación</div>
     <div class="promo-table-wrap"><table class="promo-table" style="min-width:520px"><thead><tr><th>Motivo</th><th>Veces</th><th>Cancelados</th><th>% cancelan</th></tr></thead><tbody>${reasonRows || '<tr><td colspan="4">Sin modificaciones.</td></tr>'}</tbody></table></div>
+    <div class="panel-title" style="font-size:1rem;margin:18px 0 8px">💬 Conversaciones</div>
+    <div class="promo-table-wrap"><table class="promo-table" style="min-width:680px"><thead><tr><th>Último mensaje</th><th>Negocio</th><th>Vecino</th><th>Pedido</th><th>Mensajes</th><th></th></tr></thead><tbody>${chatRows || '<tr><td colspan="6">Aún no hay conversaciones.</td></tr>'}</tbody></table></div>
     <div class="panel-title" style="font-size:1rem;margin:18px 0 8px">Pedidos cancelados tras modificar</div>
     <div class="promo-table-wrap"><table class="promo-table" style="min-width:620px"><thead><tr><th>Fecha</th><th>Negocio</th><th>Vecino</th><th>Total</th><th>Cambio propuesto</th></tr></thead><tbody>${cancelList || '<tr><td colspan="5">Ninguno.</td></tr>'}</tbody></table></div>`;
+};
+
+window.viewChat = async function(orderId) {
+  const { data: msgs } = await supabase.from('order_messages').select('*').eq('order_id', orderId).order('created_at', { ascending: true }).limit(500);
+  const { data: o } = await supabase.from('orders').select('customer_name,status,total,business_id,items').eq('id', orderId).maybeSingle();
+  const { data: b } = o ? await supabase.from('businesses').select('nombre').eq('id', o.business_id).maybeSingle() : { data: null };
+  document.getElementById('chatViewer')?.remove();
+  const ov = document.createElement('div'); ov.id = 'chatViewer';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = `<div style="background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column">
+    <div style="padding:14px 16px;border-bottom:1px solid #e8e2db;display:flex;justify-content:space-between;gap:10px"><div><b>💬 ${escH(b?.nombre || 'Negocio')} ↔ ${escH(o?.customer_name || 'Vecino')}</b><div class="row-meta">Pedido ${escH(o?.status || '')} · $${Number(o?.total || 0).toFixed(2)} · ${(o?.items || []).map(i => escH(i.name) + ' ×' + i.qty).join(', ')}</div></div><button class="btn" onclick="document.getElementById('chatViewer').remove()">✕</button></div>
+    <div style="padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:#faf7f2">${(msgs || []).length ? msgs.map(m => `<div style="align-self:${m.sender_role === 'negocio' ? 'flex-end' : 'flex-start'};max-width:82%;background:${m.sender_role === 'negocio' ? '#e2f1ed' : '#fff'};border:1px solid #e8e2db;border-radius:14px;padding:8px 12px;font-size:.9rem"><div class="row-meta" style="font-weight:700">${m.sender_role === 'negocio' ? 'Negocio' : 'Vecino'}${m.reported ? ' · ⚑ reportado' : ''}</div>${escH(m.body)}<div class="row-meta">${fmtDT(m.created_at)}</div></div>`).join('') : '<div class="row-meta">Sin mensajes.</div>'}</div></div>`;
+  ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
 };
 
 // ---- Push notifications composer ----
@@ -837,7 +855,7 @@ async function loadNotif() {
     supabase.from('push_log').select('*').order('created_at', { ascending: false }).limit(30)
   ]);
   supabase.from('order_messages').select('id,body,sender_role,created_at,order_id,orders(customer_name,total)').eq('reported', true).order('created_at', { ascending: false }).limit(50).then(({ data: rep }) => {
-    document.getElementById('chatReports').innerHTML = (rep || []).length ? rep.map(m => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(m.sender_role)}</b> (pedido de ${escH(m.orders?.customer_name || '—')}): “${escH(m.body)}”<br><span class="row-meta">${fmtDT(m.created_at)}</span></div>`).join('') : 'Sin reportes.';
+    document.getElementById('chatReports').innerHTML = (rep || []).length ? rep.map(m => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(m.sender_role)}</b> (pedido de ${escH(m.orders?.customer_name || '—')}): “${escH(m.body)}”<br><span class="row-meta">${fmtDT(m.created_at)}</span> <button class="btn" style="padding:2px 10px" onclick="viewChat('${m.order_id}')">Ver chat</button></div>`).join('') : 'Sin reportes.';
   });
   document.getElementById('pushCount').textContent = (total ?? 0) + ' dispositivo(s) con notificaciones activadas';
   document.getElementById('pushLog').innerHTML = (logs || []).length ? logs.map(l => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(l.title)}</b> — ${escH(l.body)}<br><span class="row-meta">${fmtDT(l.created_at)} · ${escH(l.audience || '')} · ✅ ${l.sent} enviadas${l.failed ? ' · ⚠️ ' + l.failed + ' fallidas' : ''}</span></div>`).join('') : 'Aún no has enviado notificaciones.';
