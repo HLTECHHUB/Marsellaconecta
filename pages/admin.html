@@ -140,6 +140,7 @@
     <div class="nav-logo">Marsella<span>Conecta</span> · Admin</div>
     <div class="nav-right">
       <span id="adminEmailLabel"></span>
+      <button class="btn-logout" onclick="openPwModal()">🔑 Cambiar contraseña</button>
       <button class="btn-logout" onclick="doAdminLogout()">Cerrar sesión</button>
     </div>
   </nav>
@@ -337,6 +338,34 @@ window.doAdminLogin = async function() {
 window.doAdminLogout = async function() {
   await supabase.auth.signOut();
   window.location.reload();
+};
+
+
+// ---------------- CHANGE PASSWORD ----------------
+window.openPwModal = function() {
+  document.getElementById('pwMsg').textContent = '';
+  ['pwCur','pwNew','pwNew2'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('pwModal').style.display = 'flex';
+};
+window.closePwModal = function() { document.getElementById('pwModal').style.display = 'none'; };
+window.submitPwChange = async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById('pwMsg'), btn = document.getElementById('pwBtn');
+  const cur = document.getElementById('pwCur').value, n1 = document.getElementById('pwNew').value, n2 = document.getElementById('pwNew2').value;
+  const fail = t => { msg.style.color = 'var(--danger)'; msg.textContent = t; };
+  if (n1.length < 8) return fail('La nueva contraseña debe tener al menos 8 caracteres.');
+  if (n1 !== n2) return fail('Las contraseñas nuevas no coinciden.');
+  if (n1 === cur) return fail('La nueva contraseña debe ser distinta a la actual.');
+  btn.disabled = true; msg.style.color = 'inherit'; msg.textContent = 'Guardando…';
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: e1 } = await supabase.auth.signInWithPassword({ email: user.email, password: cur });
+    if (e1) return fail('La contraseña actual es incorrecta.');
+    const { error: e2 } = await supabase.auth.updateUser({ password: n1 });
+    if (e2) return fail('No se pudo cambiar: ' + e2.message);
+    msg.style.color = '#1b6b4a'; msg.textContent = '✓ Contraseña actualizada.';
+    setTimeout(closePwModal, 1400);
+  } finally { btn.disabled = false; }
 };
 
 // ---------------- TABS ----------------
@@ -789,5 +818,22 @@ window.loadStats = async function loadStats() {
 
 checkAdminAndBoot();
 </script>
+
+<div id="pwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <form onsubmit="submitPwChange(event)" style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 14px;font-size:1.1rem">Cambiar contraseña</h3>
+    <label style="font-size:.8rem;font-weight:600">Contraseña actual</label>
+    <input id="pwCur" type="password" required autocomplete="current-password" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;margin:4px 0 10px">
+    <label style="font-size:.8rem;font-weight:600">Nueva contraseña (mín. 8)</label>
+    <input id="pwNew" type="password" required minlength="8" autocomplete="new-password" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;margin:4px 0 10px">
+    <label style="font-size:.8rem;font-weight:600">Repetir nueva contraseña</label>
+    <input id="pwNew2" type="password" required minlength="8" autocomplete="new-password" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;margin:4px 0 10px">
+    <div id="pwMsg" style="font-size:.85rem;min-height:1.2em;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button type="button" class="btn-logout" onclick="closePwModal()">Cancelar</button>
+      <button type="submit" id="pwBtn" style="background:var(--primary,#c65d3b);color:#fff;border:0;border-radius:20px;padding:8px 18px;font-weight:600;cursor:pointer">Guardar</button>
+    </div>
+  </form>
+</div>
 </body>
 </html>
