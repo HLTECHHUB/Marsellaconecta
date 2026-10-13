@@ -23,12 +23,17 @@
   .items { margin: 8px 0; font-size: .92rem; line-height: 1.6; }
   .actions { display: flex; gap: 10px; margin-top: 10px; } .actions .btn { flex: 1; }
   .pill { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; }
-  .p-pendiente { background: #fff4e5; color: #9a5b00; } .p-aceptado { background: #e2f1ed; color: var(--accent2); } .p-completado { background:#e8eaf6; color:#3949ab; } .p-rechazado { background: #fdecea; color: #b3261e; }
+  .p-pendiente { background: #fff4e5; color: #9a5b00; } .p-aceptado { background: #e2f1ed; color: var(--accent2); } .p-modificado { background:#fff4e5; color:#9a5b00; } .p-cancelado { background:#fdecea; color:#b3261e; } .p-completado { background:#e8eaf6; color:#3949ab; } .p-rechazado { background: #fdecea; color: #b3261e; }
   .push-box { background: #fff; border: 1.5px dashed var(--accent2); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
   input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; }
   .login { max-width: 380px; margin: 60px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; }
   .err { color: #b3261e; font-size: .85rem; margin-top: 8px; }
   h2 { font-size: 1rem; margin: 22px 0 10px; }
+  select, textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; background: #fff; }
+  .sla { font-size: .8rem; font-weight: 700; margin: 6px 0; } .sla.ok { color: var(--accent2); } .sla.late { color: #b3261e; }
+  .btn-mod { background: #fff4e5; color: #9a5b00; border: 1.5px solid #f0c987; }
+  .ov { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 800; display: none; align-items: flex-end; justify-content: center; } .ov.on { display: flex; }
+  .sheet { background: #fff; width: 100%; max-width: 520px; border-radius: 20px 20px 0 0; padding: 18px 18px 26px; } @media (min-width: 641px) { .ov { align-items: center; } .sheet { border-radius: 20px; } }
 </style>
 </head>
 <body>
@@ -44,12 +49,22 @@
     <h1>📦 Pedidos de tus clientes</h1>
     <div class="sub" id="who">Cargando…</div>
     <div class="push-box" id="pushBox"></div>
+    <div class="card" id="slaBox"></div>
     <div id="pending"></div>
     <div id="active"></div>
     <h2>Historial</h2>
     <div id="history"></div>
   </div>
 </div>
+
+<div class="ov" id="modOv" onclick="if(event.target===this)this.classList.remove('on')"><div class="sheet">
+  <b style="font-size:1.05rem">✏️ Proponer cambios al pedido</b>
+  <div class="muted" style="margin:4px 0 12px">El vecino recibirá tu mensaje y decidirá si acepta los cambios o cancela.</div>
+  <select id="modPreset"></select>
+  <textarea id="modExtra" rows="2" maxlength="200" placeholder="Detalle adicional (opcional). No incluyas teléfonos."></textarea>
+  <div class="actions"><button class="btn btn-ghost" onclick="document.getElementById('modOv').classList.remove('on')">Cancelar</button><button class="btn btn-main" style="width:auto" onclick="sendMod()">Enviar al vecino</button></div>
+  <div class="err" id="modErr"></div>
+</div></div>
 
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
@@ -59,7 +74,9 @@ import { openOrderChat, unreadCount } from '../assets/js/chat.js';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => '$' + Number(n || 0).toFixed(2);
 const fmt = (d) => new Date(d).toLocaleString('es-SV', { timeZone: 'America/El_Salvador', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-let bizNames = {};
+let bizNames = {}, myBiz = [], modId = null;
+const MODS = ['No tenemos disponible uno o más productos de tu pedido.', 'Podemos entregar solo una parte de tu pedido hoy.', 'Tu pedido tendrá un costo adicional de entrega.', 'Podemos entregarlo más tarde de lo normal.', 'Solo podemos entregarlo mañana.', 'Necesitamos confirmar el precio de algún producto.', 'Podemos ofrecerte un producto sustituto, ¿te parece bien?', 'Otro (escribe el detalle abajo)'];
+const SLAS = [[5, '5 minutos'], [10, '10 minutos'], [15, '15 minutos'], [30, '30 minutos'], [60, '1 hora'], [120, '2 horas'], [240, '4 horas']];
 
 async function boot() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -68,13 +85,24 @@ async function boot() {
   if (!session) return;
   await relinkPush();
   const { data: me } = await supabase.from('profiles').select('id,nombre').eq('auth_user_id', session.user.id).maybeSingle();
-  const { data: mine } = me ? await supabase.from('businesses').select('id,nombre').eq('owner_profile_id', me.id) : { data: [] };
+  const { data: mine } = me ? await supabase.from('businesses').select('id,nombre,response_minutes').eq('owner_profile_id', me.id) : { data: [] };
+  myBiz = mine || [];
   (mine || []).forEach((b) => { bizNames[b.id] = b.nombre; });
   document.getElementById('who').textContent = (mine || []).length ? 'Negocio(s): ' + mine.map((b) => b.nombre).join(', ') : 'Tu cuenta aún no tiene un negocio asignado.';
-  await renderPush(); await loadOrders();
+  renderSla(); await renderPush(); await loadOrders();
   clearInterval(window._poll); window._poll = setInterval(loadOrders, 20000);
 }
 
+function renderSla() {
+  const box = document.getElementById('slaBox');
+  if (!myBiz.length) { box.style.display = 'none'; return; }
+  box.innerHTML = '<b>⏱️ Tu tiempo de respuesta</b><div class="muted" style="margin:4px 0 10px">Los vecinos verán en cuánto tiempo respondes los pedidos. Se cuenta desde que llega la solicitud.</div>' +
+    myBiz.map((b) => `<div class="muted" style="margin-top:6px"><b>${esc(b.nombre)}</b></div><select onchange="saveSla('${b.id}', this.value)">${SLAS.map(([m, l]) => `<option value="${m}" ${Number(b.response_minutes || 30) === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`).join('');
+}
+window.saveSla = async (id, v) => {
+  const { error } = await supabase.from('businesses').update({ response_minutes: Number(v) }).eq('id', id);
+  if (error) alert('No se pudo guardar: ' + error.message); else { const b = myBiz.find((x) => x.id === id); if (b) b.response_minutes = Number(v); }
+};
 async function renderPush() {
   const st = await pushState(); const box = document.getElementById('pushBox');
   const T = {
@@ -94,17 +122,20 @@ window.togglePush = async () => {
 
 function orderCard(o) {
   const items = (o.items || []).map((i) => `• ${esc(i.name)} ×${esc(i.qty)} — ${money((i.price || 0) * i.qty)}`).join('<br>');
-  const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>`
+  const left = o.due_at ? Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000) : null;
+  const sla = o.status === 'pendiente' && left !== null ? (left >= 0 ? `<div class="sla ok">⏱️ Responde antes de las ${new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' })} (quedan ${left} min)</div>` : `<div class="sla late">⚠️ Vencido hace ${-left} min. Responde lo antes posible.</div>`) : '';
+  const note = o.status === 'modificado' ? `<div class="sla" style="color:#9a5b00">✏️ Esperando respuesta del vecino: “${esc(o.business_note || '')}”</div>` : '';
+  const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-mod" onclick="openMod('${o.id}')">✏️ Modificar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>`
     : o.status === 'aceptado' ? `<div class="actions"><button class="btn btn-ok" onclick="completeOrder('${o.id}')">📦 Marcar como entregado</button></div>` : '';
   return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
     <div class="muted">${esc(bizNames[o.business_id] || '')} · ${fmt(o.created_at)}</div><div class="items">${items}</div>
-    <div class="row"><b>Total ${money(o.total)}</b></div>${acts}
-    ${o.status !== 'rechazado' ? `<div class="actions"><button class="btn btn-ghost" onclick="openChat('${o.id}','${esc(o.customer_name || 'Vecino').replace(/'/g, '')}')">💬 Chat <span id="unr-${o.id}"></span></button></div>` : ''}</div>`;
+    <div class="row"><b>Total ${money(o.total)}</b></div>${sla}${note}${acts}
+    ${!['rechazado', 'cancelado'].includes(o.status) ? `<div class="actions"><button class="btn btn-ghost" onclick="openChat('${o.id}','${esc(o.customer_name || 'Vecino').replace(/'/g, '')}')">💬 Chat <span id="unr-${o.id}"></span></button></div>` : ''}</div>`;
 }
 async function loadOrders() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
   if (error) { document.getElementById('pending').innerHTML = '<div class="err">No se pudieron cargar los pedidos.</div>'; return; }
-  const pend = (data || []).filter((o) => o.status === 'pendiente'), active = (data || []).filter((o) => o.status === 'aceptado'), done = (data || []).filter((o) => ['rechazado', 'completado'].includes(o.status));
+  const pend = (data || []).filter((o) => o.status === 'pendiente'), active = (data || []).filter((o) => ['aceptado', 'modificado'].includes(o.status)), done = (data || []).filter((o) => ['rechazado', 'completado', 'cancelado'].includes(o.status));
   document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
   document.getElementById('active').innerHTML = active.length ? '<h2>🚚 En curso (' + active.length + ')</h2>' + active.map(orderCard).join('') : '';
   document.getElementById('history').innerHTML = done.length ? done.map(orderCard).join('') : '<div class="muted">Aún no hay historial.</div>';
@@ -116,6 +147,21 @@ async function loadOrders() {
   if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }
 window.openChat = (id, name) => openOrderChat(id, name);
+window.openMod = (id) => {
+  modId = id; document.getElementById('modErr').textContent = ''; document.getElementById('modExtra').value = '';
+  document.getElementById('modPreset').innerHTML = MODS.map((m) => `<option>${esc(m)}</option>`).join('');
+  document.getElementById('modOv').classList.add('on');
+};
+window.sendMod = async () => {
+  const preset = document.getElementById('modPreset').value, extra = document.getElementById('modExtra').value.trim();
+  const note = preset.startsWith('Otro') ? extra : (preset + (extra ? ' ' + extra : ''));
+  if (!note) { document.getElementById('modErr').textContent = 'Escribe el detalle del cambio.'; return; }
+  const { error } = await supabase.rpc('modify_order', { p_order_id: modId, p_note: note });
+  if (error) { document.getElementById('modErr').textContent = error.message; return; }
+  document.getElementById('modOv').classList.remove('on');
+  supabase.functions.invoke('order-push', { body: { order_id: modId, event: 'modify' } }).catch(() => {});
+  loadOrders();
+};
 window.completeOrder = async (id) => {
   if (!confirm('¿Marcar este pedido como entregado? Se cerrará el chat.')) return;
   const { error } = await supabase.rpc('complete_order', { p_order_id: id });

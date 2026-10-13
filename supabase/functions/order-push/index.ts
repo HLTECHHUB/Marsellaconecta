@@ -1,6 +1,8 @@
 // Marsella Conecta — push notifications for order requests.
 //   event "new":      the neighbor who made the order notifies the business owner.
 //   event "message":  a chat message; goes to the other person in the order.
+//   event "modify":   the business proposes changes; notifies the neighbor.
+//   event "answer":   the neighbor accepts/cancels after a modification; notifies the business.
 //   event "response": the business owner (or an admin) notifies the neighbor of accept/reject.
 // Secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (same as send-push).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -20,7 +22,7 @@ Deno.serve(async (req) => {
     const uid = u?.user?.id;
     if (!uid) return json({ error: 'No autenticado' }, 401);
     const { order_id, event } = await req.json();
-    if (!order_id || !['new', 'response', 'message'].includes(event)) return json({ error: 'Datos inválidos' }, 400);
+    if (!order_id || !['new', 'response', 'message', 'modify', 'answer'].includes(event)) return json({ error: 'Datos inválidos' }, 400);
 
     const db = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: order } = await db.from('orders').select('*').eq('id', order_id).maybeSingle();
@@ -41,6 +43,16 @@ Deno.serve(async (req) => {
       target = fromCust ? owner?.auth_user_id : cust?.auth_user_id;
       const who = fromCust ? (order.customer_name || 'Un vecino') : (biz?.nombre || 'El negocio');
       payload = { title: '💬 ' + who, body: String(last[0].body).slice(0, 100), url: fromCust ? SITE + 'pages/pedidos.html?order=' + order.id : SITE + '?pedido=' + order.id + '&chat=1', tag: 'chat-' + order.id };
+    } else if (event === 'modify') {
+      if ((owner?.auth_user_id !== uid) || order.status !== 'modificado') return json({ error: 'No permitido' }, 403);
+      target = cust?.auth_user_id;
+      payload = { title: '✏️ ' + (biz?.nombre || 'El negocio') + ' propone cambios', body: String(order.business_note || 'Revisa los cambios a tu pedido.').slice(0, 110), url: SITE + '?pedido=' + order.id, tag: 'order-' + order.id };
+    } else if (event === 'answer') {
+      if (cust?.auth_user_id !== uid || !['aceptado', 'cancelado'].includes(order.status)) return json({ error: 'No permitido' }, 403);
+      target = owner?.auth_user_id;
+      payload = order.status === 'aceptado'
+        ? { title: '✅ El vecino aceptó los cambios', body: `${order.customer_name || 'El vecino'} aceptó los cambios. Ya puedes preparar el pedido.`, url: SITE + 'pages/pedidos.html?order=' + order.id, tag: 'order-' + order.id }
+        : { title: 'Pedido cancelado', body: `${order.customer_name || 'El vecino'} canceló el pedido tras los cambios.`, url: SITE + 'pages/pedidos.html', tag: 'order-' + order.id };
     } else if (event === 'new') {
       if (cust?.auth_user_id !== uid || order.status !== 'pendiente') return json({ error: 'No permitido' }, 403);
       target = owner?.auth_user_id;

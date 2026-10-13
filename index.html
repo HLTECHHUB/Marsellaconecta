@@ -1356,13 +1356,13 @@ const orderMsg = (biz, o) => `🛒 *Hola ${biz.nombre}, este es mi pedido (ya ac
   (o.items || []).map(i => `• ${i.name} x${i.qty}: ${money((Number(i.price) || 0) * i.qty)}`).join('\n') +
   `\n\n💰 *Total: ${money(o.total)}*` + (o.customer_name ? `\n👤 ${o.customer_name}` : '') + `\n🔗 Marsella Conecta`;
 
-window.orderWhatsApp = function(orderId) {
+window.orderWhatsApp = function(orderId, direct) {
   const o = (window._myOrders || []).find(x => x.id === orderId); if (!o) return;
   const biz = allData.find(b => String(b.id) === String(o.business_id));
   const tel = cleanPhone(biz && biz.telefono);
   if (!tel) { alert('Este negocio no tiene teléfono registrado.'); return; }
   logUserEvent('Pedido_WhatsApp', (o.items || []).map(i => `${i.qty}× ${i.name}`).join(', ').slice(0, 400), biz.nombre, null, null, null, Number(o.total) || 0);
-  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(orderMsg(biz, o))}`, '_blank');
+  window.open(`https://wa.me/${COUNTRY_CODE}${tel}?text=${encodeURIComponent(direct ? orderMsg(biz, o).replace(' (ya aceptado en Marsella Conecta)', '') : orderMsg(biz, o))}`, '_blank');
 };
 
 async function loadMyOrders() {
@@ -1372,14 +1372,16 @@ async function loadMyOrders() {
   window._myOrders = data || [];
   if (!data || !data.length) { el.innerHTML = ''; return; }
   setTimeout(() => markUnread(data), 0);
-  const pill = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'], completado: ['#e8eaf6', '#3949ab', '📦 Completado'] };
+  const pill = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'], completado: ['#e8eaf6', '#3949ab', '📦 Completado'], modificado: ['#fff4e5', '#9a5b00', '✏️ Propone cambios'], cancelado: ['#fdecea', '#b3261e', 'Cancelado'] };
   el.innerHTML = '<h4 style="margin:18px 0 8px">📦 Mis solicitudes</h4>' + data.map(o => {
     const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
     return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
       <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
+      ${o.status === 'pendiente' && o.due_at ? (() => { const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000); const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' }); return left >= 0 ? `<div style="font-size:.8rem;color:#1b6b4a;font-weight:700">⏱️ ${shopEsc(biz.nombre || 'El negocio')} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div style="font-size:.82rem;color:#b3261e;font-weight:700">⚠️ El negocio no ha respondido a tiempo.</div><button class="cart-send" style="background:#fff;color:#25a244;border:1.5px solid #25a244;margin-top:6px" onclick="window.orderWhatsApp('${o.id}', true)">💬 Escribirle por WhatsApp</button>`; })() : ''}
+      ${o.status === 'modificado' ? `<div style="background:#fff4e5;border-radius:10px;padding:10px;font-size:.86rem;margin:6px 0">✏️ <b>${shopEsc(biz.nombre || 'El negocio')} propone cambios:</b><br>${shopEsc(o.business_note || '')}</div><div style="display:flex;gap:8px"><button class="cart-send" style="flex:1" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button><button class="cart-send" style="flex:1;background:#fff;color:#b3261e;border:1.5px solid #e6b8b4" onclick="window.answerMod('${o.id}', false)">✖ Cancelar</button></div>` : ''}
       ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
       ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}
-      ${o.status !== 'rechazado' ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : ''}
+      ${!['rechazado', 'cancelado'].includes(o.status) ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : ''}
       ${o.status === 'aceptado' ? `<button class="cart-send" style="background:#fff;color:#3949ab;border:1.5px solid #3949ab;margin-top:6px" onclick="window.completeMyOrder('${o.id}')">✔ Ya recibí mi pedido</button>` : ''}</div>`;
   }).join('');
 }
@@ -1389,6 +1391,13 @@ async function markUnread(orders) {
   const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
   for (const o of orders.filter(x => x.status !== 'rechazado')) unreadCount(o.id, session.user.id).then(n => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<b style="background:#d84040;color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem">' + n + '</b>'; }).catch(() => {});
 }
+window.answerMod = async (id, accept) => {
+  if (!accept && !confirm('¿Cancelar este pedido?')) return;
+  const { error } = await supabase.rpc('answer_modification', { p_order_id: id, p_accept: accept });
+  if (error) { alert('No se pudo responder: ' + error.message); return; }
+  supabase.functions.invoke('order-push', { body: { order_id: id, event: 'answer' } }).catch(() => {});
+  loadMyOrders();
+};
 window.completeMyOrder = async (id) => {
   if (!confirm('¿Ya recibiste tu pedido? Se cerrará el chat de este pedido.')) return;
   const { error } = await supabase.rpc('complete_order', { p_order_id: id });
