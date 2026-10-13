@@ -1,4 +1,4 @@
-# Marsella Conecta — Handoff (corrected)
+# Conecta Marsella — Handoff (corrected)
 
 **Revised:** October 12, 2026
 **What this is:** A corrected version of `MARSELLA_CONECTA_COMPLETE_HANDOFF.md`, rewritten to match the files actually delivered and the repositories actually inspected. Anything I could not confirm is labeled **UNVERIFIED** rather than stated as fact.

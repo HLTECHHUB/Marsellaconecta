@@ -1,4 +1,4 @@
-# Marsella Conecta
+# Conecta Marsella
 
 Directorio de negocios y vecinos de la Colonia Marsella, El Salvador.
 Contacto: info@hl-techhub.com · Static site (GitHub Pages) + Supabase (Auth, Postgres/RLS, Storage, Edge Functions).

@@ -1,4 +1,4 @@
-// Marsella Conecta service worker: makes the site installable and keeps the shell available offline.
+// Conecta Marsella service worker: makes the site installable and keeps the shell available offline.
 // Data (Supabase), CDN modules and fonts are never cached here — they always go to the network.
 const CACHE = 'marsella-shell-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './assets/icons/icon-192.png', './assets/icons/icon-512.png'];
@@ -33,7 +33,7 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Marsella Conecta', {
+  e.waitUntil(self.registration.showNotification(d.title || 'Conecta Marsella', {
     body: d.body || '', icon: './assets/icons/icon-192.png', badge: './assets/icons/icon-192.png',
     data: { url: d.url || './' }, tag: d.tag || undefined
   }));

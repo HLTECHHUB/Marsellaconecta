@@ -1,6 +1,6 @@
 {
-  "name": "Marsella Conecta",
-  "short_name": "Marsella",
+  "name": "Conecta Marsella",
+  "short_name": "Conecta",
   "description": "El directorio de negocios y servicios de Colonia Marsella, El Salvador.",
   "lang": "es",
   "start_url": "./index.html?source=pwa",

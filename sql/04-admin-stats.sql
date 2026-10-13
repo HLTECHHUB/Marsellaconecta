@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Admin stats add-on
+-- Conecta Marsella — Admin stats add-on
 -- Run this once, in Supabase Studio SQL Editor, AFTER
 -- admin-schema.sql. Just adds one policy: admins can read the
 -- events_log table (searches, logins, business clicks, etc.)

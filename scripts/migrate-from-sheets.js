@@ -1,5 +1,5 @@
 /**
- * Marsella Conecta — one-time migration from Google Sheets to Supabase.
+ * Conecta Marsella — one-time migration from Google Sheets to Supabase.
  *
  * Run this ONCE, locally, from your own machine — never deploy it or put
  * the service role key in the frontend. It:

@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Promotions add-on
+-- Conecta Marsella — Promotions add-on
 -- Run this AFTER supabase-schema.sql, once, in Supabase Studio
 -- SQL Editor. Adds a curated promotions/banner system.
 -- ============================================================

@@ -1,5 +1,5 @@
 -- ============================================================
--- Marsella Conecta — Notify webhook (SQL version)
+-- Conecta Marsella — Notify webhook (SQL version)
 -- Run this AFTER deploying the notify-new-business Edge Function
 -- (see NOTIFY-SETUP.md steps 1-3 first — you still need Resend +
 -- the function deployed + secrets set for this to actually send
