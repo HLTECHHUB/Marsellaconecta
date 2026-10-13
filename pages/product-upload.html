@@ -383,20 +383,17 @@ async function loadBusinessInfo() {
     return false;
   }
   
-  // Get business associated with this profile
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('owner_profile_id', profile.id)
-    .order('created_at')
-    .limit(1)
-    .maybeSingle();
-  
+  // Business to add products to: ?business=<id> (must be owned by this user), else their first one
+  const wanted = new URLSearchParams(location.search).get('business');
+  let q = supabase.from('businesses').select('id').eq('owner_profile_id', profile.id);
+  if (wanted) q = q.eq('id', wanted);
+  const { data: business } = await q.order('created_at').limit(1).maybeSingle();
+
   if (!business) {
     showAlert('error', 'No tienes un negocio registrado. Primero registra tu negocio.');
     return false;
   }
-  
+
   businessId = business.id;
   return true;
 }
