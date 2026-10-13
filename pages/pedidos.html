@@ -163,7 +163,9 @@ window.modCalc = () => {
 window.openMod = (id) => {
   modId = id; discarded = new Set(); const o = ordersById[id] || { items: [] };
   document.getElementById('modItems').innerHTML = (o.items || []).map((i, k) => `<div class="row" id="mrow${k}" style="padding:8px 0;border-bottom:1px solid var(--border);align-items:center;gap:8px"><span style="flex:1"><span class="mname">${esc(i.name)}</span><br><span class="muted">pidió ${esc(i.qty)} · ${money(i.price)}</span></span><input id="mq${k}" type="number" min="0" max="${esc(i.qty)}" value="${esc(i.qty)}" oninput="modCalc()" style="width:64px;margin:0;padding:8px"><button class="btn btn-no" id="mbtn${k}" style="padding:8px 10px;font-size:.78rem" onclick="modDiscard(${k})">🗑 Descartar</button></div>`).join('')
-    + '<div class="sla" id="modTotal" style="margin-top:8px"></div><label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:6px"><input type="checkbox" id="modStock" checked style="width:auto;margin:2px 0 0"><span>Marcar los productos descartados como <b>agotados</b> en mi catálogo</span></label>';
+    + '<div class="sla" id="modTotal" style="margin-top:8px"></div><div class="muted" id="modInv" style="margin-top:4px"></div><label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:6px"><input type="checkbox" id="modStock" checked style="width:auto;margin:2px 0 0"><span>Marcar los productos descartados como <b>agotados</b> (inventario en 0)</span></label>';
+  const pids = (o.items || []).map((i) => i.product_id).filter(Boolean);
+  if (pids.length) supabase.from('products').select('id,name,stock_qty').in('id', pids).then(({ data }) => { const t = (data || []).filter((x) => x.stock_qty != null).map((x) => esc(x.name) + ': ' + x.stock_qty + ' en inventario').join(' · '); document.getElementById('modInv').innerHTML = t ? '📦 ' + t : ''; });
   modCalc(); document.getElementById('modErr').textContent = ''; document.getElementById('modExtra').value = '';
   document.getElementById('modPreset').innerHTML = MODS.map((m) => `<option>${esc(m)}</option>`).join('');
   document.getElementById('modOv').classList.add('on');
@@ -181,7 +183,7 @@ window.sendMod = async () => {
   document.getElementById('modOv').classList.remove('on');
   if (document.getElementById('modStock')?.checked) {
     const gone = (o.items || []).filter((i, k) => discarded.has(k) && i.product_id).map((i) => i.product_id);
-    if (gone.length) await supabase.from('products').update({ in_stock: false }).in('id', gone);
+    if (gone.length) { await supabase.from('products').update({ in_stock: false }).in('id', gone); await supabase.from('products').update({ stock_qty: 0 }).in('id', gone).not('stock_qty', 'is', null); }
   }
   supabase.functions.invoke('order-push', { body: { order_id: modId, event: 'modify' } }).catch(() => {});
   loadOrders();
