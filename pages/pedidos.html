@@ -28,6 +28,8 @@
   input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; }
   .login { max-width: 380px; margin: 60px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; }
   .err { color: #b3261e; font-size: .85rem; margin-top: 8px; }
+  .tabs { display: flex; gap: 6px; background: #efe9e1; padding: 4px; border-radius: 14px; margin: 4px 0 16px; } .tab { flex: 1; border: none; background: none; padding: 9px 4px; border-radius: 11px; font: inherit; font-size: .84rem; font-weight: 700; color: var(--ink-muted); cursor: pointer; } .tab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 6px rgba(0,0,0,.08); } .tab b { background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: .68rem; margin-left: 2px; } .tab b:empty { display: none; }
+  .onum { font-size: .78rem; font-weight: 800; color: var(--accent); }
   h2 { font-size: 1rem; margin: 22px 0 10px; }
   select, textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; background: #fff; }
   .sla { font-size: .8rem; font-weight: 700; margin: 6px 0; } .sla.ok { color: var(--accent2); } .sla.late { color: #b3261e; }
@@ -50,10 +52,8 @@
     <div class="sub" id="who">Cargando…</div>
     <div class="push-box" id="pushBox"></div>
     <div class="card" id="slaBox"></div>
-    <div id="pending"></div>
-    <div id="active"></div>
-    <h2>Historial</h2>
-    <div id="history"></div>
+    <div class="tabs"><button class="tab on" id="t-active" onclick="setTab('active')">Activos <b id="n-active"></b></button><button class="tab" id="t-done" onclick="setTab('done')">Completados <b id="n-done"></b></button><button class="tab" id="t-cancel" onclick="setTab('cancel')">Cancelados <b id="n-cancel"></b></button></div>
+    <div id="olist"></div>
   </div>
 </div>
 
@@ -132,23 +132,30 @@ function orderCard(o) {
   const note = o.status === 'modificado' ? `<div class="sla" style="color:#9a5b00">✏️ Esperando respuesta del vecino: “${esc(o.business_note || '')}”${o.proposed_items ? '<br>Nuevo pedido: ' + o.proposed_items.map((i) => esc(i.name) + ' ×' + esc(i.qty)).join(', ') + ' — ' + money(o.proposed_total) : ''}</div>` : '';
   const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-mod" onclick="openMod('${o.id}')">✏️ Modificar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>`
     : o.status === 'aceptado' ? `<div class="actions"><button class="btn btn-ok" onclick="completeOrder('${o.id}')">📦 Marcar como entregado</button></div>` : '';
-  return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
+  return `<div class="card"><div class="row"><b>${o.order_number ? '<span class="onum">#' + o.order_number + '</span> · ' : ''}${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
     <div class="muted">${esc(bizNames[o.business_id] || '')} · ${fmt(o.created_at)}</div><div class="items">${items}</div>
     <div class="row"><b>Total ${money(o.total)}</b></div>${sla}${note}${acts}
     ${!['rechazado', 'cancelado'].includes(o.status) ? `<div class="actions"><button class="btn btn-ghost" onclick="openChat('${o.id}','${esc(o.customer_name || 'Vecino').replace(/'/g, '')}')">💬 Chat <span id="unr-${o.id}"></span></button></div>` : ''}</div>`;
+}
+let allOrders = [], tab = 'active';
+const GROUPS = { active: ['pendiente', 'aceptado', 'modificado'], done: ['completado'], cancel: ['rechazado', 'cancelado'] };
+window.setTab = (t) => { tab = t; renderList(); };
+function renderList() {
+  Object.keys(GROUPS).forEach((k) => { const n = allOrders.filter((o) => GROUPS[k].includes(o.status)).length; const b = document.getElementById('n-' + k); b.textContent = n || ''; document.getElementById('t-' + k).classList.toggle('on', tab === k); });
+  const list = allOrders.filter((o) => GROUPS[tab].includes(o.status));
+  const el = document.getElementById('olist');
+  if (tab === 'active') {
+    const pend = list.filter((o) => o.status === 'pendiente'), rest = list.filter((o) => o.status !== 'pendiente');
+    el.innerHTML = (pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>') + (rest.length ? '<h2>🚚 En curso (' + rest.length + ')</h2>' + rest.map(orderCard).join('') : '');
+  } else el.innerHTML = list.length ? list.map(orderCard).join('') : '<div class="muted" style="text-align:center;padding:30px">' + (tab === 'done' ? 'Aún no hay pedidos completados.' : 'No hay pedidos cancelados ni rechazados.') + '</div>';
+  allOrders.filter((o) => o.status !== 'rechazado').slice(0, 40).forEach((o) => { if (window._uid) unreadCount(o.id, window._uid).then((n) => { const e = document.getElementById('unr-' + o.id); if (e && n) e.innerHTML = '<span class="pill p-pendiente">' + n + ' nuevo(s)</span>'; }).catch(() => {}); });
 }
 async function loadOrders() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
   if (error) { document.getElementById('pending').innerHTML = '<div class="err">No se pudieron cargar los pedidos.</div>'; return; }
   ordersById = Object.fromEntries((data || []).map((o) => [o.id, o]));
-  const pend = (data || []).filter((o) => o.status === 'pendiente'), active = (data || []).filter((o) => ['aceptado', 'modificado'].includes(o.status)), done = (data || []).filter((o) => ['rechazado', 'completado', 'cancelado'].includes(o.status));
-  document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
-  document.getElementById('active').innerHTML = active.length ? '<h2>🚚 En curso (' + active.length + ')</h2>' + active.map(orderCard).join('') : '';
-  document.getElementById('history').innerHTML = done.length ? done.map(orderCard).join('') : '<div class="muted">Aún no hay historial.</div>';
-  const { data: { session } } = await supabase.auth.getSession();
-  for (const o of (data || []).filter((x) => x.status !== 'rechazado').slice(0, 20)) {
-    unreadCount(o.id, session.user.id).then((n) => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<span class="pill p-pendiente">' + n + ' nuevo(s)</span>'; }).catch(() => {});
-  }
+  allOrders = data || []; renderList();
+  const { data: { session } } = await supabase.auth.getSession(); window._uid = session && session.user.id; renderList();
   const want = new URLSearchParams(location.search).get('order');
   if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }

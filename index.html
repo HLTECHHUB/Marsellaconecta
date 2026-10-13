@@ -372,6 +372,9 @@
   .promo-banner.no-img .promo-dots button.active { background: #c65d3b; }
   .promo-banner .promo-dots { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; }
   /* PRODUCTS + CART */
+  .nav-orders { position: relative; display: inline-flex; align-items: center; height: 38px; padding: 0 12px; background: #e2f1ed; color: #1b6b4a; border-radius: 9px; font-weight: 700; font-size: .85rem; text-decoration: none; white-space: nowrap; }
+  .nav-orders .count { position: absolute; top: -6px; right: -6px; background: #d84040; color: #fff; min-width: 20px; height: 20px; border-radius: 10px; font-size: .7rem; font-weight: 800; display: none; place-items: center; padding: 0 4px; }
+  @media (max-width: 640px) { .nav-orders .nav-orders-t { display: none; } .nav-orders { width: 38px; padding: 0; justify-content: center; } }
   .nav-cart { position: relative; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; background: #f5e6e0; border-radius: 9px; border: none; font-size: 1.05rem; }
   .nav-cart .count { position: absolute; top: -6px; right: -6px; background: #d84040; color: #fff; min-width: 20px; height: 20px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; display: none; place-items: center; padding: 0 4px; }
   .btn-products { grid-column: 1 / -1; background: #f5e6e0; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 9px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; width: 100%; margin-top: 8px; }
@@ -428,6 +431,7 @@
   </div>
   <div class="nav-actions">
     <button class="nav-cart" id="navCart" onclick="window.openCart()" title="Mi pedido">🛒<span class="count" id="cartCount">0</span></button>
+    <a class="nav-orders" id="navOrders" href="pages/mis-pedidos.html" title="Mis pedidos" style="display:none">📦<span class="nav-orders-t"> Mis pedidos</span><span class="count" id="ordersCount"></span></a>
     <div class="profile-badge-nav" id="navProfileBadge" onclick="openProfileEditModal()">👤 Perfil</div>
     <button class="nav-login" id="navLoginBtn" onclick="openAuthModal()">Entrar</button>
     <a href="pages/register-user.html" id="navJoinBtn" class="btn-join-nav">Unirte Ahora</a>
@@ -622,7 +626,6 @@
 import { supabase } from './assets/js/supabase.js';
 import { bindZonaPicker } from './assets/js/zonas.js';
 import { CONFIG } from './assets/js/config.js';
-import { openOrderChat, unreadCount } from './assets/js/chat.js';
 const COUNTRY_CODE = '503';
 
 const CATEGORY_ICONS = {
@@ -1333,7 +1336,7 @@ window.closeCart = () => document.getElementById('cartDrawer').classList.remove(
 
 function renderCart() {
   const body = document.getElementById('cartBody');
-  if (!cart.length) { body.innerHTML = '<div class="cart-empty"><div style="font-size:2.4rem">🛒</div><p>Tu pedido está vacío.</p><p style="font-size:0.8rem;margin-top:6px">Abre un negocio con productos y toca “Agregar”.</p></div><div id="cartOrders"></div>'; loadMyOrders(); return; }
+  if (!cart.length) { body.innerHTML = '<div class="cart-empty"><div style="font-size:2.4rem">🛒</div><p>Tu pedido está vacío.</p><p style="font-size:0.8rem;margin-top:6px">Abre un negocio con productos y toca “Agregar”.</p></div>'; loadMyOrders(); return; }
   const groups = {};
   cart.forEach(i => { const p = productsById[i.id]; if (p) (groups[p.business_id] ||= []).push({ p, qty: i.qty }); });
   body.innerHTML = Object.entries(groups).map(([bizId, items]) => {
@@ -1347,35 +1350,18 @@ function renderCart() {
       <button class="cart-send" onclick="window.sendOrder('${bizId}')">📨 Enviar solicitud al negocio</button>
       <div style="font-size:.74rem;color:var(--ink-muted);margin-top:6px">El negocio debe aceptar tu pedido. Después coordinan los detalles por el chat de la app.</div>
     </div>`;
-  }).join('') + '<div id="cartOrders"></div>';
+  }).join('') + '';
   loadMyOrders();
 }
 
 async function loadMyOrders() {
-  const el = document.getElementById('cartOrders');
-  if (!el || !currentProfile) return;
-  const { data } = await supabase.from('orders').select('*').eq('customer_profile_id', currentProfile.id).order('created_at', { ascending: false }).limit(8);
-  window._myOrders = data || [];
-  if (!data || !data.length) { el.innerHTML = ''; return; }
-  setTimeout(() => markUnread(data), 0);
-  const pill = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'], completado: ['#e8eaf6', '#3949ab', '📦 Completado'], modificado: ['#fff4e5', '#9a5b00', '✏️ Propone cambios'], cancelado: ['#fdecea', '#b3261e', 'Cancelado'] };
-  el.innerHTML = '<h4 style="margin:18px 0 8px">📦 Mis solicitudes</h4>' + data.map(o => {
-    const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
-    return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
-      <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
-      ${o.status === 'pendiente' && o.due_at ? (() => { const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000); const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' }); return left >= 0 ? `<div style="font-size:.8rem;color:#1b6b4a;font-weight:700">⏱️ ${shopEsc(biz.nombre || 'El negocio')} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div style="font-size:.82rem;color:#b3261e;font-weight:700">⚠️ El negocio no ha respondido a tiempo.</div><div style="font-size:.8rem;color:var(--ink-muted);margin-top:4px">Puedes escribirle por el chat mientras responde.</div>`; })() : ''}
-      ${o.status === 'modificado' ? `<div style="background:#fff4e5;border-radius:10px;padding:10px;font-size:.86rem;margin:6px 0">✏️ <b>${shopEsc(biz.nombre || 'El negocio')} propone cambios:</b><br>${shopEsc(o.business_note || '')}${o.proposed_items ? modDiff(o) : ''}</div><div style="display:flex;gap:8px"><button class="cart-send" style="flex:1" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button><button class="cart-send" style="flex:1;background:#fff;color:#b3261e;border:1.5px solid #e6b8b4" onclick="window.answerMod('${o.id}', false)">✖ Cancelar</button></div>` : ''}
-      ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
-      ${o.status === 'aceptado' ? `<div style="font-size:.84rem;color:#1b6b4a;font-weight:700;margin:6px 0">✅ Pedido aceptado. Coordina la entrega por el chat.</div>` : ''}
-      ${!['rechazado', 'cancelado'].includes(o.status) ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : ''}
-      ${o.status === 'aceptado' ? `<button class="cart-send" style="background:#fff;color:#3949ab;border:1.5px solid #3949ab;margin-top:6px" onclick="window.completeMyOrder('${o.id}')">✔ Ya recibí mi pedido</button>` : ''}</div>`;
-  }).join('');
-}
-
-window.chatOrder = (id) => { const o = (window._myOrders || []).find(x => x.id === id); const biz = o && allData.find(b => String(b.id) === String(o.business_id)); window.closeCart(); openOrderChat(id, (biz && biz.nombre) || 'Negocio'); };
-async function markUnread(orders) {
-  const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
-  for (const o of orders.filter(x => x.status !== 'rechazado')) unreadCount(o.id, session.user.id).then(n => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<b style="background:#d84040;color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem">' + n + '</b>'; }).catch(() => {});
+  // Orders now live in their own page (pages/mis-pedidos.html); here we only refresh the nav badge.
+  const btn = document.getElementById('navOrders');
+  if (!currentProfile) { if (btn) btn.style.display = 'none'; return; }
+  if (btn) btn.style.display = '';
+  const { data } = await supabase.from('orders').select('id,status').eq('customer_profile_id', currentProfile.id).in('status', ['pendiente', 'aceptado', 'modificado']);
+  const n = (data || []).length, c = document.getElementById('ordersCount');
+  if (c) { c.textContent = n; c.style.display = n ? 'grid' : 'none'; }
 }
 window.answerMod = async (id, accept) => {
   if (!accept && !confirm('¿Cancelar este pedido?')) return;
@@ -1409,13 +1395,7 @@ async function checkModifications() {
   const o = (data || []).find(x => !modShown.has(x.id));
   if (o) { modShown.add(o.id); showModPopup(o); }
 }
-window.addEventListener('load', () => { setTimeout(checkModifications, 3500); setInterval(checkModifications, 20000); });
-window.completeMyOrder = async (id) => {
-  if (!confirm('¿Ya recibiste tu pedido? Se cerrará el chat de este pedido.')) return;
-  const { error } = await supabase.rpc('complete_order', { p_order_id: id });
-  if (error) { alert('No se pudo actualizar: ' + error.message); return; }
-  loadMyOrders();
-};
+window.addEventListener('load', () => { setTimeout(() => { checkModifications(); loadMyOrders(); }, 3500); setInterval(() => { checkModifications(); loadMyOrders(); }, 20000); });
 let sendingOrder = false;
 window.sendOrder = async function(bizId) {
   if (!currentProfile) { window.closeCart(); openAuthModal(); return; }
@@ -1446,10 +1426,10 @@ window.sendOrder = async function(bizId) {
   } finally { sendingOrder = false; }
 };
 
-// Deep link from a notification: ?pedido=<id> opens the cart drawer with the order status.
+// Deep link from a notification: ?pedido=<id> goes to the orders page.
 (function() {
-  if (!new URLSearchParams(location.search).get('pedido')) return;
-  let tries = 0; const t = setInterval(() => { if ((currentProfile && allData.length) || ++tries > 30) { clearInterval(t); if (currentProfile) { window.openCart(); const q = new URLSearchParams(location.search); if (q.get('chat') === '1') setTimeout(() => window.chatOrder(q.get('pedido')), 1200); } } }, 500);
+  const q = new URLSearchParams(location.search); const id = q.get('pedido');
+  if (id) location.replace('pages/mis-pedidos.html?pedido=' + encodeURIComponent(id) + (q.get('chat') === '1' ? '&chat=1' : ''));
 })();
 
 // ---- Promo banner carousel ----

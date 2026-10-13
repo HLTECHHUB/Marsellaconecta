@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis pedidos — Conecta Marsella</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#c65d3b">
+<style>
+  :root { --bg:#faf7f2; --surface:#fff; --ink:#2d2622; --ink-muted:#6b6560; --accent:#c65d3b; --accent2:#1b6b4a; --border:#e8e2db; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+  nav { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; gap: 10px; }
+  .logo { font-weight: 800; text-decoration: none; color: var(--ink); } .logo span { color: var(--accent); }
+  .navr { display: flex; gap: 8px; align-items: center; }
+  .shell { max-width: 640px; margin: 0 auto; padding: 18px 16px 80px; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; } .sub { color: var(--ink-muted); font-size: .9rem; margin-bottom: 14px; }
+  .btn { border: none; border-radius: 12px; padding: 11px 14px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+  .btn-ok { background: var(--accent2); color: #fff; } .btn-no { background: #fff; color: #b3261e; border: 1.5px solid #e6b8b4; }
+  .btn-main { background: var(--accent); color: #fff; } .btn-ghost { background: #fff; border: 1.5px solid var(--border); color: var(--ink); }
+  .btn-chat { background: #fff; color: var(--accent2); border: 1.5px solid var(--accent2); } .btn-done { background: #fff; color: #3949ab; border: 1.5px solid #3949ab; }
+  .tabs { display: flex; gap: 6px; background: #efe9e1; padding: 4px; border-radius: 14px; margin-bottom: 16px; }
+  .tab { flex: 1; border: none; background: none; padding: 10px; border-radius: 11px; font: inherit; font-weight: 700; color: var(--ink-muted); cursor: pointer; }
+  .tab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+  .tab b { background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 7px; font-size: .72rem; margin-left: 4px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(45,38,34,.06); }
+  .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .muted { color: var(--ink-muted); font-size: .8rem; }
+  .items { margin: 8px 0; font-size: .92rem; line-height: 1.6; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; } .actions .btn { flex: 1; min-width: 130px; }
+  .pill { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; white-space: nowrap; }
+  .modbox { background: #fff4e5; border-radius: 12px; padding: 10px 12px; font-size: .88rem; margin: 8px 0; }
+  .empty { text-align: center; color: var(--ink-muted); padding: 40px 10px; }
+  .ok-note { font-size: .84rem; color: var(--accent2); font-weight: 700; margin: 6px 0; } .late { font-size: .82rem; color: #b3261e; font-weight: 700; margin: 6px 0; }
+  .login { max-width: 380px; margin: 70px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; }
+  .unr { background: #d84040; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: .72rem; margin-left: 4px; }
+  .month { font-size: .8rem; font-weight: 800; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .04em; margin: 18px 2px 8px; }
+  .stat { display: flex; gap: 10px; margin-bottom: 14px; } .stat div { flex: 1; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; } .stat b { display: block; font-size: 1.15rem; }
+</style>
+</head>
+<body>
+<div id="loginScreen" class="login" style="display:none">
+  <h1>📦 Mis pedidos</h1><p class="sub">Inicia sesión para ver tus pedidos.</p>
+  <a class="btn btn-main" href="../index.html">Ir a Conecta Marsella</a>
+</div>
+
+<div id="app" style="display:none">
+  <nav>
+    <a class="logo" href="../index.html">Conecta<span>Marsella</span></a>
+    <div class="navr"><a class="btn btn-ghost" id="bizLink" style="display:none;padding:8px 12px" href="pedidos.html">🏪 Mi negocio</a><a class="btn btn-ghost" style="padding:8px 12px" href="../index.html">← Directorio</a></div>
+  </nav>
+  <div class="shell">
+    <h1>📦 Mis pedidos</h1>
+    <div class="sub" id="who">Cargando…</div>
+    <div class="stat" id="stat"></div>
+    <div class="tabs"><button class="tab on" id="tabActive" onclick="setTab('active')">Activos <b id="nActive" style="display:none"></b></button><button class="tab" id="tabHist" onclick="setTab('hist')">Historial</button></div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase.js';
+import { openOrderChat, unreadCount } from '../assets/js/chat.js';
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => '$' + Number(n || 0).toFixed(2);
+const fmt = (d) => new Date(d).toLocaleString('es-SV', { timeZone: 'America/El_Salvador', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const monthOf = (d) => new Date(d).toLocaleDateString('es-SV', { timeZone: 'America/El_Salvador', month: 'long', year: 'numeric' });
+const ACTIVE = ['pendiente', 'aceptado', 'modificado'];
+const PILL = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'], completado: ['#e8eaf6', '#3949ab', '📦 Completado'], modificado: ['#fff4e5', '#9a5b00', '✏️ Propone cambios'], cancelado: ['#fdecea', '#b3261e', 'Cancelado'] };
+let orders = [], names = {}, tab = 'active', uid = null;
+
+function modDiff(o) {
+  if (!o.proposed_items) return '';
+  const prop = {}; o.proposed_items.forEach((i) => { prop[String(i.product_id)] = Number(i.qty); });
+  const lines = (o.items || []).map((i) => { const nq = prop[String(i.product_id)] || 0;
+    return nq === Number(i.qty) ? `<div>${esc(i.name)} ×${i.qty}</div>` : nq === 0 ? `<div style="color:#b3261e"><s>${esc(i.name)} ×${i.qty}</s> — no disponible</div>` : `<div>${esc(i.name)} <s style="color:#b3261e">×${i.qty}</s> <b style="color:#1b6b4a">×${nq}</b></div>`; }).join('');
+  return `<div style="margin-top:6px;line-height:1.6">${lines}<div style="margin-top:4px"><s class="muted">${money(o.total)}</s> → <b>${money(o.proposed_total)}</b></div></div>`;
+}
+
+function card(o) {
+  const st = PILL[o.status] || PILL.pendiente, bn = esc(names[o.business_id] || 'Negocio');
+  let extra = '';
+  if (o.status === 'pendiente' && o.due_at) {
+    const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000);
+    const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' });
+    extra = left >= 0 ? `<div class="ok-note">⏱️ ${bn} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div class="late">⚠️ El negocio no ha respondido a tiempo. Puedes escribirle por el chat.</div>`;
+  }
+  if (o.status === 'modificado') extra = `<div class="modbox">✏️ <b>${bn} propone cambios:</b><br>${esc(o.business_note || '')}${modDiff(o)}</div>
+    <div class="actions"><button class="btn btn-ok" onclick="answer('${o.id}', true)">✅ Aceptar cambios</button><button class="btn btn-no" onclick="answer('${o.id}', false)">✖ Cancelar pedido</button></div>`;
+  if (o.status === 'aceptado') extra = `<div class="ok-note">✅ Pedido aceptado. Coordina la entrega por el chat.</div>`;
+  const canChat = !['rechazado', 'cancelado'].includes(o.status);
+  const btns = (canChat ? `<button class="btn btn-chat" onclick="chat('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : '')
+    + (o.status === 'aceptado' ? `<button class="btn btn-done" onclick="receive('${o.id}')">✔ Ya recibí mi pedido</button>` : '');
+  return `<div class="card" id="ord-${o.id}"><div class="row"><b>${o.order_number ? '<span style="color:var(--accent)">#' + o.order_number + '</span> · ' : ''}${bn}</b><span class="pill" style="background:${st[0]};color:${st[1]}">${st[2]}</span></div>
+    <div class="muted">${fmt(o.created_at)}</div>
+    <div class="items">${(o.items || []).map((i) => esc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
+    ${extra}${o.status === 'modificado' ? '' : ''}${btns ? `<div class="actions">${btns}</div>` : ''}</div>`;
+}
+
+function render() {
+  const act = orders.filter((o) => ACTIVE.includes(o.status)), hist = orders.filter((o) => !ACTIVE.includes(o.status));
+  const n = document.getElementById('nActive'); n.textContent = act.length; n.style.display = act.length ? '' : 'none';
+  document.getElementById('tabActive').classList.toggle('on', tab === 'active'); document.getElementById('tabHist').classList.toggle('on', tab === 'hist');
+  const done = orders.filter((o) => o.status === 'completado');
+  document.getElementById('stat').innerHTML = `<div><b>${orders.length}</b><span class="muted">Pedidos en total</span></div><div><b>${done.length}</b><span class="muted">Completados</span></div><div><b>${money(done.reduce((s, o) => s + Number(o.total || 0), 0))}</b><span class="muted">Comprado</span></div>`;
+  const el = document.getElementById('list');
+  if (tab === 'active') {
+    el.innerHTML = act.length ? act.map(card).join('') : '<div class="empty">No tienes pedidos activos.<br><a href="../index.html" style="color:var(--accent);font-weight:700">Explorar negocios</a></div>';
+  } else if (!hist.length) {
+    el.innerHTML = '<div class="empty">Aún no tienes historial de pedidos.</div>';
+  } else {
+    let last = ''; el.innerHTML = hist.map((o) => { const m = monthOf(o.created_at); const h = m !== last ? `<div class="month">${esc(m)}</div>` : ''; last = m; return h + card(o); }).join('');
+  }
+  setTimeout(markUnread, 0);
+}
+function markUnread() {
+  orders.filter((o) => !['rechazado', 'cancelado'].includes(o.status)).forEach((o) => unreadCount(o.id, uid).then((n) => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<b class="unr">' + n + '</b>'; }).catch(() => {}));
+}
+window.setTab = (t) => { tab = t; render(); };
+window.chat = (id) => openOrderChat(id, names[(orders.find((x) => x.id === id) || {}).business_id] || 'Negocio');
+window.answer = async (id, accept) => {
+  if (!accept && !confirm('¿Cancelar este pedido?')) return;
+  const { error } = await supabase.rpc('answer_modification', { p_order_id: id, p_accept: accept });
+  if (error) { alert('No se pudo responder: ' + error.message); return; }
+  supabase.functions.invoke('order-push', { body: { order_id: id, event: 'answer' } }).catch(() => {});
+  await load();
+};
+window.receive = async (id) => {
+  if (!confirm('¿Ya recibiste tu pedido? Se cerrará el chat de este pedido.')) return;
+  const { error } = await supabase.rpc('complete_order', { p_order_id: id });
+  if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+  await load();
+};
+
+async function load() {
+  const { data: me } = await supabase.from('profiles').select('id,nombre').eq('auth_user_id', uid).maybeSingle();
+  if (!me) { document.getElementById('who').textContent = 'No encontramos tu perfil.'; return; }
+  document.getElementById('who').textContent = 'Hola, ' + (me.nombre || 'vecino') + '. Aquí están tus pedidos.';
+  const { data } = await supabase.from('orders').select('*').eq('customer_profile_id', me.id).order('created_at', { ascending: false }).limit(200);
+  orders = data || [];
+  const ids = [...new Set(orders.map((o) => o.business_id))];
+  if (ids.length) { const { data: bs } = await supabase.from('businesses').select('id,nombre').in('id', ids); (bs || []).forEach((b) => { names[b.id] = b.nombre; }); }
+  render();
+}
+
+async function boot() {
+  const { data: { session } } = await supabase.auth.getSession();
+  document.getElementById('loginScreen').style.display = session ? 'none' : 'block';
+  document.getElementById('app').style.display = session ? 'block' : 'none';
+  if (!session) return;
+  uid = session.user.id;
+  supabase.rpc('my_business_ids').then(({ data, error }) => { if (!error && data && data.length) document.getElementById('bizLink').style.display = ''; });
+  await load();
+  const q = new URLSearchParams(location.search), pid = q.get('pedido');
+  if (pid) {
+    const o = orders.find((x) => x.id === pid);
+    if (o && !ACTIVE.includes(o.status)) { tab = 'hist'; render(); }
+    setTimeout(() => { const el = document.getElementById('ord-' + pid); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.outline = '2px solid var(--accent)'; } if (q.get('chat') === '1' && o) window.chat(pid); }, 400);
+  }
+  clearInterval(window._poll); window._poll = setInterval(load, 25000);
+}
+boot();
+</script>
+</body>
+</html>
