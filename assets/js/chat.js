@@ -5,6 +5,8 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const hhmm = (d) => new Date(d).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' });
 const seenKey = (id) => 'mc_chat_seen_' + id;
 let css = false, state = null;
+export const blockedReason = (t) => (/(\d[\s\-.()+_/]*){7,}/.test(t) || /((cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)[\s\-.,]*){6,}/i.test(t) || /(wa\.me|t\.me|https?:\/\/|www\.)/i.test(t))
+  ? 'No se permiten números de teléfono ni enlaces en el chat.' : '';
 
 function injectCss() {
   if (css) return; css = true;
@@ -41,10 +43,12 @@ export async function openOrderChat(orderId, title) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { alert('Inicia sesión para usar el chat.'); return; }
   const me = session.user.id;
+  const { data: ord } = await supabase.from('orders').select('status').eq('id', orderId).maybeSingle();
+  const closed = !ord || ['rechazado', 'completado'].includes(ord.status);
   const ov = document.createElement('div'); ov.className = 'mcc-ov';
   ov.innerHTML = `<div class="mcc-box"><div class="mcc-head"><div><b>💬 ${esc(title || 'Chat del pedido')}</b><small>Solo tú y el otro participante ven esta conversación</small></div><button class="mcc-x" aria-label="Cerrar">✕</button></div>
     <div class="mcc-list" id="mccList"><div class="mcc-empty">Cargando…</div></div>
-    <form class="mcc-form" id="mccForm"><input id="mccIn" maxlength="500" placeholder="Escribe un mensaje…" autocomplete="off"><button type="submit">Enviar</button></form></div>`;
+    ${closed ? '<div class="mcc-note">🔒 Este pedido ya se completó o no está disponible. El chat está cerrado.</div>' : '<div class="mcc-note">Por seguridad no se permiten números de teléfono ni enlaces. Usen este chat hasta completar el pedido.</div><form class="mcc-form" id="mccForm"><input id="mccIn" maxlength="500" placeholder="Escribe un mensaje…" autocomplete="off"><button type="submit">Enviar</button></form>'}</div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click', (e) => { if (e.target === ov) closeChat(); });
   ov.querySelector('.mcc-x').onclick = closeChat;
@@ -72,9 +76,11 @@ export async function openOrderChat(orderId, title) {
   try { state.channel = supabase.channel('chat-' + orderId).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_messages', filter: 'order_id=eq.' + orderId }, (p) => add(p.new)).subscribe(); } catch (_) {}
   state.timer = setInterval(load, 7000); // fallback if realtime is unavailable
 
-  ov.querySelector('#mccForm').onsubmit = async (e) => {
+  const form = ov.querySelector('#mccForm'); if (!form) return;
+  form.onsubmit = async (e) => {
     e.preventDefault();
     const inp = ov.querySelector('#mccIn'); const body = inp.value.trim(); if (!body) return;
+    const why = blockedReason(body); if (why) { alert(why); return; }
     inp.value = ''; inp.focus();
     const { data: id, error } = await supabase.rpc('send_order_message', { p_order_id: orderId, p_body: body });
     if (error) { alert('No se pudo enviar: ' + error.message); inp.value = body; return; }
