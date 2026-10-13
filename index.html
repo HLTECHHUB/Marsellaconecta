@@ -58,8 +58,16 @@
   .nav-install.on { background: #e7f4ec; }
   .nav-install:hover { background: #1b6b4a; color: #fff; }
   @media (max-width: 640px) { .app-strip { padding: 0 12px; } .app-strip .nav-install { flex: 1; padding: 9px 8px; font-size: 0.8rem; text-align: center; } }
-  .install-steps { padding: 18px 22px 22px; font-size: .95rem; line-height: 1.7; }
-  .install-steps ol { margin: 10px 0 0 20px; }
+  .install-steps { padding: 16px 20px 24px; font-size: 1rem; line-height: 1.5; }
+  .install-steps ol { list-style: none; counter-reset: st; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
+  .install-steps li { counter-increment: st; display: flex; gap: 12px; align-items: flex-start; background: #f4f8f5; border-radius: 14px; padding: 12px 14px; }
+  .install-steps li::before { content: counter(st); flex: none; width: 28px; height: 28px; border-radius: 50%; background: #1b6b4a; color: #fff; font-weight: 800; display: grid; place-items: center; font-size: .9rem; }
+  .install-steps .warn { background: #fff4e5; border-radius: 14px; padding: 12px 14px; margin-bottom: 4px; }
+  @media (max-width: 640px) {
+    #installOverlay { align-items: flex-end; padding: 0; }
+    #installOverlay .shop-modal { max-width: none !important; width: 100%; border-radius: 22px 22px 0 0; max-height: 88vh; padding-bottom: env(safe-area-inset-bottom); animation: sheetUp .25s ease-out; }
+  }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
   .btn-join-nav {
     background: transparent; color: var(--accent2); text-decoration: none;
     font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border: 1.5px solid var(--accent2);
@@ -1431,9 +1439,11 @@ window.addEventListener('appinstalled', () => { deferredInstall = null; refreshI
 window.installApp = async function() {
   logUserEvent('Instalar_App_Clic');
   if (deferredInstall) { deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; refreshInstallBtn(); return; }
-  document.getElementById('installSteps').innerHTML = isIOS
-    ? 'En iPhone/iPad (con <b>Safari</b>):<ol><li>Toca el botón <b>Compartir</b> ⬆️ (abajo en la pantalla).</li><li>Elige <b>“Añadir a pantalla de inicio”</b>.</li><li>Toca <b>Añadir</b>. ¡Listo! Verás el ícono de Marsella Conecta.</li></ol>'
-    : 'En Android (con <b>Chrome</b>):<ol><li>Toca el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>“Instalar app”</b> o <b>“Añadir a pantalla de inicio”</b>.</li><li>Confirma. ¡Listo! Verás el ícono de Marsella Conecta.</li></ol>';
+  const inApp = /fban|fbav|instagram|whatsapp|line\/|tiktok|wv\)/i.test(navigator.userAgent);
+  const warn = inApp ? '<div class="warn">⚠️ Estás dentro de otra app (WhatsApp, Facebook, Instagram…). Toca los <b>⋮</b> o “Abrir en el navegador” y abre este enlace en <b>' + (isIOS ? 'Safari' : 'Chrome') + '</b> primero.</div>' : '';
+  document.getElementById('installSteps').innerHTML = warn + (isIOS
+    ? '<ol><li><span>Abre esta página en <b>Safari</b> y toca el botón <b>Compartir</b> ⬆️ (abajo en la pantalla).</span></li><li><span>Desliza y elige <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Toca <b>Añadir</b>. ¡Listo! Verás el ícono de Marsella Conecta.</span></li></ol>'
+    : '<ol><li><span>Abre esta página en <b>Chrome</b> y toca el menú <b>⋮</b> (arriba a la derecha).</span></li><li><span>Elige <b>“Instalar app”</b> o <b>“Añadir a pantalla de inicio”</b>.</span></li><li><span>Confirma con <b>Instalar</b>. ¡Listo! Verás el ícono de Marsella Conecta.</span></li></ol>');
   document.getElementById('installOverlay').classList.add('active');
 };
 refreshInstallBtn();
@@ -1467,7 +1477,15 @@ window.togglePush = async function() {
       logUserEvent('Notificaciones_Activadas');
       reg.showNotification('Marsella Conecta', { body: '¡Listo! Te avisaremos de promociones y novedades del barrio.', icon: './assets/icons/icon-192.png' });
     }
-  } catch (e) { console.warn('Notificaciones:', e); alert('No se pudo cambiar las notificaciones. Intenta de nuevo.'); }
+  } catch (e) {
+    console.warn('Notificaciones:', e);
+    const m = String((e && (e.message || e.name)) || e);
+    let why = 'Intenta de nuevo en unos segundos.';
+    if (/permission|denied|NotAllowed/i.test(m)) why = 'Las notificaciones están bloqueadas. Actívalas en los ajustes del navegador para este sitio.';
+    else if (/push service|AbortError|registration failed/i.test(m)) why = 'Tu navegador no pudo registrar el servicio de notificaciones. Abre la página en Chrome (no dentro de WhatsApp/Facebook) y revisa que tengas internet; algunos navegadores (Brave, modo ahorro) lo bloquean.';
+    else if (/save_push_subscription|rpc|function|schema/i.test(m)) why = 'El servidor no pudo guardar tu dispositivo (' + m + ').';
+    alert('No se pudieron activar las notificaciones.\n\n' + why);
+  }
   refreshPushBtn();
 };
 // A signed-in neighbor's device gets linked to their profile (so admin can target by zona).
