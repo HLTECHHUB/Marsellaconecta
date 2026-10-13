@@ -663,6 +663,19 @@ window.filterByCategory = function(cat) {
   renderPills();
 };
 
+// Accent-insensitive, plural-tolerant search helpers
+const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const stem = (w) => (w.length > 3 ? w.replace(/(es|s)$/, '') : w);
+const SEARCH_SYNONYMS = {
+  taxi: ['transporte'], moto: ['transporte', 'mecanica'], flete: ['transporte'], bus: ['transporte'],
+  comida: ['alimentacion'], pupusa: ['alimentacion'], pan: ['alimentacion'], comedor: ['alimentacion'],
+  bebida: ['bebidas'], agua: ['bebidas'], refresco: ['bebidas'],
+  aire: ['instalacion ac', 'acondicionado'], clima: ['instalacion ac'], ac: ['instalacion ac'],
+  gotera: ['plomeria'], tuberia: ['plomeria'], plomero: ['plomeria'],
+  electricista: ['electricidad'], luz: ['electricidad'],
+  pelo: ['belleza'], salon: ['belleza'], medicina: ['farmacia'], ropa: ['lavanderia'],
+};
+
 function applyFilters() {
   const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
 
@@ -671,18 +684,17 @@ function applyFilters() {
     searchDebounceTimer = setTimeout(() => logUserEvent('Busqueda_Palabra', q, ''), 1200);
   }
 
+  // Typing a search looks across ALL categories (a leftover category pill must not hide results).
+  if (q && activeFilter !== 'Todos') { activeFilter = 'Todos'; document.querySelectorAll('.cat-card').forEach(el => el.classList.remove('active')); renderPills(); }
+
+  const tokens = norm(q).split(/\s+/).filter(Boolean).map(stem);
   filtered = allData.filter(r => {
     const matchCat = activeFilter === 'Todos' || r.categoria === activeFilter;
-    if (!q) return matchCat;
-
-    const hay = [r.nombre, r.categoria, r.sub_categoria, r.barrio, r.descripcion, r.horario].join(' ').toLowerCase();
-
-    let implicitMatch = false;
-    if ((q === 'taxi' || q === 'moto' || q === 'flete') && hay.includes('transporte')) implicitMatch = true;
-    if ((q === 'comida' || q === 'pupusa' || q === 'pan' || q === 'bebida') && hay.includes('alimentacion')) implicitMatch = true;
-    if ((q === 'aire' || q === 'clima' || q === 'gotera' || q === 'techo') && (hay.includes('tecnicos') || hay.includes('hogar'))) implicitMatch = true;
-
-    return matchCat && (hay.includes(q) || implicitMatch);
+    if (!tokens.length) return matchCat;
+    const hay = norm([r.nombre, r.categoria, r.sub_categoria, r.barrio, r.descripcion, r.horario].join(' '));
+    // every word must match, either directly or through a synonym (taxis -> taxi -> transporte)
+    const ok = tokens.every(t => hay.includes(t) || (SEARCH_SYNONYMS[t] || []).some(syn => hay.includes(syn)));
+    return matchCat && ok;
   });
   renderCards();
   renderSearchDropdown(q);
@@ -693,7 +705,7 @@ function renderSearchDropdown(q) {
   const dropdown = document.getElementById('searchDropdown');
   if (!q || q.length < 2) { dropdown.classList.remove('active'); dropdown.innerHTML = ''; return; }
 
-  const matches = allData.filter(r => (r.nombre || '').toLowerCase().includes(q)).slice(0, 6);
+  const matches = filtered.slice(0, 6);
   if (!matches.length) { dropdown.classList.remove('active'); dropdown.innerHTML = ''; return; }
 
   dropdown.innerHTML = matches.map(r => `
