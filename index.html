@@ -1375,6 +1375,7 @@ async function loadMyOrders() {
     const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
     return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
       <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
+      ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
       ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}</div>`;
   }).join('');
 }

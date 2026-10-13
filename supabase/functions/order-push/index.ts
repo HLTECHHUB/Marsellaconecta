@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       target = cust?.auth_user_id;
       payload = order.status === 'aceptado'
         ? { title: '✅ ¡Tu pedido fue aceptado!', body: `${biz?.nombre || 'El negocio'} aceptó tu pedido. Toca para enviarlo por WhatsApp.`, url: SITE + '?pedido=' + order.id, tag: 'order-' + order.id }
-        : { title: 'Pedido no disponible', body: `${biz?.nombre || 'El negocio'} no puede atender tu pedido ahora.`, url: SITE + '?pedido=' + order.id, tag: 'order-' + order.id };
+        : { title: 'Pedido no disponible', body: `${biz?.nombre || 'El negocio'} no tiene disponible tu pedido por ahora.`, url: SITE + '?pedido=' + order.id, tag: 'order-' + order.id };
     }
     if (!target) return json({ notified: 0, devices: 0, reason: 'El destinatario no tiene cuenta vinculada' });
 
