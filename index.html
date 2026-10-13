@@ -602,6 +602,12 @@
     <div class="install-steps" id="installSteps"></div>
   </div>
 </div>
+<div class="shop-overlay" id="modOverlay" style="z-index:950">
+  <div class="shop-modal" style="max-width:420px">
+    <div class="shop-head"><h3>✏️ Cambios en tu pedido</h3></div>
+    <div class="install-steps" id="modBody"></div>
+  </div>
+</div>
 <div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
   <div class="cart-panel">
     <div class="shop-head"><h3>Mi pedido 🛒</h3><button class="shop-x" onclick="window.closeCart()">✕</button></div>
@@ -1378,7 +1384,7 @@ async function loadMyOrders() {
     return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
       <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
       ${o.status === 'pendiente' && o.due_at ? (() => { const left = Math.round((new Date(o.due_at).getTime() - Date.now()) / 60000); const hhmm = new Date(o.due_at).toLocaleTimeString('es-SV', { timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit' }); return left >= 0 ? `<div style="font-size:.8rem;color:#1b6b4a;font-weight:700">⏱️ ${shopEsc(biz.nombre || 'El negocio')} responde antes de las ${hhmm} (≈${left} min)</div>` : `<div style="font-size:.82rem;color:#b3261e;font-weight:700">⚠️ El negocio no ha respondido a tiempo.</div><button class="cart-send" style="background:#fff;color:#25a244;border:1.5px solid #25a244;margin-top:6px" onclick="window.orderWhatsApp('${o.id}', true)">💬 Escribirle por WhatsApp</button>`; })() : ''}
-      ${o.status === 'modificado' ? `<div style="background:#fff4e5;border-radius:10px;padding:10px;font-size:.86rem;margin:6px 0">✏️ <b>${shopEsc(biz.nombre || 'El negocio')} propone cambios:</b><br>${shopEsc(o.business_note || '')}</div><div style="display:flex;gap:8px"><button class="cart-send" style="flex:1" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button><button class="cart-send" style="flex:1;background:#fff;color:#b3261e;border:1.5px solid #e6b8b4" onclick="window.answerMod('${o.id}', false)">✖ Cancelar</button></div>` : ''}
+      ${o.status === 'modificado' ? `<div style="background:#fff4e5;border-radius:10px;padding:10px;font-size:.86rem;margin:6px 0">✏️ <b>${shopEsc(biz.nombre || 'El negocio')} propone cambios:</b><br>${shopEsc(o.business_note || '')}${o.proposed_items ? modDiff(o) : ''}</div><div style="display:flex;gap:8px"><button class="cart-send" style="flex:1" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button><button class="cart-send" style="flex:1;background:#fff;color:#b3261e;border:1.5px solid #e6b8b4" onclick="window.answerMod('${o.id}', false)">✖ Cancelar</button></div>` : ''}
       ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
       ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}
       ${!['rechazado', 'cancelado'].includes(o.status) ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ ${o.status === 'completado' ? 'Ver chat' : 'Chat con el negocio'} <span id="unr-${o.id}"></span></button>` : ''}
@@ -1396,8 +1402,34 @@ window.answerMod = async (id, accept) => {
   const { error } = await supabase.rpc('answer_modification', { p_order_id: id, p_accept: accept });
   if (error) { alert('No se pudo responder: ' + error.message); return; }
   supabase.functions.invoke('order-push', { body: { order_id: id, event: 'answer' } }).catch(() => {});
+  document.getElementById('modOverlay').classList.remove('active');
   loadMyOrders();
 };
+const modShown = new Set();
+function modDiff(o) {
+  if (!o.proposed_items) return `<div style="font-size:.82rem;color:var(--ink-muted);margin-bottom:12px">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>`;
+  const prop = {}; o.proposed_items.forEach(i => { prop[String(i.product_id)] = Number(i.qty); });
+  const lines = (o.items || []).map(i => { const nq = prop[String(i.product_id)] || 0;
+    return nq === Number(i.qty) ? `<div>${shopEsc(i.name)} ×${i.qty}</div>` : nq === 0 ? `<div style="color:#b3261e"><s>${shopEsc(i.name)} ×${i.qty}</s> — no disponible</div>` : `<div>${shopEsc(i.name)} <s style="color:#b3261e">×${i.qty}</s> <b style="color:#1b6b4a">×${nq}</b></div>`; }).join('');
+  return `<div style="font-size:.9rem;margin:8px 0 12px;line-height:1.7">${lines}<div style="margin-top:6px"><s style="color:var(--ink-muted)">${money(o.total)}</s> → <b>${money(o.proposed_total)}</b></div></div>`;
+}
+function showModPopup(o) {
+  const biz = allData.find(b => String(b.id) === String(o.business_id)) || {};
+  document.getElementById('modBody').innerHTML = `<p><b>${shopEsc(biz.nombre || 'El negocio')}</b> propone cambios en tu pedido:</p>
+    <div style="background:#fff4e5;border-radius:12px;padding:12px 14px;margin:10px 0;font-size:.95rem">${shopEsc(o.business_note || '')}</div>
+    ${modDiff(o)}
+    <button class="cart-send" onclick="window.answerMod('${o.id}', true)">✅ Aceptar cambios</button>
+    <button class="cart-send" style="background:#fff;color:#b3261e;border:1.5px solid #e6b8b4;margin-top:8px" onclick="window.answerMod('${o.id}', false)">✖ No acepto (cancelar pedido)</button>
+    <button style="background:none;border:none;color:var(--ink-muted);margin-top:10px;width:100%;cursor:pointer;font:inherit;font-size:.82rem" onclick="document.getElementById('modOverlay').classList.remove('active')">Decidir después</button>`;
+  document.getElementById('modOverlay').classList.add('active');
+}
+async function checkModifications() {
+  if (!currentProfile || document.getElementById('modOverlay').classList.contains('active')) return;
+  const { data } = await supabase.from('orders').select('*').eq('status', 'modificado').order('modified_at', { ascending: true }).limit(5);
+  const o = (data || []).find(x => !modShown.has(x.id));
+  if (o) { modShown.add(o.id); showModPopup(o); }
+}
+window.addEventListener('load', () => { setTimeout(checkModifications, 3500); setInterval(checkModifications, 20000); });
 window.completeMyOrder = async (id) => {
   if (!confirm('¿Ya recibiste tu pedido? Se cerrará el chat de este pedido.')) return;
   const { error } = await supabase.rpc('complete_order', { p_order_id: id });
