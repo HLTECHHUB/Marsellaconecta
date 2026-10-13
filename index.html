@@ -532,7 +532,8 @@
     <div class="modal-form-group"><label>Correo Electrónico</label><input type="email" id="edit_email"></div>
     <div class="modal-row-split">
       <div class="modal-form-group"><label>WhatsApp</label><input type="tel" id="edit_whatsapp" maxlength="9"></div>
-      <div class="modal-form-group"><label>Senda / Quartier</label><input type="text" id="edit_quartier"></div>
+      <div class="modal-form-group"><label>Zona y Quartier</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select id="edit_zona"></select><select id="edit_quartier"></select></div></div>
     </div>
     <div class="modal-form-group"><label>Cambiar Contraseña (Opcional)</label><input type="password" id="edit_password" placeholder="Dejar en blanco para mantener actual"></div>
     
@@ -573,6 +574,7 @@
 // ----------------------------------------------------------------
 
 import { supabase } from './assets/js/supabase.js';
+import { bindZonaPicker } from './assets/js/zonas.js';
 const COUNTRY_CODE = '503';
 
 const CATEGORY_ICONS = {
@@ -632,7 +634,7 @@ function getSessionId() {
   } catch (e) { return null; }
 }
 
-async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null, promotionId = null, productId = null) {
+async function logUserEvent(eventType, searchVal = '', bizName = '', categoria = null, promotionId = null, productId = null, valor = null) {
   try {
     await supabase.from('events_log').insert({
       profile_id: currentProfile?.id || null,
@@ -643,7 +645,8 @@ async function logUserEvent(eventType, searchVal = '', bizName = '', categoria =
       categoria: categoria || (activeFilter && activeFilter !== 'Todos' ? activeFilter : null),
       pagina: location.pathname.split('/').pop() || 'index.html',
       promotion_id: promotionId,
-      product_id: productId
+      product_id: productId,
+      valor: valor
     });
   } catch (err) {
     console.warn('Analytics logger failed:', err);
@@ -753,7 +756,7 @@ async function openProfileEditModal() {
   document.getElementById('edit_nombre').value = currentProfile.nombre || '';
   document.getElementById('edit_apellido').value = currentProfile.apellido || '';
   document.getElementById('edit_email').value = currentProfile.email || '';
-  document.getElementById('edit_quartier').value = currentProfile.quartier || '';
+  bindZonaPicker(document.getElementById('edit_zona'), document.getElementById('edit_quartier'), { zona: currentProfile.zona || '', quartier: currentProfile.quartier || '' });
   document.getElementById('edit_whatsapp').value = currentProfile.whatsapp || '';
   document.getElementById('edit_password').value = '';
   document.getElementById('profileEditModal').classList.add('active');
@@ -765,11 +768,12 @@ async function dispatchProfileOverwrites() {
   const nombre = document.getElementById('edit_nombre').value.trim();
   const apellido = document.getElementById('edit_apellido').value.trim();
   const email = document.getElementById('edit_email').value.trim();
-  const quartier = document.getElementById('edit_quartier').value.trim();
+  const quartier = document.getElementById('edit_quartier').value;
+  const zona = document.getElementById('edit_zona').value;
   const whatsapp = document.getElementById('edit_whatsapp').value.trim();
   const password = document.getElementById('edit_password').value;
 
-  if (!nombre || !apellido || !email || !quartier) {
+  if (!nombre || !apellido || !email || !zona || !quartier) {
     alert('Por favor rellena todos los campos obligatorios.');
     return;
   }
@@ -779,7 +783,7 @@ async function dispatchProfileOverwrites() {
 
   const { error: profileErr } = await supabase
     .from('profiles')
-    .update({ nombre, apellido, quartier, whatsapp })
+    .update({ nombre, apellido, quartier, zona, whatsapp })
     .eq('id', currentProfile.id);
 
   const authUpdates = {};
@@ -1270,7 +1274,7 @@ function renderCartCount() {
 window.addToCart = function(id) {
   const p = productsById[id]; if (!p || !p.in_stock) return;
   const line = cart.find(i => i.id === id);
-  { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : '', null, null, p.id); }
+  { const b = allData.find(x => x.id === p.business_id); logUserEvent('Agregar_Carrito', p.name, b ? b.nombre : '', null, null, p.id, Number(p.price) || 0); }
   if (line) line.qty += 1; else cart.push({ id, qty: 1 });
   saveCart(); renderCartCount();
   const grid = document.getElementById('productsGrid');

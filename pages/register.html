@@ -159,8 +159,13 @@
           </select>
         </div>
         <div class="field">
-          <label>Barrio / Senda / Zona <span class="req">*</span></label>
-          <input type="text" id="f_barrio" required placeholder="Ej: Ciudad Marsella, Senda 4, Pol. H">
+          <label>Zona y Quartier <span class="req">*</span></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="f_zona" required></select>
+            <select id="f_quartier" required></select>
+          </div>
+          <input type="hidden" id="f_barrio">
+          <div class="help-text" style="font-size:.78rem;color:#6b6560;margin-top:4px">Marsella 1 = Q1–Q7 · Marsella 2 = Q8–Q14</div>
         </div>
       </div>
 
@@ -314,6 +319,8 @@ import { supabase } from '../assets/js/supabase.js';
 
 let myProfile = null;
 const PENDING_KEY = 'marsella-pending-business';
+import { bindZonaPicker, parseZonaLabel, zonaLabel } from '../assets/js/zonas.js';
+bindZonaPicker(document.getElementById('f_zona'), document.getElementById('f_quartier'), { onChange: (z, q) => { document.getElementById('f_barrio').value = z && q ? zonaLabel(z, q) : ''; } });
 const DRAFT_FIELDS = ['f_nombre','f_cat','f_barrio','f_tel','f_desc','f_horario','f_owner','f_dui','f_email','f_source'];
 
 async function loadMyProfile() {
@@ -341,6 +348,7 @@ async function loadMyProfile() {
     if (draft) {
       localStorage.removeItem(PENDING_KEY);
       DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el && draft[id] != null) el.value = draft[id]; });
+      { const pz = parseZonaLabel(draft.f_barrio); bindZonaPicker(document.getElementById('f_zona'), document.getElementById('f_quartier'), { zona: pz.zona, quartier: pz.quartier, onChange: (z, q) => { document.getElementById('f_barrio').value = z && q ? zonaLabel(z, q) : ''; } }); }
       if (draft.plan) { const r = document.querySelector(`input[name="plan"][value="${draft.plan}"]`); if (r) r.checked = true; }
       await dispatchDirectToSheets();
     }
@@ -426,7 +434,7 @@ async function dispatchDirectToSheets() {
     const { data: su, error: suErr } = await supabase.auth.signUp({
       email,
       password: document.getElementById('f_pass').value,
-      options: { data: { nombre, apellido, whatsapp: document.getElementById('f_tel').value.trim(), quartier: document.getElementById('f_barrio').value.trim(), source: 'registro-negocio' } }
+      options: { data: { nombre, apellido, whatsapp: document.getElementById('f_tel').value.trim(), quartier: document.getElementById('f_quartier').value, zona: document.getElementById('f_zona').value, source: 'registro-negocio' } }
     });
     if (suErr || (su && su.user && su.user.identities && su.user.identities.length === 0)) {
       alert('Ese correo ya tiene una cuenta (o no se pudo crear: ' + (suErr ? suErr.message : 'ya registrado') + '). Inicia sesión en el directorio y vuelve a registrar tu negocio.');
