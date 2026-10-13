@@ -137,6 +137,30 @@
   .bar-num { font-size:.62rem; color:var(--ink-muted); height:14px; }
   .bar-lbl { display:flex; gap:3px; margin-top:4px; }
   .bar-lbl span { flex:1; text-align:center; font-size:.62rem; color:var(--ink-muted); min-width:0; overflow:hidden; }
+  .btn-add { background: #1b6b4a; color: #fff; border-radius: 22px; padding: 10px 20px; }
+  .btn-add:hover { opacity: .88; }
+  .promo-admin-grid { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+  .promo-admin-card { transition: transform .15s, box-shadow .15s; }
+  .promo-admin-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(45,38,34,.12); }
+  .promo-admin-card.is-expired { opacity: .85; }
+  .promo-admin-card.is-expired .promo-admin-img { filter: grayscale(.8); }
+  .promo-admin-img { aspect-ratio: 4/1; }
+  .promo-ph { display:flex; align-items:center; justify-content:center; font-size:1.6rem; background: linear-gradient(135deg,#fff1d6,#ffd9a0); }
+  .promo-dates { font-size: .78rem; color: var(--ink-muted); line-height: 1.7; margin-bottom: 8px; }
+  .promo-dates b { color: var(--ink); font-weight: 600; }
+  .promo-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .promo-kpi { background: var(--bg); border-radius: 10px; padding: 8px 4px; text-align: center; }
+  .promo-kpi b { display: block; font-family: 'Syne', sans-serif; font-size: 1.05rem; color: var(--accent); }
+  .promo-kpi span { font-size: .68rem; color: var(--ink-muted); }
+  .spark { display: flex; align-items: flex-end; gap: 2px; height: 28px; margin-bottom: 10px; }
+  .spark i { flex: 1; background: var(--accent); opacity: .7; border-radius: 2px 2px 0 0; min-height: 2px; }
+  .badge-exp { background: #fee2e2; color: #991b1b; }
+  .badge-soon { background: #fef3c7; color: #92400e; }
+  .promo-table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--card-shadow); margin-bottom: 20px; }
+  .promo-table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 760px; }
+  .promo-table th { text-align: left; padding: 10px 12px; background: var(--bg); font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-muted); white-space: nowrap; }
+  .promo-table td { padding: 10px 12px; border-top: 1px solid var(--border); white-space: nowrap; }
+  .promo-table td.wrap { white-space: normal; min-width: 160px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -209,9 +233,12 @@
 
     <!-- ---------- PROMOCIONES TAB ---------- -->
     <div class="tab-panel" id="tab-promos">
-      <div class="panel-header"><div class="panel-title">Promociones / Banner</div></div>
+      <div class="panel-header">
+        <div><div class="panel-title">🔥 Promociones</div><div class="row-meta">Banners que aparecen debajo del buscador en el directorio</div></div>
+        <button class="btn btn-add" id="promoNewBtn" onclick="togglePromoForm()">＋ Nueva promoción</button>
+      </div>
 
-      <div class="form-card">
+      <div class="form-card" id="promoFormCard" style="display:none">
         <h3 id="promoFormTitle">+ Nueva Promoción</h3>
         <input type="hidden" id="promo_id">
         <div class="field-row">
@@ -243,6 +270,8 @@
         <div class="error-text" id="promoError"></div>
       </div>
 
+      <div class="seg" id="promoSeg"></div>
+      <div id="promoSummary"></div>
       <div id="promoGridAdmin" class="promo-admin-grid"><div class="loading">Cargando promociones...</div></div>
     </div>
 
@@ -677,8 +706,10 @@ async function loadPromotions() {
     for (let from = 0; from < 50000; from += 1000) {
       const { data: ev, error: e2 } = await supabase.from('events_log').select('promotion_id,evento_tipo,created_at').not('promotion_id', 'is', null).order('created_at', { ascending: false }).range(from, from + 999);
       if (e2) throw e2;
-      ev.forEach(e => { const s = (promoStats[e.promotion_id] ||= { v: 0, c: 0, last: null });
-        if (e.evento_tipo === 'Promo_Vista') s.v++; else if (e.evento_tipo === 'Promo_Click') { s.c++; if (!s.last) s.last = e.created_at; } });
+      ev.forEach(e => { const s = (promoStats[e.promotion_id] ||= { v: 0, c: 0, last: null, days: {} });
+        const day = new Date(e.created_at).toLocaleDateString('en-CA', { timeZone: TZ });
+        const d = (s.days[day] ||= { v: 0, c: 0 });
+        if (e.evento_tipo === 'Promo_Vista') { s.v++; d.v++; } else if (e.evento_tipo === 'Promo_Click') { s.c++; d.c++; if (!s.last) s.last = e.created_at; } });
       if (ev.length < 1000) break;
     }
   } catch (err) { console.warn('promo stats', err); }
@@ -686,28 +717,110 @@ async function loadPromotions() {
   renderPromoGrid();
 }
 
+let promoView = 'active';
+const fmtDay = d => new Date(d).toLocaleDateString('es-SV', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' });
+const promoState = p => {
+  const exp = p.expira_at && new Date(p.expira_at).getTime() < Date.now();
+  return exp ? 'expired' : (p.activo ? 'active' : 'hidden');
+};
+const promoSpark = (st) => {
+  const days = [...Array(14)].map((_, k) => new Date(Date.now() - (13 - k) * 86400000).toLocaleDateString('en-CA', { timeZone: TZ }));
+  return days.map(d => (st.days && st.days[d]) || { v: 0, c: 0 });
+};
+const expiryText = p => {
+  if (!p.expira_at) return 'Sin fecha de expiración';
+  const diff = new Date(p.expira_at).getTime() - Date.now(), days = Math.ceil(Math.abs(diff) / 86400000);
+  return diff < 0 ? `Expiró ${fmtDay(p.expira_at)} (hace ${days} día${days !== 1 ? 's' : ''})` : `Expira ${fmtDay(p.expira_at)} (en ${days} día${days !== 1 ? 's' : ''})`;
+};
+const getPS = id => promoStats[id] || { v: 0, c: 0, last: null, days: {} };
+
+window.setPromoView = function(v) { promoView = v; renderPromoGrid(); };
+window.togglePromoForm = function(force) {
+  const card = document.getElementById('promoFormCard');
+  const show = typeof force === 'boolean' ? force : card.style.display === 'none';
+  card.style.display = show ? 'block' : 'none';
+  document.getElementById('promoNewBtn').textContent = show ? '✕ Cerrar formulario' : '＋ Nueva promoción';
+  if (show) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 function renderPromoGrid() {
   const el = document.getElementById('promoGridAdmin');
-  if (!promotions.length) { el.innerHTML = '<div class="empty-note">Aún no hay promociones. Agrega la primera arriba.</div>'; return; }
-  el.innerHTML = promotions.map(p => `
-    <div class="promo-admin-card">
-      ${p.imagen_url ? `<img class="promo-admin-img" src="${p.imagen_url}" alt="">` : '<div class="promo-admin-img"></div>'}
+  const groups = { active: [], expired: [], hidden: [] };
+  promotions.forEach(p => groups[promoState(p)].push(p));
+  const seg = [['active', '🟢 Activas'], ['expired', '⏳ Expiradas'], ['hidden', '👁️‍🗨️ Ocultas'], ['stats', '📊 Estadísticas']];
+  document.getElementById('promoSeg').innerHTML = seg.map(([k, l]) => `<button class="${k === promoView ? 'on' : ''}" onclick="setPromoView('${k}')">${l}${k !== 'stats' ? ` (${groups[k].length})` : ''}</button>`).join('');
+  const sumEl = document.getElementById('promoSummary');
+  sumEl.innerHTML = '';
+
+  if (promoView === 'stats') { el.className = ''; renderPromoStats(el, sumEl); return; }
+  el.className = 'promo-admin-grid';
+  const list = groups[promoView];
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-note" style="grid-column:1/-1">${promoView === 'active' ? 'No hay promociones activas. Crea una con “＋ Nueva promoción”.' : promoView === 'expired' ? 'Ninguna promoción ha expirado todavía.' : 'No hay promociones ocultas.'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const st = getPS(p.id), ctr = st.v ? Math.round(st.c / st.v * 100) : 0, state = promoState(p);
+    const sp = promoSpark(st), mx = Math.max(1, ...sp.map(x => x.v));
+    const soon = p.expira_at && state === 'active' && (new Date(p.expira_at) - Date.now()) < 3 * 86400000;
+    return `<div class="promo-admin-card ${state === 'expired' ? 'is-expired' : ''}">
+      ${p.imagen_url ? `<img class="promo-admin-img" src="${escH(p.imagen_url)}" alt="">` : '<div class="promo-admin-img promo-ph">🔥 🎉 🔥</div>'}
       <div class="promo-admin-body">
-        <div class="promo-admin-title">${escH(p.titulo)}</div>
-        ${p.negocio_nombre ? `<div class="row-meta" style="margin-bottom:6px">🏪 ${escH(p.negocio_nombre)}</div>` : ''}
-        <div class="row-badges" style="margin-bottom:10px">
-          <span class="badge ${p.activo ? 'badge-active' : 'badge-rejected'}">${p.activo ? 'Activo' : 'Oculto'}</span>
-          ${(() => { const s = promoStats[p.id] || { v: 0, c: 0, last: null }; const ctr = s.v ? Math.round(s.c / s.v * 100) : 0;
-            return `<span class="badge badge-idle">👁 ${s.v} vistas</span><span class="badge badge-live">👆 ${s.c} clics · ${ctr}%</span>${s.last ? `<span class="badge badge-idle">Último clic: ${timeAgo(s.last)}</span>` : ''}`; })()}
+        <div class="promo-admin-title" style="font-size:1rem">${escH(p.titulo)}</div>
+        ${p.negocio_nombre ? `<div class="row-meta" style="margin-bottom:6px">🏪 ${escH(p.negocio_nombre)}</div>` : '<div class="row-meta" style="margin-bottom:6px">Promo general</div>'}
+        <div class="row-badges" style="margin-bottom:8px">
+          <span class="badge ${state === 'active' ? 'badge-active' : state === 'expired' ? 'badge-exp' : 'badge-rejected'}">${state === 'active' ? 'Activa' : state === 'expired' ? 'Expirada' : 'Oculta'}</span>
+          ${soon ? '<span class="badge badge-soon">Expira pronto</span>' : ''}
         </div>
+        <div class="promo-dates">📅 Agregada: <b>${fmtDay(p.created_at)}</b><br>⏳ <b>${expiryText(p)}</b></div>
+        <div class="promo-kpis">
+          <div class="promo-kpi"><b>${st.v}</b><span>👁 Vistas</span></div>
+          <div class="promo-kpi"><b>${st.c}</b><span>👆 Clics</span></div>
+          <div class="promo-kpi"><b>${ctr}%</b><span>Tasa de clic</span></div>
+        </div>
+        <div class="spark" title="Vistas, últimos 14 días">${sp.map(x => `<i style="height:${Math.max(2, x.v / mx * 28)}px"></i>`).join('')}</div>
+        <div class="promo-dates" style="margin-bottom:10px">${st.last ? `Último clic: <b>${timeAgo(st.last)}</b>` : 'Sin clics todavía'}</div>
         <div class="promo-admin-actions">
           <button class="btn btn-ghost" onclick="window.editPromo('${p.id}')">Editar</button>
-          <button class="btn ${p.activo ? 'btn-reject' : 'btn-approve'}" onclick="window.togglePromoActive('${p.id}', ${!p.activo})">${p.activo ? 'Ocultar' : 'Activar'}</button>
+          ${state === 'expired' ? `<button class="btn btn-approve" onclick="window.renewPromo('${p.id}')">Renovar</button>` : `<button class="btn ${p.activo ? 'btn-reject' : 'btn-approve'}" onclick="window.togglePromoActive('${p.id}', ${!p.activo})">${p.activo ? 'Ocultar' : 'Activar'}</button>`}
           <button class="btn btn-danger-outline" onclick="window.deletePromo('${p.id}')">Eliminar</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+
+function renderPromoStats(el, sumEl) {
+  const tv = promotions.reduce((n, p) => n + getPS(p.id).v, 0), tc = promotions.reduce((n, p) => n + getPS(p.id).c, 0);
+  sumEl.innerHTML = `<div class="stat-cards">
+    <div class="stat-card"><div class="stat-card-num">${promotions.length}</div><div class="stat-card-label">Promociones totales</div></div>
+    <div class="stat-card"><div class="stat-card-num">${tv}</div><div class="stat-card-label">Vistas</div></div>
+    <div class="stat-card"><div class="stat-card-num">${tc}</div><div class="stat-card-label">Clics</div></div>
+    <div class="stat-card"><div class="stat-card-num">${tv ? Math.round(tc / tv * 100) : 0}%</div><div class="stat-card-label">Tasa de clic</div></div></div>`;
+  if (!promotions.length) { el.innerHTML = '<div class="empty-note">Aún no hay promociones.</div>'; return; }
+  const days = [...Array(14)].map((_, k) => new Date(Date.now() - (13 - k) * 86400000).toLocaleDateString('en-CA', { timeZone: TZ }));
+  const tot = days.map(d => promotions.reduce((a, p) => { const x = (getPS(p.id).days || {})[d] || { v: 0, c: 0 }; a.v += x.v; a.c += x.c; return a; }, { v: 0, c: 0 }));
+  const mx = Math.max(1, ...tot.map(t => t.v));
+  const rows = [...promotions].sort((a, b) => getPS(b.id).c - getPS(a.id).c || getPS(b.id).v - getPS(a.id).v).map(p => {
+    const st = getPS(p.id), state = promoState(p);
+    return `<tr><td class="wrap">${escH(p.titulo)}</td><td>${escH(p.negocio_nombre || '—')}</td>
+      <td><span class="badge ${state === 'active' ? 'badge-active' : state === 'expired' ? 'badge-exp' : 'badge-rejected'}">${state === 'active' ? 'Activa' : state === 'expired' ? 'Expirada' : 'Oculta'}</span></td>
+      <td>${fmtDay(p.created_at)}</td><td>${p.expira_at ? fmtDay(p.expira_at) : '—'}</td>
+      <td><b>${st.v}</b></td><td><b>${st.c}</b></td><td>${st.v ? Math.round(st.c / st.v * 100) : 0}%</td><td>${st.last ? timeAgo(st.last) : '—'}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<div class="chart-card"><div class="panel-title" style="font-size:.95rem;margin-bottom:8px">Actividad de las últimas 2 semanas</div>
+      <div class="bars" style="height:140px">${tot.map((t, k) => `<div class="bar-col" title="${days[k]}: ${t.v} vistas, ${t.c} clics"><div class="bar-num">${t.v || ''}</div><div style="display:flex;gap:2px;align-items:flex-end;width:100%;justify-content:center"><div class="bar" style="width:45%;height:${Math.max(2, t.v / mx * 100)}px"></div><div class="bar peak" style="width:45%;height:${Math.max(2, t.c / mx * 100)}px"></div></div></div>`).join('')}</div>
+      <div class="bar-lbl">${days.map(d => `<span>${d.slice(8)}</span>`).join('')}</div>
+      <div class="row-meta" style="margin-top:6px">▮ Vistas (naranja) · ▮ Clics (verde) · Para ver cuándo del día hay más actividad usa Estadísticas → 🔥 Promociones</div></div>
+    <div class="promo-table-wrap"><table class="promo-table"><thead><tr><th>Promoción</th><th>Negocio</th><th>Estado</th><th>Agregada</th><th>Expira</th><th>Vistas</th><th>Clics</th><th>CTR</th><th>Último clic</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+window.renewPromo = function(id) {
+  window.editPromo(id);
+  document.getElementById('promo_expira').value = '';
+  document.getElementById('promo_activo').checked = true;
+  document.getElementById('promoFormTitle').textContent = '🔁 Renovando: ' + (promotions.find(x => x.id === id) || {}).titulo + ' (elige nueva fecha de expiración y guarda)';
+};
 
 window.editPromo = function(id) {
   const p = promotions.find(x => x.id === id);
@@ -729,6 +842,7 @@ window.editPromo = function(id) {
   document.getElementById('promoFormTitle').textContent = '✏️ Editando: ' + p.titulo;
   document.getElementById('promoSubmitBtn').textContent = 'Actualizar Promoción';
   document.getElementById('promoCancelBtn').style.display = 'inline-block';
+  togglePromoForm(true);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -751,6 +865,7 @@ window.resetPromoForm = function() {
   document.getElementById('promoFormTitle').textContent = '+ Nueva Promoción';
   document.getElementById('promoSubmitBtn').textContent = 'Guardar Promoción';
   document.getElementById('promoCancelBtn').style.display = 'none';
+  togglePromoForm(false);
 };
 
 const PROMO_WA_TEXT = 'Clic promocional desde Marsella Conecta';
