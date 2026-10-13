@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
     subs = subs || [];
     if (audience && audience !== 'all') {
       const ids = subs.map((s) => s.profile_id).filter(Boolean);
-      const { data: profs } = ids.length ? await db.from('profiles').select('id,zona').in('id', ids) : { data: [] };
-      const zonaOf = new Map((profs || []).map((p) => [p.id, p.zona]));
+      const { data: profs } = ids.length ? await db.from('profiles').select('auth_user_id,zona').in('auth_user_id', ids) : { data: [] };
+      const zonaOf = new Map((profs || []).map((p) => [p.auth_user_id, p.zona]));
       subs = subs.filter((s) => s.profile_id && (audience === 'registered' || zonaOf.get(s.profile_id) === audience));
     }
 

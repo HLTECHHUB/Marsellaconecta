@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos — Marsella Conecta</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#c65d3b">
+<style>
+  :root { --bg:#faf7f2; --surface:#fff; --ink:#2d2622; --ink-muted:#6b6560; --accent:#c65d3b; --accent2:#1b6b4a; --border:#e8e2db; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+  nav { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; }
+  .logo { font-weight: 800; text-decoration: none; color: var(--ink); } .logo span { color: var(--accent); }
+  .shell { max-width: 640px; margin: 0 auto; padding: 18px 16px 60px; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; } .sub { color: var(--ink-muted); font-size: .9rem; margin-bottom: 16px; }
+  .btn { border: none; border-radius: 12px; padding: 12px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+  .btn-ok { background: var(--accent2); color: #fff; } .btn-no { background: #fff; color: #b3261e; border: 1.5px solid #e6b8b4; }
+  .btn-main { background: var(--accent); color: #fff; width: 100%; } .btn-ghost { background: #fff; border: 1.5px solid var(--border); color: var(--ink); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(45,38,34,.06); }
+  .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .muted { color: var(--ink-muted); font-size: .8rem; }
+  .items { margin: 8px 0; font-size: .92rem; line-height: 1.6; }
+  .actions { display: flex; gap: 10px; margin-top: 10px; } .actions .btn { flex: 1; }
+  .pill { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; }
+  .p-pendiente { background: #fff4e5; color: #9a5b00; } .p-aceptado { background: #e2f1ed; color: var(--accent2); } .p-rechazado { background: #fdecea; color: #b3261e; }
+  .push-box { background: #fff; border: 1.5px dashed var(--accent2); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+  input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; margin-bottom: 10px; }
+  .login { max-width: 380px; margin: 60px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; }
+  .err { color: #b3261e; font-size: .85rem; margin-top: 8px; }
+  h2 { font-size: 1rem; margin: 22px 0 10px; }
+</style>
+</head>
+<body>
+<div id="loginScreen" class="login" style="display:none">
+  <h1>📦 Pedidos</h1><p class="sub">Inicia sesión con la cuenta de tu negocio.</p>
+  <input type="email" id="email" placeholder="Correo"><input type="password" id="password" placeholder="Contraseña">
+  <button class="btn btn-main" onclick="doLogin()">Ingresar</button><div class="err" id="loginErr"></div>
+</div>
+
+<div id="app" style="display:none">
+  <nav><a class="logo" href="../index.html">Marsella<span>Conecta</span></a><button class="btn btn-ghost" style="padding:8px 14px" onclick="doLogout()">Salir</button></nav>
+  <div class="shell">
+    <h1>📦 Pedidos de tus clientes</h1>
+    <div class="sub" id="who">Cargando…</div>
+    <div class="push-box" id="pushBox"></div>
+    <div id="pending"></div>
+    <h2>Historial</h2>
+    <div id="history"></div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase.js';
+import { pushState, enablePush, disablePush, relinkPush } from '../assets/js/push.js';
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => '$' + Number(n || 0).toFixed(2);
+const fmt = (d) => new Date(d).toLocaleString('es-SV', { timeZone: 'America/El_Salvador', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+let bizNames = {};
+
+async function boot() {
+  const { data: { session } } = await supabase.auth.getSession();
+  document.getElementById('loginScreen').style.display = session ? 'none' : 'block';
+  document.getElementById('app').style.display = session ? 'block' : 'none';
+  if (!session) return;
+  await relinkPush();
+  const { data: me } = await supabase.from('profiles').select('id,nombre').eq('auth_user_id', session.user.id).maybeSingle();
+  const { data: mine } = me ? await supabase.from('businesses').select('id,nombre').eq('owner_profile_id', me.id) : { data: [] };
+  (mine || []).forEach((b) => { bizNames[b.id] = b.nombre; });
+  document.getElementById('who').textContent = (mine || []).length ? 'Negocio(s): ' + mine.map((b) => b.nombre).join(', ') : 'Tu cuenta aún no tiene un negocio asignado.';
+  await renderPush(); await loadOrders();
+  clearInterval(window._poll); window._poll = setInterval(loadOrders, 20000);
+}
+
+async function renderPush() {
+  const st = await pushState(); const box = document.getElementById('pushBox');
+  const T = {
+    unsupported: '<b>Este navegador no admite notificaciones.</b><div class="muted">Usa Chrome en Android o instala la app en iPhone.</div>',
+    'needs-install': '<b>En iPhone:</b> primero toca Compartir ⬆️ → “Añadir a pantalla de inicio”, abre la app y vuelve aquí para activar las notificaciones.',
+    denied: '<b>Notificaciones bloqueadas.</b><div class="muted">Actívalas en los ajustes del navegador para este sitio.</div>',
+    on: '<b>🔔 Notificaciones activas en este dispositivo.</b><div class="muted">Te avisaremos cuando llegue un pedido.</div><div class="actions"><button class="btn btn-ghost" onclick="togglePush()">Desactivar</button></div>',
+    off: '<b>🔕 Activa las notificaciones</b><div class="muted">Para enterarte al instante cuando un vecino te haga un pedido.</div><div class="actions"><button class="btn btn-main" onclick="togglePush()">Activar notificaciones</button></div>'
+  };
+  box.innerHTML = T[st];
+}
+window.togglePush = async () => {
+  try { (await pushState()) === 'on' ? await disablePush() : await enablePush(); }
+  catch (e) { alert('No se pudo cambiar: ' + (e.message || e)); }
+  renderPush();
+};
+
+function orderCard(o) {
+  const items = (o.items || []).map((i) => `• ${esc(i.name)} ×${esc(i.qty)} — ${money((i.price || 0) * i.qty)}`).join('<br>');
+  const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>` : '';
+  return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
+    <div class="muted">${esc(bizNames[o.business_id] || '')} · ${fmt(o.created_at)}</div><div class="items">${items}</div>
+    <div class="row"><b>Total ${money(o.total)}</b></div>${acts}</div>`;
+}
+async function loadOrders() {
+  const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
+  if (error) { document.getElementById('pending').innerHTML = '<div class="err">No se pudieron cargar los pedidos.</div>'; return; }
+  const pend = (data || []).filter((o) => o.status === 'pendiente'), done = (data || []).filter((o) => o.status !== 'pendiente');
+  document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
+  document.getElementById('history').innerHTML = done.length ? done.map(orderCard).join('') : '<div class="muted">Aún no hay historial.</div>';
+}
+window.respond = async (id, status) => {
+  if (!confirm(status === 'aceptado' ? '¿Aceptar este pedido?' : '¿Rechazar este pedido?')) return;
+  const { error } = await supabase.rpc('respond_order', { p_order_id: id, p_status: status });
+  if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+  supabase.functions.invoke('order-push', { body: { order_id: id, event: 'response' } }).catch(() => {});
+  loadOrders();
+};
+window.doLogin = async () => {
+  const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('email').value.trim(), password: document.getElementById('password').value });
+  if (error) { document.getElementById('loginErr').textContent = 'Correo o contraseña incorrectos.'; return; }
+  boot();
+};
+window.doLogout = async () => { await supabase.auth.signOut(); location.reload(); };
+boot();
+</script>
+</body>
+</html>
