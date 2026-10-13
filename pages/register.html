@@ -291,8 +291,11 @@
       <div class="badge-line"><span>Panel de Control:</span> <strong>Crea tu cuenta de vecino para administrar tu ficha</strong></div>
     </div>
 
+    <p style="color:var(--ink-muted);font-size:0.88rem;margin:6px 0 16px">¿Quieres agregar tus productos ahora? También puedes hacerlo después desde "Mi Negocio".</p>
     <div class="success-actions">
-      <a href="../index.html" class="btn-primary">Volver al Directorio Principal</a>
+      <a href="#" id="addProductsLink" class="btn-primary">📦 Agregar productos ahora</a>
+      <a href="mi-negocio.html" class="btn-primary" style="background:var(--bg);color:var(--accent);border:1.5px solid var(--border)">Lo haré después</a>
+      <a href="../index.html" class="btn-primary" style="background:var(--bg);color:var(--accent);border:1.5px solid var(--border)">Ir al directorio</a>
     </div>
   </div>
 </div>
@@ -436,6 +439,7 @@ async function dispatchDirectToSheets() {
   document.getElementById('registrationForm').style.display = 'none';
   document.getElementById('progressWrap').style.display = 'none';
 
+  document.getElementById('addProductsLink').href = 'product-upload.html?business=' + encodeURIComponent(biz.id);
   document.getElementById('outBiz').textContent = businessName;
   document.getElementById('outId').textContent = biz.id.slice(0, 8).toUpperCase();
 
