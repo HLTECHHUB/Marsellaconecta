@@ -199,6 +199,7 @@
       <button class="tab-btn" data-tab="vecinos" onclick="switchTab('vecinos')">👥 Vecinos</button>
       <button class="tab-btn" data-tab="promos" onclick="switchTab('promos')">🔥 Promociones</button>
       <button class="tab-btn" data-tab="productos" onclick="switchTab('productos')">🛍️ Productos</button>
+      <button class="tab-btn" data-tab="notif" onclick="switchTab('notif')">🔔 Notificaciones</button>
       <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Estadísticas</button>
     </div>
 
@@ -318,6 +319,27 @@
     </div>
 
     <!-- ---------- ESTADÍSTICAS TAB ---------- -->
+    <div class="tab-panel" id="tab-notif">
+      <div class="panel-header">
+        <div><div class="panel-title">🔔 Notificaciones push</div><div class="row-meta" id="pushCount">Cargando dispositivos…</div></div>
+      </div>
+      <div class="card" style="padding:16px;max-width:560px;display:grid;gap:10px">
+        <div class="field"><label>Título</label><input id="pushTitle" maxlength="60" placeholder="Ej: ¡Nueva promoción en Marsella!"></div>
+        <div class="field"><label>Mensaje</label><textarea id="pushBody" rows="3" maxlength="160" placeholder="Texto corto (máx. 160 caracteres)"></textarea></div>
+        <div class="field"><label>Enlace al tocar (opcional)</label><input id="pushUrl" placeholder="Vacío = abre la página principal"></div>
+        <div class="field"><label>Enviar a</label>
+          <select id="pushAudience">
+            <option value="all">Todos los dispositivos</option>
+            <option value="Marsella 1">Vecinos de Marsella 1</option>
+            <option value="Marsella 2">Vecinos de Marsella 2</option>
+            <option value="registered">Solo vecinos registrados</option>
+          </select></div>
+        <div style="display:flex;gap:8px;align-items:center"><button class="btn btn-add" id="pushSendBtn" onclick="sendPush()">📣 Enviar notificación</button><span class="row-meta" id="pushMsg"></span></div>
+      </div>
+      <div class="panel-title" style="margin:20px 0 8px;font-size:1rem">Enviadas</div>
+      <div id="pushLog" class="row-meta">—</div>
+    </div>
+
     <div class="tab-panel" id="tab-stats">
       <div class="panel-header">
         <div class="panel-title">Estadísticas de Actividad</div>
@@ -495,6 +517,7 @@ window.switchTab = function(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'stats') loadStats();
   if (tab === 'productos') loadProductsAdmin();
+  if (tab === 'notif') loadNotif();
 };
 
 async function loadAll() {
@@ -748,6 +771,31 @@ window.saveUser = async function(id) {
 
 // ================= PRODUCTOS =================
 let adminProducts = [], adminProdCats = {}, cartEvents = [], prodView = 'catalog', prodLoaded = false, prodOpen = {};
+// ---- Push notifications composer ----
+async function loadNotif() {
+  const [{ count: total }, { data: logs }] = await Promise.all([
+    supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }),
+    supabase.from('push_log').select('*').order('created_at', { ascending: false }).limit(30)
+  ]);
+  document.getElementById('pushCount').textContent = (total ?? 0) + ' dispositivo(s) con notificaciones activadas';
+  document.getElementById('pushLog').innerHTML = (logs || []).length ? logs.map(l => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(l.title)}</b> — ${escH(l.body)}<br><span class="row-meta">${fmtDT(l.created_at)} · ${escH(l.audience || '')} · ✅ ${l.sent} enviadas${l.failed ? ' · ⚠️ ' + l.failed + ' fallidas' : ''}</span></div>`).join('') : 'Aún no has enviado notificaciones.';
+}
+window.sendPush = async function() {
+  const title = document.getElementById('pushTitle').value.trim(), body = document.getElementById('pushBody').value.trim();
+  const url = document.getElementById('pushUrl').value.trim(), audience = document.getElementById('pushAudience').value;
+  const msg = document.getElementById('pushMsg');
+  if (!title || !body) { msg.textContent = 'Escribe título y mensaje.'; return; }
+  if (url && !/^https:\/\//.test(url)) { msg.textContent = 'El enlace debe empezar con https://'; return; }
+  if (!confirm('¿Enviar esta notificación ahora?')) return;
+  const btn = document.getElementById('pushSendBtn'); btn.disabled = true; msg.textContent = 'Enviando…';
+  const { data, error } = await supabase.functions.invoke('send-push', { body: { title, body, url, audience } });
+  btn.disabled = false;
+  if (error || data?.error) { msg.textContent = 'Error: ' + (data?.error || error.message); return; }
+  msg.textContent = `Enviada a ${data.sent} dispositivo(s)` + (data.failed ? `, ${data.failed} fallaron` : '') + '.';
+  document.getElementById('pushTitle').value = ''; document.getElementById('pushBody').value = ''; document.getElementById('pushUrl').value = '';
+  loadNotif();
+};
+
 async function loadProductsAdmin() {
   document.getElementById('prodBody').innerHTML = '<div class="loading">Cargando productos...</div>';
   try {
@@ -1273,6 +1321,10 @@ function timeAgo(dateStr) {
 }
 
 const EVENT_LABELS = {
+  'Notificaciones_Activadas': '🔔 Activó notificaciones',
+  'Notificaciones_Desactivadas': '🔕 Desactivó notificaciones',
+  'App_Instalada': '📲 Instaló la app',
+  'Instalar_App_Clic': '📲 Clic en Agregar app',
   'Login_Exitoso': '🔑 Inicio de sesión',
   'Cierre_Sesion': '🚪 Cierre de sesión',
   'Busqueda_Palabra': '🔎 Búsqueda',
