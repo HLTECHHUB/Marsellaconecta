@@ -320,7 +320,8 @@
   .promo-banner.no-img .hero-slide h2 { color: #2d2622; }
   .promo-banner.no-img .hero-slide p { color: #6b3f2c; }
   .promo-banner.no-img .promo-biz-tag { background: #1b6b4a; border-color: #1b6b4a; color: #fff; }
-  .promo-banner.no-img a.promo-cta-btn { background: #1b6b4a !important; color: #fff !important; }
+  .hero-slide button.promo-cta-btn { background: #fff; color: var(--accent); font-weight: 700; font-size: 0.85rem; padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
+  .promo-banner.no-img .promo-cta-btn { background: #1b6b4a !important; color: #fff !important; }
   .promo-banner.no-img .promo-dots button { background: rgba(45,38,34,.3); }
   .promo-banner.no-img .promo-dots button.active { background: #c65d3b; }
   .promo-banner .promo-dots { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; }
@@ -331,6 +332,16 @@
   .btn-products:hover { background: var(--accent); color: #fff; }
   .shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; }
   .shop-overlay.active { display: flex; }
+  .biz-detail { border: none; box-shadow: none; border-radius: 0; animation: none; padding: 0 20px 20px; }
+  .biz-detail:hover { transform: none; box-shadow: none; }
+  .bd-photo { width: calc(100% + 40px); margin: 0 -20px 14px; max-height: 220px; object-fit: cover; display: block; }
+  .bd-promo { background: linear-gradient(135deg, #fff1d6, #ffd9a0); border: 2px dashed #c65d3b; border-radius: 12px; padding: 12px 14px; margin: 16px 0 4px; }
+  .bd-promo b { display: block; font-family: 'Syne', sans-serif; font-size: 1.05rem; }
+  .bd-promo span { font-size: .85rem; color: #6b3f2c; }
+  .bd-row { font-size: .9rem; margin: 8px 0; color: var(--ink); }
+  .bd-prods { margin-top: 14px; }
+  .bd-prods h4 { font-size: .9rem; margin-bottom: 6px; }
+  .bd-prod { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
   .shop-modal { background: var(--surface); width: 100%; max-width: 640px; max-height: 88vh; border-radius: 16px; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
   .shop-head { position: sticky; top: 0; background: var(--surface); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1; }
   .shop-head h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
@@ -509,6 +520,12 @@
   <div class="shop-modal">
     <div class="shop-head"><div><h3 id="productsTitle">Productos</h3><div id="productsSub" style="font-size:0.78rem;color:var(--ink-muted)"></div></div><button class="shop-x" onclick="window.closeProducts()">✕</button></div>
     <div class="prod-grid" id="productsGrid"></div>
+  </div>
+</div>
+<div class="shop-overlay" id="bizOverlay" onclick="if(event.target===this) window.closeBizDetail()">
+  <div class="shop-modal">
+    <div class="shop-head"><h3 id="bizDetailTitle">Negocio</h3><button class="shop-x" onclick="window.closeBizDetail()">✕</button></div>
+    <div id="bizDetailBody"></div>
   </div>
 </div>
 <div class="cart-drawer" id="cartDrawer" onclick="if(event.target===this) window.closeCart()">
@@ -1053,6 +1070,45 @@ window.openProducts = function(bizId) {
 };
 window.closeProducts = () => document.getElementById('productsOverlay').classList.remove('active');
 
+window.closeBizDetail = () => document.getElementById('bizOverlay').classList.remove('active');
+window.openBizDetail = function(bizId, promo) {
+  const r = allData.find(b => String(b.id) === String(bizId));
+  if (!r) return false;
+  const tel = cleanPhone(r.telefono);
+  const stars = parseFloat(r.estrellas) || 0;
+  const starsHtml = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
+  const verified = ['activo', 'verificado', 'active'].includes((r.estado || '').toLowerCase());
+  const prods = productsByBiz[r.id] || [];
+  const waHref = tel ? `https://wa.me/${COUNTRY_CODE}${tel}` + (promo ? `?text=${encodeURIComponent('Clic promocional desde Marsella Conecta')}` : '') : '';
+  document.getElementById('bizDetailTitle').textContent = r.nombre || 'Negocio';
+  document.getElementById('bizDetailBody').innerHTML = `
+    <div class="biz-card biz-detail" data-name="${shopEsc(r.nombre)}">
+      ${r.imagen_url ? `<img class="bd-photo" src="${shopEsc(r.imagen_url)}" alt="${shopEsc(r.nombre)}">` : ''}
+      ${promo ? `<div class="bd-promo"><b>🔥 ${shopEsc(promo.titulo)}</b>${promo.descripcion ? `<span>${shopEsc(promo.descripcion)}</span>` : ''}</div>` : ''}
+      <div class="biz-header" style="padding:16px 0 4px">
+        <div class="biz-avatar" style="${catTileStyle(r.categoria)}">${getCategorySvg(r.categoria)}</div>
+        <div class="biz-meta">
+          <div class="biz-name">${shopEsc(r.nombre)}</div>
+          <div class="biz-cat-barrio">${shopEsc(r.categoria || '')}${r.barrio ? ' · ' + shopEsc(r.barrio) : ''}</div>
+          <div class="biz-badges">${verified ? '<span class="badge badge-verified">✓ Activo</span>' : ''}</div>
+        </div>
+      </div>
+      ${r.descripcion ? `<div class="bd-row">${shopEsc(r.descripcion)}</div>` : ''}
+      ${r.horario ? `<div class="bd-row">🕐 ${shopEsc(r.horario)}</div>` : ''}
+      ${r.barrio ? `<div class="bd-row">📍 ${shopEsc(r.barrio)}, Colonia Marsella</div>` : ''}
+      ${tel ? `<div class="bd-row">📱 ${shopEsc(r.telefono)}</div>` : ''}
+      ${starsHtml ? `<div class="bd-row biz-stars">${starsHtml} ${stars}/5</div>` : ''}
+      <div class="biz-actions" style="margin-top:12px">
+        ${tel ? `<a class="btn-call" href="tel:+${COUNTRY_CODE}${tel}">📞 Llamar</a><a class="btn-wa" href="${waHref}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+      </div>
+      ${prods.length ? `<div class="bd-prods"><h4>🛍️ Productos (${prods.length})</h4>
+        ${prods.slice(0, 6).map(p => `<div class="bd-prod"><span>${shopEsc(p.name)}</span><b>${p.price != null ? money(p.price) : ''}</b></div>`).join('')}
+        <button class="btn-products" style="margin-top:10px" onclick="window.closeBizDetail();window.openProducts('${r.id}')">Ver todos y pedir</button></div>` : ''}
+    </div>`;
+  document.getElementById('bizOverlay').classList.add('active');
+  return true;
+};
+
 function renderProductsGrid(bizId) {
   const list = productsByBiz[bizId] || [];
   document.getElementById('productsGrid').dataset.biz = bizId;
@@ -1154,12 +1210,20 @@ async function loadPromotions() {
     };
     const seenPromo = new Set();
     window.promoClick = (i) => { const p = promos[i]; if (p) logUserEvent('Promo_Click', p.titulo, p.negocio_nombre || '', null, p.id); };
+    window.promoOpen = (i) => {
+      const p = promos[i]; if (!p) return;
+      window.promoClick(i);
+      if (!window.openBizDetail(p.business_id, p)) { const h = promoLink(p); if (h) window.open(h, '_blank', 'noopener'); }
+    };
     const hero = document.getElementById('promoBanner');
     const defaultBg = '';
     hero.style.display = 'flex';
     document.getElementById('promoSlides').innerHTML = promos.map((p, i) => {
       const href = promoLink(p);
-      const link = href ? `<a class="promo-cta-btn" href="${shopEsc(href)}" target="_blank" rel="noopener" onclick="window.promoClick(${i})">${shopEsc(p.cta_text || 'Ver Promoción')}</a>` : '';
+      const label = shopEsc(p.cta_text || 'Ver Promoción');
+      const link = p.business_id
+        ? `<button class="promo-cta-btn" onclick="window.promoOpen(${i})">${label}</button>`
+        : (href ? `<a class="promo-cta-btn" href="${shopEsc(href)}" target="_blank" rel="noopener" onclick="window.promoClick(${i})">${label}</a>` : '');
       return `<div class="hero-slide ${i === 0 ? 'active' : ''}">
         ${p.negocio_nombre ? `<div class="promo-biz-tag">${shopEsc(p.negocio_nombre)}</div>` : ''}
         <h2>${shopEsc(p.titulo)}</h2>
