@@ -1,6 +1,6 @@
 // Conecta Marsella service worker: makes the site installable and keeps the shell available offline.
 // Data (Supabase), CDN modules and fonts are never cached here — they always go to the network.
-const CACHE = 'marsella-shell-v3';
+const CACHE = 'marsella-shell-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './assets/icons/icon-192.png', './assets/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -14,12 +14,12 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || url.origin !== location.origin) return;
   // Pages: network first, fall back to the cached copy when offline.
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return r; }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html'))));
+    e.respondWith(fetch(req, { cache: 'reload' }).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return r; }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html'))));
     return;
   }
   // Scripts and config: always network first, so a stale cached copy can never hide new settings.
   if (/\.(js|json|webmanifest)$/.test(url.pathname)) {
-    e.respondWith(fetch(req).then((r) => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); } return r; }).catch(() => caches.match(req)));
+    e.respondWith(fetch(req, { cache: 'reload' }).then((r) => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); } return r; }).catch(() => caches.match(req)));
     return;
   }
   // Own static files: serve cached, refresh in the background.
