@@ -86,8 +86,12 @@ async function boot() {
   if (!session) return;
   await relinkPush();
   const { data: me } = await supabase.from('profiles').select('id,nombre').eq('auth_user_id', session.user.id).maybeSingle();
-  const { data: mine } = me ? await supabase.from('businesses').select('id,nombre,response_minutes').eq('owner_profile_id', me.id) : { data: [] };
-  myBiz = mine || [];
+  // Businesses whose orders this user handles (owner, or the user the owner chose in Mi Negocio).
+  const { data: ids, error: idsErr } = await supabase.rpc('my_business_ids');
+  const { data: mine } = idsErr
+    ? (me ? await supabase.from('businesses').select('id,nombre,response_minutes,owner_profile_id').eq('owner_profile_id', me.id) : { data: [] }) // SQL 20 not applied yet
+    : (ids && ids.length) ? await supabase.from('businesses').select('id,nombre,response_minutes,owner_profile_id').in('id', ids) : { data: [] };
+  myBiz = (mine || []).filter((b) => me && b.owner_profile_id === me.id); // only owners can change the response time
   (mine || []).forEach((b) => { bizNames[b.id] = b.nombre; });
   document.getElementById('who').textContent = (mine || []).length ? 'Negocio(s): ' + mine.map((b) => b.nombre).join(', ') : 'Tu cuenta aún no tiene un negocio asignado.';
   renderSla(); await renderPush(); await loadOrders();

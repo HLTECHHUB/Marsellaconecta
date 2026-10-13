@@ -28,7 +28,10 @@ Deno.serve(async (req) => {
     const { data: order } = await db.from('orders').select('*').eq('id', order_id).maybeSingle();
     if (!order) return json({ error: 'Pedido no encontrado' }, 404);
     const { data: biz } = await db.from('businesses').select('nombre,owner_profile_id').eq('id', order.business_id).maybeSingle();
-    const { data: owner } = biz?.owner_profile_id ? await db.from('profiles').select('auth_user_id').eq('id', biz.owner_profile_id).maybeSingle() : { data: null };
+    // The owner can choose another registered user to receive/handle the business's orders (business_notify).
+    const { data: chosen } = await db.from('business_notify').select('profile_id').eq('business_id', order.business_id).maybeSingle();
+    const staffProfile = chosen?.profile_id || biz?.owner_profile_id;
+    const { data: owner } = staffProfile ? await db.from('profiles').select('auth_user_id').eq('id', staffProfile).maybeSingle() : { data: null };
     const { data: cust } = await db.from('profiles').select('auth_user_id').eq('id', order.customer_profile_id).maybeSingle();
 
     let target: string | null | undefined, payload: Record<string, string>;
