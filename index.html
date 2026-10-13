@@ -378,6 +378,7 @@
   .nav-cart { position: relative; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; background: #f5e6e0; border-radius: 9px; border: none; font-size: 1.05rem; }
   .nav-cart .count { position: absolute; top: -6px; right: -6px; background: #d84040; color: #fff; min-width: 20px; height: 20px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; display: none; place-items: center; padding: 0 4px; }
   .btn-products { grid-column: 1 / -1; background: #f5e6e0; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 9px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; width: 100%; margin-top: 8px; }
+  .btn-products.has-cart { background: var(--accent2); color: #fff; border-color: var(--accent2); }
   .btn-products:hover { background: var(--accent); color: #fff; }
   .shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; }
   .shop-overlay.active { display: flex; }
@@ -1144,7 +1145,7 @@ function generateCardHtml(r, index) {
     <div class="biz-actions">
       <button class="btn-share" onclick="window.shareBiz('${name.replace(/'/g,"\\'")}','${tel}')" title="Compartir">⬆️</button>
     </div>
-    ${nProducts ? `<button class="btn-products" onclick="window.openProducts('${r.id}')">🛍️ Ver ${nProducts} producto${nProducts!==1?'s':''}</button>` : ''}
+    ${nProducts ? `<button class="btn-products ${bizCartInfo(r.id).n ? 'has-cart' : ''}" data-biz="${r.id}" data-np="${nProducts}" onclick="window.openProducts('${r.id}')">${bizBtnLabel(r.id, nProducts)}</button>` : ''}
   </div>`;
 }
 
@@ -1304,7 +1305,7 @@ window.openBizDetail = function(bizId, promo) {
       ${starsHtml ? `<div class="bd-row biz-stars">${starsHtml} ${stars}/5</div>` : ''}
       ${prods.length ? `<div class="bd-prods"><h4>🛍️ Productos (${prods.length})</h4>
         ${prods.slice(0, 6).map(p => `<div class="bd-prod"><span>${shopEsc(p.name)}</span><b>${p.price != null ? money(p.price) : ''}</b></div>`).join('')}
-        <button class="btn-products" style="margin-top:10px" onclick="window.closeBizDetail();window.openProducts('${r.id}')">Ver todos y pedir</button></div>` : ''}
+        <button class="btn-products ${bizCartInfo(r.id).n ? 'has-cart' : ''}" data-biz="${r.id}" data-np="0" style="margin-top:10px" onclick="window.closeBizDetail();window.openProducts('${r.id}')">${bizCartInfo(r.id).n ? bizBtnLabel(r.id, 0) : 'Ver todos y pedir'}</button></div>` : ''}
     </div>`;
   document.getElementById('bizOverlay').classList.add('active');
   return true;
@@ -1331,7 +1332,24 @@ function renderProductsGrid(bizId) {
   }).join('');
 }
 
+function bizCartInfo(bizId) {
+  let n = 0, t = 0;
+  cart.forEach(i => { const p = productsById[i.id]; if (p && String(p.business_id) === String(bizId)) { n += i.qty; t += (Number(p.price) || 0) * i.qty; } });
+  return { n, t };
+}
+function bizBtnLabel(bizId, np) {
+  const { n, t } = bizCartInfo(bizId);
+  return n ? `🛒 ${n} seleccionado${n !== 1 ? 's' : ''} · ${money(t)} — ver / pedir` : `🛍️ Ver ${np} producto${np !== 1 ? 's' : ''}`;
+}
+function refreshBizButtons() {
+  document.querySelectorAll('.btn-products[data-biz]').forEach(b => {
+    const id = b.dataset.biz, np = Number(b.dataset.np) || 0, n = bizCartInfo(id).n;
+    b.classList.toggle('has-cart', !!n);
+    b.textContent = (!n && np === 0) ? 'Ver todos y pedir' : bizBtnLabel(id, np);
+  });
+}
 function renderCartCount() {
+  refreshBizButtons();
   const n = cart.reduce((s, i) => s + i.qty, 0);
   const el = document.getElementById('cartCount');
   el.textContent = n; el.style.display = n ? 'grid' : 'none';
