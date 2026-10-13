@@ -56,6 +56,7 @@
   /* Desktop: small floating pills bottom-left. Phones: full-width row under the nav (see media query). */
   .app-strip { position: fixed; left: 18px; bottom: 18px; z-index: 90; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .app-strip .nav-install { box-shadow: 0 4px 14px rgba(0,0,0,.18); padding: 10px 16px; }
+  .mc-google { background: #fff !important; color: #3c4043 !important; border: 1.5px solid #dadce0 !important; cursor: pointer; width: 100%; font-weight: 700; }
   .nav-login { border: 1.5px solid var(--accent, #c65d3b); background: #fff; color: var(--accent, #c65d3b); border-radius: 20px; padding: 8px 14px; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
   .nav-install.on { background: #e7f4ec; }
   .nav-install:hover { background: #1b6b4a; color: #fff; }
@@ -545,6 +546,8 @@
     <div class="mc-modal-icon">🏡</div>
     <div class="mc-modal-title">Únete a nuestra comunidad enseguida</div>
     <div class="mc-modal-text">Para proteger la seguridad de los vecinos y acceder a los canales directos de comunicación con los negocios, debes formar parte activa de nuestra red vecinal.</div>
+    <button class="mc-modal-cta mc-google" onclick="signInWithGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:8px"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.2 7-10.3 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar con Google</button>
+    <div style="text-align:center;font-size:.72rem;color:var(--ink-muted);margin:8px 0">— o —</div>
     <button class="mc-modal-cta" style="border:none;cursor:pointer;width:100%" onclick="switchToLoginLayout()">Ya tengo cuenta — Iniciar Sesión</button>
     <a href="pages/register-user.html" class="mc-modal-cta" style="background:#fff;color:var(--accent,#c65d3b);border:2px solid var(--accent,#c65d3b);margin-top:8px">Soy nuevo — Unirme como Vecino</a>
     <button class="mc-modal-close" style="margin-top:10px" onclick="closeAuthModal()">Volver al directorio</button>
@@ -557,6 +560,8 @@
     <div class="mc-modal-title">Acceso Vecinal</div>
     <div class="mc-modal-text">Ingresa tus credenciales registradas para reanudar tu sesión permanente.</div>
     
+    <button class="mc-modal-cta mc-google" onclick="signInWithGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:8px"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.5-4.2 7-10.3 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar con Google</button>
+    <div style="text-align:center;font-size:.72rem;color:var(--ink-muted);margin:8px 0">— o —</div>
     <div class="modal-form-group">
       <label>Correo Electrónico</label>
       <input type="email" id="log_email" placeholder="ejemplo@correo.com">
@@ -753,6 +758,11 @@ async function evaluateUserSession() {
     .eq('auth_user_id', session.user.id)
     .single();
   currentProfile = profile;
+  // One-tap (Google) accounts arrive without zona/quartier: ask for them once.
+  if (profile && (!profile.zona || !profile.quartier) && !sessionStorage.getItem('mc_zona_asked')) {
+    try { sessionStorage.setItem('mc_zona_asked', '1'); } catch (_) {}
+    setTimeout(async () => { await openProfileEditModal(); const t = document.querySelector('#profileEditModal .mc-modal-text'); if (t) t.textContent = '¡Bienvenido! Un último paso: confirma tu nombre y elige tu zona y quartier para terminar de crear tu cuenta.'; }, 600);
+  }
 
   if (navJoinBtn) navJoinBtn.style.display = 'none';
   { const lb = document.getElementById('navLoginBtn'); if (lb) lb.style.display = 'none'; }
@@ -775,6 +785,11 @@ async function executeNavbarSessionLogout() {
   }
 }
 
+async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/' } });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+}
+window.signInWithGoogle = signInWithGoogle;
 function openAuthModal() { document.getElementById('authGateModal').classList.add('active'); }
 function closeAuthModal() { document.getElementById('authGateModal').classList.remove('active'); }
 function switchToLoginLayout() { closeAuthModal(); document.getElementById('userLoginModal').classList.add('active'); }
