@@ -151,8 +151,11 @@
           <input type="tel" id="f_whatsapp" required maxlength="9" placeholder="7123-4567">
         </div>
         <div class="field">
-          <label>Quartier (Senda / Etapa / Zona) <span class="req">*</span></label>
-          <input type="text" id="f_quartier" required placeholder="Ej: Senda 4, Pol. H">
+          <label>Zona y Quartier <span class="req">*</span></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="f_zona" required></select>
+            <select id="f_quartier" required></select>
+          </div>
         </div>
       </div>
 
@@ -202,6 +205,8 @@
 
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
+import { bindZonaPicker } from '../assets/js/zonas.js';
+bindZonaPicker(document.getElementById('f_zona'), document.getElementById('f_quartier'));
 
 function validateAndNext(step) {
   if (step === 1) {
@@ -226,14 +231,15 @@ async function dispatchNeighborToSheets() {
   const targetBtn = document.getElementById('submitBtn');
 
   const whatsappInput = document.getElementById('f_whatsapp').value.trim().replace(/\D/g, '');
-  const quartier = document.getElementById('f_quartier').value.trim();
+  const quartier = document.getElementById('f_quartier').value;
+  const zona = document.getElementById('f_zona').value;
   const password = document.getElementById('f_password').value;
   const source = document.getElementById('f_source').value;
   const emailInput = document.getElementById('f_email').value.trim().toLowerCase();
   const neighborFirst = document.getElementById('f_nombre').value.trim();
   const neighborLast = document.getElementById('f_apellido').value.trim();
 
-  if (!whatsappInput || !quartier || !password || !source) {
+  if (!whatsappInput || !zona || !quartier || !password || !source) {
     alert('Por favor completa todos los campos obligatorios de seguridad y contacto.');
     return;
   }
@@ -257,6 +263,7 @@ async function dispatchNeighborToSheets() {
         apellido: neighborLast,
         whatsapp: whatsappInput,
         quartier,
+        zona,
         source,
       }
     }
@@ -278,7 +285,7 @@ async function dispatchNeighborToSheets() {
 
   document.getElementById('outName').textContent = neighborFirst + ' ' + neighborLast;
   document.getElementById('outId').textContent = (data.user?.id || '').slice(0, 8).toUpperCase();
-  document.getElementById('outZone').textContent = quartier;
+  document.getElementById('outZone').textContent = zona + ' · ' + quartier;
 
   document.getElementById('successCard').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -222,6 +222,7 @@
       <div class="panel-header">
         <div class="panel-title">Vecinos Registrados</div>
         <div class="filter-row">
+          <select class="search-mini" id="userZonaFilter" onchange="renderProfiles()" style="min-width:140px"><option value="">Todas las zonas</option><option value="Marsella 1">Marsella 1</option><option value="Marsella 2">Marsella 2</option></select>
           <select class="search-mini" id="userActivityFilter" onchange="renderProfiles()" style="min-width:150px">
             <option value="all">Todos</option>
             <option value="a7">🟢 Activos (7 días)</option>
@@ -365,6 +366,7 @@
 
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
+import { ZONAS, bindZonaPicker } from '../assets/js/zonas.js';
 
 let businesses = [];
 
@@ -651,6 +653,7 @@ function renderProfiles() {
   const q = (document.getElementById('userSearch').value || '').toLowerCase().trim();
   let list = profiles;
   if (q) list = list.filter(p => `${p.nombre||''} ${p.apellido||''} ${p.email||''}`.toLowerCase().includes(q));
+  { const zf = (document.getElementById('userZonaFilter') || {}).value; if (zf) list = list.filter(p => p.zona === zf); }
   const lastOf = p => (activityByProfile[p.id] || [])[0]?.created_at;
   const ageDays = p => { const l = lastOf(p); return l ? (Date.now() - new Date(l)) / 86400000 : Infinity; };
   const af = (document.getElementById('userActivityFilter') || {}).value || 'all';
@@ -670,7 +673,7 @@ function renderProfiles() {
       <div class="row-top" onclick="window.toggleUser('${p.id}')">
         <div>
           <div class="row-name">${p.nombre || ''} ${p.apellido || ''}</div>
-          <div class="row-meta">${p.email || ''}${p.whatsapp ? ' · ' + p.whatsapp : ''}${p.quartier ? ' · ' + p.quartier : ''}</div>
+          <div class="row-meta">${p.email || ''}${p.whatsapp ? ' · ' + p.whatsapp : ''}${(p.zona || p.quartier) ? ' · 📍 ' + [p.zona, p.quartier].filter(Boolean).join(' · ') : ''}</div>
           <div class="row-badges">
             <span class="badge ${p.estado === 'Activo' ? 'badge-active' : 'badge-rejected'}">${p.estado || 'Activo'}</span>
             ${needsReset ? '<span class="badge badge-migrated">Pendiente de reset de clave</span>' : ''}
@@ -687,7 +690,7 @@ function renderProfiles() {
         </div>
         <div class="field-row">
           <div class="field"><label>WhatsApp</label><input type="text" id="usr_whatsapp_${p.id}" value="${(p.whatsapp||'').replace(/"/g,'&quot;')}"></div>
-          <div class="field"><label>Quartier</label><input type="text" id="usr_quartier_${p.id}" value="${(p.quartier||'').replace(/"/g,'&quot;')}"></div>
+          <div class="field"><label>Zona y Quartier</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select id="usr_zona_${p.id}" data-z="${escH(p.zona || '')}" data-q="${escH(p.quartier || '')}"></select><select id="usr_quartier_${p.id}"></select></div></div>
         </div>
         <div class="field">
           <label>Estado de la cuenta</label>
@@ -701,6 +704,7 @@ function renderProfiles() {
       </div>
     </div>`;
   }).join('');
+  bindUserZonaPickers();
 }
 
 function activityDetailHtml(p) {
@@ -720,6 +724,9 @@ function activityDetailHtml(p) {
   </div>`;
 }
 
+function bindUserZonaPickers() {
+  document.querySelectorAll('[id^="usr_zona_"]').forEach(z => { const id = z.id.replace('usr_zona_', ''); bindZonaPicker(z, document.getElementById('usr_quartier_' + id), { zona: z.dataset.z, quartier: z.dataset.q }); });
+}
 window.toggleUser = function(id) {
   expandedUserId = expandedUserId === id ? null : id;
   renderProfiles();
@@ -730,7 +737,8 @@ window.saveUser = async function(id) {
     nombre: document.getElementById(`usr_nombre_${id}`).value.trim(),
     apellido: document.getElementById(`usr_apellido_${id}`).value.trim(),
     whatsapp: document.getElementById(`usr_whatsapp_${id}`).value.trim(),
-    quartier: document.getElementById(`usr_quartier_${id}`).value.trim(),
+    quartier: document.getElementById(`usr_quartier_${id}`).value,
+    zona: document.getElementById(`usr_zona_${id}`).value,
     estado: document.getElementById(`usr_estado_${id}`).value,
   };
   const { error } = await supabase.from('profiles').update(payload).eq('id', id);
@@ -753,7 +761,7 @@ async function loadProductsAdmin() {
     adminProdCats = {}; (cats || []).forEach(c => adminProdCats[c.id] = c.name);
     cartEvents = [];
     for (let from = 0; from < 50000; from += 1000) {
-      const { data, error } = await supabase.from('events_log').select('evento_tipo,product_id,negocio_nombre,valor_busqueda,profile_id,session_id,created_at').in('evento_tipo', ['Agregar_Carrito', 'Pedido_WhatsApp']).order('created_at', { ascending: false }).range(from, from + 999);
+      const { data, error } = await supabase.from('events_log').select('evento_tipo,product_id,negocio_nombre,valor_busqueda,profile_id,session_id,valor,created_at').in('evento_tipo', ['Agregar_Carrito', 'Pedido_WhatsApp']).order('created_at', { ascending: false }).range(from, from + 999);
       if (error) throw error; cartEvents.push(...data); if (data.length < 1000) break;
     }
   } catch (err) { document.getElementById('prodBody').innerHTML = `<div class="empty-note">Error: ${escH(err.message)}</div>`; return; }
@@ -767,12 +775,13 @@ const adds = () => cartEvents.filter(e => e.evento_tipo === 'Agregar_Carrito');
 
 window.renderProductsAdmin = function() {
   if (!prodLoaded) return;
-  document.getElementById('prodSeg').innerHTML = [['catalog', '📦 Catálogo'], ['cart', '🛒 Carrito (estadísticas)']].map(([k, l]) => `<button class="${k === prodView ? 'on' : ''}" onclick="setProdView('${k}')">${l}</button>`).join('');
+  document.getElementById('prodSeg').innerHTML = [['catalog', '📦 Catálogo'], ['cart', '🛒 Carrito (estadísticas)'], ['users', '👥 Carrito por usuario']].map(([k, l]) => `<button class="${k === prodView ? 'on' : ''}" onclick="setProdView('${k}')">${l}</button>`).join('');
   const addCount = {}, addLast = {};
   adds().forEach(e => { if (e.product_id) { addCount[e.product_id] = (addCount[e.product_id] || 0) + 1; addLast[e.product_id] ||= e.created_at; } });
   const sum = document.getElementById('prodSummary'), body = document.getElementById('prodBody');
   const bizName = id => (businesses.find(b => b.id === id) || {}).nombre || 'Negocio eliminado';
   document.getElementById('prodBiz').parentElement.style.display = prodView === 'catalog' ? 'flex' : 'none';
+  if (prodView === 'users') { renderCartUsersView(sum, body); return; }
 
   if (prodView === 'cart') {
     const a = adds(), week = a.filter(e => Date.now() - new Date(e.created_at) < 7 * 86400000).length;
@@ -865,6 +874,67 @@ window.setCatalogUrl = async function(bizId) {
   const { error } = await supabase.from('businesses').update({ whatsapp_catalog_url: v || null }).eq('id', bizId);
   if (error) return alert('Error: ' + error.message);
   b.whatsapp_catalog_url = v || null; renderProductsAdmin();
+};
+let cartRange = '30', cartZona = '', cartUserQ = '', cartOpenUser = null, lastCartRows = [];
+const money2 = n => '$' + (Number(n) || 0).toFixed(2);
+function renderCartUsersView(sum, body) {
+  sum.innerHTML = '';
+  body.innerHTML = `<div class="filter-row" style="margin-bottom:12px">
+      <select class="search-mini" id="cuRange" style="min-width:150px"><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="0">Todo el historial</option></select>
+      <select class="search-mini" id="cuZona" style="min-width:150px"><option value="">Todas las zonas</option>${Object.keys(ZONAS).map(z => `<option value="${z}">${z}</option>`).join('')}</select>
+      <input class="search-mini" id="cuQ" placeholder="Buscar usuario o producto...">
+      <button class="btn btn-ghost" onclick="exportCartUsersCsv()">⬇️ Exportar CSV</button></div>
+    <div id="cartUsersOut"></div>`;
+  const r = document.getElementById('cuRange'), z = document.getElementById('cuZona'), q = document.getElementById('cuQ');
+  r.value = cartRange; z.value = cartZona; q.value = cartUserQ;
+  r.onchange = () => { cartRange = r.value; renderCartUsers(); }; z.onchange = () => { cartZona = z.value; renderCartUsers(); }; q.oninput = () => { cartUserQ = q.value; renderCartUsers(); };
+  renderCartUsers();
+}
+function renderCartUsers() {
+  const out = document.getElementById('cartUsersOut'); if (!out) return;
+  const since = cartRange === '0' ? 0 : Date.now() - parseInt(cartRange) * 86400000;
+  const priceOf = e => e.valor != null ? Number(e.valor) : Number((adminProducts.find(p => String(p.id) === String(e.product_id)) || {}).price || 0);
+  const users = {};
+  adds().filter(e => new Date(e.created_at).getTime() >= since).forEach(e => {
+    const prof = e.profile_id ? profiles.find(p => p.id === e.profile_id) : null;
+    const key = e.profile_id || ('anon:' + (e.session_id || '?'));
+    const u = users[key] ||= { key, prof, anon: !e.profile_id, sid: e.session_id, n: 0, total: 0, days: new Set(), last: null, items: {} };
+    const val = priceOf(e), day = new Date(e.created_at).toLocaleDateString('en-CA', { timeZone: TZ });
+    u.n++; u.total += val; u.days.add(day); if (!u.last) u.last = e.created_at;
+    const ik = e.product_id || e.valor_busqueda;
+    const it = u.items[ik] ||= { name: e.valor_busqueda || (adminProducts.find(p => String(p.id) === String(e.product_id)) || {}).name || 'Producto', biz: e.negocio_nombre || '', qty: 0, total: 0, last: e.created_at };
+    it.qty++; it.total += val;
+  });
+  const ql = cartUserQ.toLowerCase().trim();
+  let rows = Object.values(users).filter(u => {
+    if (cartZona && !(u.prof && u.prof.zona === cartZona)) return false;
+    if (!ql) return true;
+    const hay = `${u.prof ? (u.prof.nombre || '') + ' ' + (u.prof.apellido || '') + ' ' + (u.prof.email || '') : 'visitante'} ${Object.values(u.items).map(i => i.name + ' ' + i.biz).join(' ')}`.toLowerCase();
+    return hay.includes(ql);
+  }).sort((a, b) => b.total - a.total || b.n - a.n);
+  lastCartRows = rows;
+  const tot = rows.reduce((a, u) => a + u.total, 0), nAdds = rows.reduce((a, u) => a + u.n, 0);
+  const label = u => u.prof ? `${escH(((u.prof.nombre || '') + ' ' + (u.prof.apellido || '')).trim() || u.prof.email)}<div class="row-meta">${escH(u.prof.email || '')}</div>` : `Visitante<div class="row-meta">#${escH(String(u.sid || '?').slice(0, 6))} · sin cuenta</div>`;
+  const zq = u => u.prof ? escH([u.prof.zona, u.prof.quartier].filter(Boolean).join(' · ') || '—') : '—';
+  out.innerHTML = `<div class="stat-cards">
+      <div class="stat-card"><div class="stat-card-num">${rows.length}</div><div class="stat-card-label">Usuarios con carrito</div></div>
+      <div class="stat-card"><div class="stat-card-num">${nAdds}</div><div class="stat-card-label">Productos agregados</div></div>
+      <div class="stat-card"><div class="stat-card-num">${money2(tot)}</div><div class="stat-card-label">Valor total agregado</div></div>
+      <div class="stat-card"><div class="stat-card-num">${rows.length ? money2(tot / rows.length) : '$0.00'}</div><div class="stat-card-label">Promedio por usuario</div></div>
+      <div class="stat-card"><div class="stat-card-num">${rows.length ? (nAdds / rows.length).toFixed(1) : 0}</div><div class="stat-card-label">Agregados por usuario</div></div></div>
+    ${rows.length ? `<div class="promo-table-wrap"><table class="promo-table" style="min-width:820px"><thead><tr><th>Usuario</th><th>Zona · Quartier</th><th>Agregados</th><th>Productos distintos</th><th>Total $</th><th>Días activos</th><th>Última vez</th></tr></thead><tbody>
+      ${rows.map(u => `<tr style="cursor:pointer" onclick="toggleCartUser('${escH(u.key)}')"><td class="wrap">${label(u)}</td><td>${zq(u)}</td><td><b>${u.n}</b></td><td>${Object.keys(u.items).length}</td><td><b>${money2(u.total)}</b></td><td>${u.days.size}</td><td>${timeAgo(u.last)}</td></tr>
+        ${cartOpenUser === u.key ? `<tr><td colspan="7" style="background:var(--bg);white-space:normal"><b>Lo que agregó:</b>
+          <table class="promo-table" style="min-width:0;margin-top:6px"><thead><tr><th>Producto</th><th>Negocio</th><th>Veces</th><th>Subtotal</th></tr></thead><tbody>${Object.values(u.items).sort((a, b) => b.qty - a.qty).map(i => `<tr><td class="wrap">${escH(i.name)}</td><td>${escH(i.biz)}</td><td>${i.qty}</td><td>${money2(i.total)}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('')}
+      </tbody></table></div>` : '<div class="empty-note">Sin productos agregados con estos filtros.</div>'}
+    <div class="row-meta">Tocar una fila muestra lo que agregó. El valor es el precio del producto cada vez que se agregó (en agregados anteriores se usa el precio actual).</div>`;
+}
+window.toggleCartUser = k => { cartOpenUser = cartOpenUser === k ? null : k; renderCartUsers(); };
+window.exportCartUsersCsv = () => {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const lines = [['Usuario', 'Email', 'Zona', 'Quartier', 'Agregados', 'Productos distintos', 'Total USD', 'Días activos', 'Última vez'].map(q).join(',')];
+  lastCartRows.forEach(u => lines.push([u.prof ? `${u.prof.nombre || ''} ${u.prof.apellido || ''}`.trim() : 'Visitante', u.prof ? u.prof.email : '', u.prof ? u.prof.zona : '', u.prof ? u.prof.quartier : '', u.n, Object.keys(u.items).length, u.total.toFixed(2), u.days.size, u.last].map(q).join(',')));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv' })); a.download = 'carrito-por-usuario.csv'; a.click();
 };
 window.toggleProdBiz = id => { prodOpen[id] = prodOpen[id] === false; renderProductsAdmin(); };
 window.toggleProdStock = async (id, v) => {
@@ -1213,7 +1283,7 @@ let statsCache = null;
 window.loadStats = async function loadStats(useCache) {
   const sel = document.getElementById('statsUser');
   if (!sel.options.length) {
-    sel.innerHTML = '<option value="all">Todos los usuarios</option><option value="anon">Solo visitantes (sin cuenta)</option><option value="reg">Solo vecinos registrados</option>' +
+    sel.innerHTML = '<option value="all">Todos los usuarios</option><option value="anon">Solo visitantes (sin cuenta)</option><option value="reg">Solo vecinos registrados</option><option value="z:Marsella 1">Zona: Marsella 1</option><option value="z:Marsella 2">Zona: Marsella 2</option>' +
       profiles.map(p => `<option value="${p.id}">${escH((p.nombre || '') + ' ' + (p.apellido || ''))} (${escH(p.email || '')})</option>`).join('');
   }
   document.getElementById('typeSeg').innerHTML = Object.entries(TYPE_GROUPS).map(([k, g]) => `<button class="${k === statsType ? 'on' : ''}" onclick="setStatsType('${k}')">${g.label}</button>`).join('');
@@ -1229,7 +1299,7 @@ window.loadStats = async function loadStats(useCache) {
 
   // who filter
   const who = sel.value;
-  let events = statsCache.events.filter(e => who === 'all' ? true : who === 'anon' ? !e.profile_id : who === 'reg' ? !!e.profile_id : e.profile_id === who);
+  let events = statsCache.events.filter(e => who === 'all' ? true : who === 'anon' ? !e.profile_id : who === 'reg' ? !!e.profile_id : who.startsWith('z:') ? (profiles.find(p => p.id === e.profile_id) || {}).zona === who.slice(2) : e.profile_id === who);
   const grp = TYPE_GROUPS[statsType].types;
   const typed = grp ? events.filter(e => grp.includes(e.evento_tipo)) : events;
 
