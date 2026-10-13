@@ -616,6 +616,7 @@
 import { supabase } from './assets/js/supabase.js';
 import { bindZonaPicker } from './assets/js/zonas.js';
 import { CONFIG } from './assets/js/config.js';
+import { openOrderChat, unreadCount } from './assets/js/chat.js';
 const COUNTRY_CODE = '503';
 
 const CATEGORY_ICONS = {
@@ -1370,16 +1371,23 @@ async function loadMyOrders() {
   const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(8);
   window._myOrders = data || [];
   if (!data || !data.length) { el.innerHTML = ''; return; }
+  setTimeout(() => markUnread(data), 0);
   const pill = { pendiente: ['#fff4e5', '#9a5b00', '⏳ Esperando respuesta'], aceptado: ['#e2f1ed', '#1b6b4a', '✅ Aceptado'], rechazado: ['#fdecea', '#b3261e', 'No disponible'] };
   el.innerHTML = '<h4 style="margin:18px 0 8px">📦 Mis solicitudes</h4>' + data.map(o => {
     const biz = allData.find(b => String(b.id) === String(o.business_id)) || {}; const st = pill[o.status] || pill.pendiente;
     return `<div class="cart-group" id="ord-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${shopEsc(biz.nombre || 'Negocio')}</b><span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:12px;background:${st[0]};color:${st[1]}">${st[2]}</span></div>
       <div style="font-size:.82rem;color:var(--ink-muted);margin:6px 0">${(o.items || []).map(i => shopEsc(i.name) + ' ×' + i.qty).join(', ')} · <b>${money(o.total)}</b></div>
       ${o.status === 'rechazado' ? '<div style="font-size:.82rem;color:#b3261e;font-weight:600">Este pedido no está disponible por ahora. Puedes intentar con otro producto u otro negocio.</div>' : ''}
-      ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}</div>`;
+      ${o.status === 'aceptado' ? `<button class="cart-send" onclick="window.orderWhatsApp('${o.id}')">💬 Enviar pedido por WhatsApp</button>` : ''}
+      ${o.status !== 'rechazado' ? `<button class="cart-send" style="background:#fff;color:#1b6b4a;border:1.5px solid #1b6b4a;margin-top:6px" onclick="window.chatOrder('${o.id}')">🗨️ Chat con el negocio <span id="unr-${o.id}"></span></button>` : ''}</div>`;
   }).join('');
 }
 
+window.chatOrder = (id) => { const o = (window._myOrders || []).find(x => x.id === id); const biz = o && allData.find(b => String(b.id) === String(o.business_id)); window.closeCart(); openOrderChat(id, (biz && biz.nombre) || 'Negocio'); };
+async function markUnread(orders) {
+  const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
+  for (const o of orders.filter(x => x.status !== 'rechazado')) unreadCount(o.id, session.user.id).then(n => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<b style="background:#d84040;color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem">' + n + '</b>'; }).catch(() => {});
+}
 let sendingOrder = false;
 window.sendOrder = async function(bizId) {
   if (!currentProfile) { window.closeCart(); openAuthModal(); return; }
@@ -1414,7 +1422,7 @@ window.sendOrder = async function(bizId) {
 // Deep link from a notification: ?pedido=<id> opens the cart drawer with the order status.
 (function() {
   if (!new URLSearchParams(location.search).get('pedido')) return;
-  let tries = 0; const t = setInterval(() => { if ((currentProfile && allData.length) || ++tries > 30) { clearInterval(t); if (currentProfile) window.openCart(); } }, 500);
+  let tries = 0; const t = setInterval(() => { if ((currentProfile && allData.length) || ++tries > 30) { clearInterval(t); if (currentProfile) { window.openCart(); const q = new URLSearchParams(location.search); if (q.get('chat') === '1') setTimeout(() => window.chatOrder(q.get('pedido')), 1200); } } }, 500);
 })();
 
 // ---- Promo banner carousel ----
