@@ -199,7 +199,7 @@ function renderMyBusinesses() {
           <div class="biz-card-meta">${b.categoria || ''}${b.barrio ? ' · ' + b.barrio : ''}</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a class="btn btn-ghost" style="text-decoration:none" href="product-upload.html?business=${b.id}">📦 Productos</a>
+          <a class="btn btn-ghost" style="text-decoration:none" href="mis-productos.html?business=${b.id}">📦 Productos</a>
           <button class="btn btn-ghost" onclick="window.toggleManage('${b.id}')">${isOpen ? 'Cerrar' : 'Administrar'}</button>
         </div>
       </div>

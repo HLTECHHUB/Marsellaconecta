@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis Productos — Marsella Conecta</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent:#c65d3b; --green:#1b6b4a; --bg:#faf7f2; --ink:#2d2622; --muted:#6b6560; --border:#e8e2db; --danger:#dc2626; --r:12px; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); }
+  nav { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#fff; border-bottom:1px solid var(--border); }
+  .logo { font-family:'Syne',sans-serif; font-weight:800; text-decoration:none; color:var(--ink); }
+  .logo span { color:var(--accent); }
+  nav a.back { font-size:.85rem; font-weight:600; color:var(--muted); text-decoration:none; }
+  .wrap { max-width:820px; margin:0 auto; padding:22px 16px 60px; }
+  h1 { font-family:'Syne',sans-serif; font-size:1.5rem; }
+  .sub { color:var(--muted); font-size:.9rem; margin:4px 0 18px; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:18px; margin-bottom:16px; }
+  .card h3 { font-family:'Syne',sans-serif; font-size:1rem; margin-bottom:12px; }
+  label { display:block; font-weight:600; font-size:.82rem; margin:10px 0 4px; }
+  input, select, textarea { width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:9px; font:inherit; font-size:.92rem; background:#fff; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); }
+  textarea { min-height:84px; resize:vertical; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px) { .row { grid-template-columns:1fr; } }
+  .btn { border:none; border-radius:9px; padding:10px 16px; font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; }
+  .btn-p { background:var(--accent); color:#fff; } .btn-g { background:var(--green); color:#fff; }
+  .btn-l { background:var(--bg); border:1.5px solid var(--border); color:var(--ink); }
+  .btn-d { background:#fff; border:1.5px solid var(--danger); color:var(--danger); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .prod { display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .prod:last-child { border-bottom:none; }
+  .thumb { width:54px; height:54px; border-radius:10px; object-fit:cover; background:var(--bg); display:grid; place-items:center; font-size:1.4rem; flex:none; }
+  .pinfo { flex:1; min-width:0; } .pname { font-weight:700; } .pmeta { font-size:.8rem; color:var(--muted); }
+  .pact { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .pact .btn { padding:6px 10px; font-size:.74rem; }
+  .badge { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:10px; text-transform:uppercase; }
+  .in { background:#dcfce7; color:#166534; } .out { background:#fee2e2; color:#991b1b; }
+  .msg { padding:10px 14px; border-radius:9px; font-size:.88rem; margin-bottom:12px; display:none; }
+  .msg.ok { display:block; background:#e2f1ed; color:#1b6b4a; } .msg.err { display:block; background:#fef2f2; color:#991b1b; }
+  .hint { font-size:.78rem; color:var(--muted); margin-top:4px; }
+  .empty { text-align:center; color:var(--muted); padding:26px 10px; }
+  @media (max-width:560px) { .prod { flex-wrap:wrap; } .pact { width:100%; justify-content:flex-start; } }
+  #preview img { max-width:120px; border-radius:10px; margin-top:8px; }
+</style>
+</head>
+<body>
+<nav><a class="logo" href="../index.html">Marsella<span>Conecta</span></a><a class="back" href="mi-negocio.html">← Mi negocio</a></nav>
+
+<div class="wrap">
+  <h1>🛍️ Mis productos</h1>
+  <p class="sub">Agrega, edita o quita los productos de tu negocio. Los clientes los ven y pueden pedirte por WhatsApp.</p>
+  <div id="msg" class="msg"></div>
+  <div id="gate" class="card" style="display:none"></div>
+
+  <div id="app" style="display:none">
+    <div class="card" id="bizPick" style="display:none"><label style="margin-top:0">Negocio</label><select id="bizSel"></select></div>
+
+    <div class="top">
+      <div><b id="bizName"></b> <span class="pmeta" id="count"></span></div>
+      <div><button class="btn btn-g" onclick="openForm()">＋ Agregar producto</button> <button class="btn btn-l" onclick="toggleBulk()">📋 Agregar varios</button></div>
+    </div>
+
+    <div class="card" id="bulkCard" style="display:none">
+      <h3>📋 Agregar varios de golpe</h3>
+      <p class="hint" style="margin:0 0 8px">Un producto por línea, con el precio al final. Ejemplo:<br><code>Pupusa de queso, 1.50</code><br><code>Horchata grande - 2</code></p>
+      <textarea id="bulkText" placeholder="Pupusa de queso, 1.50&#10;Horchata grande - 2.00"></textarea>
+      <label>Categoría para todos</label><select id="bulkCat"></select>
+      <div class="hint" id="bulkInfo"></div>
+      <div style="margin-top:10px"><button class="btn btn-p" id="bulkBtn" onclick="saveBulk()">Guardar todos</button> <button class="btn btn-l" onclick="toggleBulk()">Cancelar</button></div>
+    </div>
+
+    <div class="card" id="formCard" style="display:none">
+      <h3 id="formTitle">Nuevo producto</h3>
+      <input type="hidden" id="pid">
+      <label style="margin-top:0">Nombre *</label><input id="pname" placeholder="Ej: Pupusas de queso">
+      <div class="row">
+        <div><label>Precio (USD) *</label><input id="pprice" type="number" step="0.01" min="0" placeholder="1.50"></div>
+        <div><label>Categoría *</label><select id="pcat"></select></div>
+      </div>
+      <label>Descripción</label><textarea id="pdesc" maxlength="500" placeholder="Ingredientes, tamaño, detalles..."></textarea>
+      <div class="row">
+        <div><label>¿Disponible?</label><select id="pstock"><option value="true">✓ Disponible</option><option value="false">✗ Agotado</option></select></div>
+        <div><label>Foto (opcional)</label><input id="pfile" type="file" accept="image/*"></div>
+      </div>
+      <div id="preview"></div>
+      <div style="margin-top:14px"><button class="btn btn-p" id="saveBtn" onclick="saveProduct()">Guardar producto</button> <button class="btn btn-l" onclick="closeForm()">Cancelar</button></div>
+    </div>
+
+    <div class="card"><div id="list"><div class="empty">Cargando...</div></div></div>
+
+    <div class="card">
+      <h3>📲 Catálogo de WhatsApp (opcional)</h3>
+      <p class="hint" style="margin:0 0 8px">Si ya tienes un catálogo en WhatsApp Business, pega aquí su enlace (WhatsApp Business → Catálogo → Compartir). Los clientes verán un botón “Ver catálogo en WhatsApp” en tu negocio.</p>
+      <input id="catUrl" placeholder="https://wa.me/c/503XXXXXXXX">
+      <div style="margin-top:10px"><button class="btn btn-l" onclick="saveCatalogUrl()">Guardar enlace</button></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase.js';
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let biz = null, bizList = [], products = [], cats = [], existingImg = null;
+
+function flash(t, ok = true) { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t; if (ok) setTimeout(() => m.className = 'msg', 3500); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+async function compress(file) {
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+  const max = 800, k = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+}
+
+async function boot() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { $('gate').style.display = 'block'; $('gate').innerHTML = 'Inicia sesión para administrar tus productos. <a href="../index.html">Ir al inicio</a>'; return; }
+  const { data: profile } = await supabase.from('profiles').select('id').eq('auth_user_id', session.user.id).maybeSingle();
+  const { data: bs } = profile ? await supabase.from('businesses').select('id,nombre,whatsapp_catalog_url').eq('owner_profile_id', profile.id).order('created_at') : { data: [] };
+  bizList = bs || [];
+  if (!bizList.length) { $('gate').style.display = 'block'; $('gate').innerHTML = 'Aún no tienes un negocio registrado. <a href="register.html">Registra tu negocio</a>'; return; }
+  const { data: c } = await supabase.from('product_categories').select('*').order('order').order('id');
+  cats = c || [];
+  const opts = cats.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  $('pcat').innerHTML = opts; $('bulkCat').innerHTML = opts;
+  const wanted = new URLSearchParams(location.search).get('business');
+  biz = bizList.find(b => b.id === wanted) || bizList[0];
+  if (bizList.length > 1) { $('bizPick').style.display = 'block'; $('bizSel').innerHTML = bizList.map(b => `<option value="${b.id}">${esc(b.nombre)}</option>`).join(''); $('bizSel').value = biz.id; $('bizSel').onchange = () => { biz = bizList.find(b => b.id === $('bizSel').value); closeForm(); load(); }; }
+  $('app').style.display = 'block';
+  load();
+}
+
+async function load() {
+  $('bizName').textContent = biz.nombre; $('catUrl').value = biz.whatsapp_catalog_url || '';
+  const { data, error } = await supabase.from('products').select('*').eq('business_id', biz.id).order('created_at', { ascending: false });
+  if (error) { $('list').innerHTML = `<div class="empty">Error: ${esc(error.message)}</div>`; return; }
+  products = data || [];
+  $('count').textContent = `· ${products.length} producto${products.length !== 1 ? 's' : ''}`;
+  const cname = id => (cats.find(c => c.id === id) || {}).name || '';
+  $('list').innerHTML = products.length ? products.map(p => `<div class="prod">
+      ${p.image_url ? `<img class="thumb" src="${esc(p.image_url)}" alt="">` : '<div class="thumb">📦</div>'}
+      <div class="pinfo"><div class="pname">${esc(p.name)}</div><div class="pmeta">$${Number(p.price || 0).toFixed(2)}${cname(p.product_category_id) ? ' · ' + esc(cname(p.product_category_id)) : ''} · <span class="badge ${p.in_stock ? 'in' : 'out'}">${p.in_stock ? 'Disponible' : 'Agotado'}</span></div></div>
+      <div class="pact"><button class="btn btn-l" onclick="toggleStock(${p.id},${!p.in_stock})">${p.in_stock ? 'Agotado' : 'Disponible'}</button><button class="btn btn-l" onclick="editProduct(${p.id})">Editar</button><button class="btn btn-d" onclick="delProduct(${p.id})">Eliminar</button></div>
+    </div>`).join('') : '<div class="empty">Todavía no tienes productos. Pulsa “＋ Agregar producto” o “📋 Agregar varios”.</div>';
+}
+
+window.openForm = (p) => {
+  $('bulkCard').style.display = 'none'; $('formCard').style.display = 'block';
+  $('pid').value = p ? p.id : ''; $('pname').value = p ? p.name : ''; $('pprice').value = p ? p.price : '';
+  $('pcat').value = p && p.product_category_id ? p.product_category_id : (cats[0] || {}).id; $('pdesc').value = p ? (p.description || '') : '';
+  $('pstock').value = p ? String(!!p.in_stock) : 'true'; $('pfile').value = ''; existingImg = p ? p.image_url : null;
+  $('preview').innerHTML = existingImg ? `<img src="${esc(existingImg)}" alt="">` : '';
+  $('formTitle').textContent = p ? 'Editar producto' : 'Nuevo producto';
+  $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+window.closeForm = () => { $('formCard').style.display = 'none'; };
+window.editProduct = id => openForm(products.find(p => p.id === id));
+window.toggleBulk = () => { const b = $('bulkCard'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; $('formCard').style.display = 'none'; };
+
+window.saveProduct = async () => {
+  const name = $('pname').value.trim(), price = parseFloat($('pprice').value);
+  if (!name) return flash('Escribe el nombre del producto.', false);
+  if (isNaN(price) || price < 0) return flash('Escribe un precio válido.', false);
+  const btn = $('saveBtn'); btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    let image_url = existingImg || null;
+    const f = $('pfile').files[0];
+    if (f) {
+      const blob = await compress(f), path = `${biz.id}/${Date.now()}.jpg`;
+      const { error: ue } = await supabase.storage.from('marsella-products').upload(path, blob, { contentType: 'image/jpeg' });
+      if (ue) throw ue;
+      image_url = supabase.storage.from('marsella-products').getPublicUrl(path).data.publicUrl;
+    }
+    const row = { business_id: biz.id, name, price, product_category_id: parseInt($('pcat').value) || null, description: $('pdesc').value.trim() || null, in_stock: $('pstock').value === 'true', image_url };
+    const id = $('pid').value;
+    const { error } = id ? await supabase.from('products').update(row).eq('id', id) : await supabase.from('products').insert(row);
+    if (error) throw error;
+    closeForm(); flash(id ? 'Producto actualizado ✓' : 'Producto agregado ✓'); load();
+  } catch (e) { flash('No se pudo guardar: ' + (e.message || e), false); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar producto'; }
+};
+
+window.toggleStock = async (id, v) => { const { error } = await supabase.from('products').update({ in_stock: v }).eq('id', id); if (error) return flash(error.message, false); load(); };
+window.delProduct = async id => { if (!confirm('¿Eliminar este producto?')) return; const { error } = await supabase.from('products').delete().eq('id', id); if (error) return flash(error.message, false); flash('Producto eliminado'); load(); };
+
+function parseBulk(t) {
+  const out = [];
+  t.split(/\n+/).map(l => l.trim()).filter(Boolean).forEach(l => {
+    const m = l.match(/^(.*?)[\s,;:\-–—]*\$?\s*(\d+(?:[.,]\d{1,2})?)\s*$/);
+    if (m && m[1].trim()) out.push({ name: m[1].trim(), price: parseFloat(m[2].replace(',', '.')) });
+  });
+  return out;
+}
+$('bulkText').addEventListener('input', () => { const n = parseBulk($('bulkText').value).length, tot = $('bulkText').value.split(/\n+/).filter(l => l.trim()).length; $('bulkInfo').textContent = tot ? `${n} de ${tot} línea${tot !== 1 ? 's' : ''} reconocida${n !== 1 ? 's' : ''}${n < tot ? ' — revisa que cada línea termine con el precio' : ''}` : ''; });
+window.saveBulk = async () => {
+  const items = parseBulk($('bulkText').value);
+  if (!items.length) return flash('No encontré productos. Usa el formato: Nombre, precio', false);
+  const btn = $('bulkBtn'); btn.disabled = true;
+  const cat = parseInt($('bulkCat').value) || null;
+  const { error } = await supabase.from('products').insert(items.map(i => ({ business_id: biz.id, name: i.name, price: i.price, product_category_id: cat, in_stock: true })));
+  btn.disabled = false;
+  if (error) return flash('No se pudo guardar: ' + error.message, false);
+  $('bulkText').value = ''; $('bulkInfo').textContent = ''; $('bulkCard').style.display = 'none';
+  flash(`${items.length} productos agregados ✓`); load();
+};
+
+window.saveCatalogUrl = async () => {
+  const u = $('catUrl').value.trim();
+  if (u && !/^https:\/\/[^\s]+$/i.test(u)) return flash('El enlace debe empezar con https://', false);
+  const { error } = await supabase.from('businesses').update({ whatsapp_catalog_url: u || null }).eq('id', biz.id);
+  if (error) return flash('No se pudo guardar: ' + error.message, false);
+  biz.whatsapp_catalog_url = u || null; flash('Enlace guardado ✓');
+};
+
+boot();
+</script>
+</body>
+</html>
