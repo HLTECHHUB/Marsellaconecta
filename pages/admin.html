@@ -117,6 +117,26 @@
   .activity-type { font-weight: 700; }
   .activity-detail { color: var(--ink-muted); }
   .activity-time { color: var(--ink-muted); white-space: nowrap; font-size: 0.72rem; }
+
+  .chip { display:inline-block; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:2px 10px; font-size:.75rem; margin:2px 4px 2px 0; }
+  .chip b { color: var(--accent); margin-left:4px; }
+  .act-box { margin-top:14px; padding-top:12px; border-top:1px dashed var(--border); }
+  .act-box h4 { margin:0 0 6px; font-size:.85rem; }
+  .act-tl { max-height:240px; overflow:auto; border:1px solid var(--border); border-radius:10px; }
+  .act-tl .activity-item { padding:7px 12px; }
+  .badge-live { background:#dcfce7; color:#166534; }
+  .badge-idle { background:#f3f4f6; color:#4b5563; }
+  .seg { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .seg button { border:1.5px solid var(--border); background:#fff; border-radius:16px; padding:5px 12px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .seg button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:20px; box-shadow:var(--card-shadow); }
+  .bars { display:flex; align-items:flex-end; gap:3px; height:180px; padding-top:10px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; min-width:0; }
+  .bar { width:100%; background:var(--accent); opacity:.75; border-radius:4px 4px 0 0; min-height:2px; }
+  .bar.peak { opacity:1; background:#1b6b4a; }
+  .bar-num { font-size:.62rem; color:var(--ink-muted); height:14px; }
+  .bar-lbl { display:flex; gap:3px; margin-top:4px; }
+  .bar-lbl span { flex:1; text-align:center; font-size:.62rem; color:var(--ink-muted); min-width:0; overflow:hidden; }
 </style>
 </head>
 <body>
@@ -172,8 +192,18 @@
     <div class="tab-panel" id="tab-vecinos">
       <div class="panel-header">
         <div class="panel-title">Vecinos Registrados</div>
-        <input class="search-mini" id="userSearch" placeholder="Buscar vecino..." oninput="renderProfiles()">
+        <div class="filter-row">
+          <select class="search-mini" id="userActivityFilter" onchange="renderProfiles()" style="min-width:150px">
+            <option value="all">Todos</option>
+            <option value="a7">🟢 Activos (7 días)</option>
+            <option value="a30">Activos (30 días)</option>
+            <option value="idle">Inactivos (+30 días)</option>
+            <option value="never">Sin actividad</option>
+          </select>
+          <input class="search-mini" id="userSearch" placeholder="Buscar vecino..." oninput="renderProfiles()">
+        </div>
       </div>
+      <div id="userSummary" class="row-meta" style="margin-bottom:10px"></div>
       <div id="userList"><div class="loading">Cargando vecinos...</div></div>
     </div>
 
@@ -223,11 +253,23 @@
             <option value="90">Últimos 90 días</option>
             <option value="0">Todo el historial</option>
           </select>
+          <select class="search-mini" id="statsUser" onchange="loadStats()" style="min-width:170px"></select>
         </div>
       </div>
 
       <div class="stat-cards" id="statCards">
         <div class="loading">Cargando estadísticas...</div>
+      </div>
+
+      <div class="chart-card">
+        <div class="panel-title" style="font-size:0.95rem;margin-bottom:10px">⏰ ¿Cuándo hay más actividad?</div>
+        <div class="seg" id="typeSeg"></div>
+        <div class="seg" id="viewSeg">
+          <button data-v="hour" class="on" onclick="setStatsView('hour')">Hora del día</button>
+          <button data-v="dow" onclick="setStatsView('dow')">Día de la semana</button>
+        </div>
+        <div id="statsChart"></div>
+        <div id="chartNote" class="row-meta" style="margin-top:8px"></div>
       </div>
 
       <div class="stats-cols">
@@ -370,6 +412,7 @@ window.submitPwChange = async function(e) {
 
 // ---------------- TABS ----------------
 window.switchTab = function(tab) {
+  if (tab === 'vecinos' && typeof loadActivity === 'function') loadActivity();
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -378,6 +421,7 @@ window.switchTab = function(tab) {
 
 async function loadAll() {
   await Promise.all([loadBusinesses(), loadProfiles(), loadPromotions()]);
+  loadActivity();
 }
 
 // ================= NEGOCIOS =================
@@ -531,6 +575,14 @@ function renderProfiles() {
   const q = (document.getElementById('userSearch').value || '').toLowerCase().trim();
   let list = profiles;
   if (q) list = list.filter(p => `${p.nombre||''} ${p.apellido||''} ${p.email||''}`.toLowerCase().includes(q));
+  const lastOf = p => (activityByProfile[p.id] || [])[0]?.created_at;
+  const ageDays = p => { const l = lastOf(p); return l ? (Date.now() - new Date(l)) / 86400000 : Infinity; };
+  const af = (document.getElementById('userActivityFilter') || {}).value || 'all';
+  if (activityLoaded && af !== 'all') list = list.filter(p => af === 'a7' ? ageDays(p) <= 7 : af === 'a30' ? ageDays(p) <= 30 : af === 'idle' ? (ageDays(p) > 30 && ageDays(p) !== Infinity) : ageDays(p) === Infinity);
+  if (activityLoaded) {
+    const n7 = profiles.filter(p => ageDays(p) <= 7).length, n30 = profiles.filter(p => ageDays(p) <= 30).length;
+    document.getElementById('userSummary').textContent = `${profiles.length} vecinos · 🟢 ${n7} activos en 7 días · ${n30} en 30 días`;
+  }
 
   const el = document.getElementById('userList');
   if (!list.length) { el.innerHTML = '<div class="empty-note">No hay vecinos registrados.</div>'; return; }
@@ -546,6 +598,9 @@ function renderProfiles() {
           <div class="row-badges">
             <span class="badge ${p.estado === 'Activo' ? 'badge-active' : 'badge-rejected'}">${p.estado || 'Activo'}</span>
             ${needsReset ? '<span class="badge badge-migrated">Pendiente de reset de clave</span>' : ''}
+            ${activityLoaded ? (() => { const ev = activityByProfile[p.id] || []; const d = ageDays(p);
+              const ns = ev.filter(e => /^Busqueda/.test(e.evento_tipo)).length, nc = ev.filter(e => /^Click_(Llamar|WhatsApp)$/.test(e.evento_tipo)).length;
+              return `<span class="badge ${d <= 7 ? 'badge-live' : 'badge-idle'}">${d === Infinity ? 'Sin actividad' : (d <= 7 ? '🟢 ' : '') + 'Última: ' + timeAgo(lastOf(p))}</span><span class="badge badge-idle">🔎 ${ns} · 📞 ${nc}</span>`; })() : ''}
           </div>
         </div>
       </div>
@@ -566,9 +621,27 @@ function renderProfiles() {
           </select>
         </div>
         <button class="btn btn-save" onclick="window.saveUser('${p.id}')">Guardar Cambios</button>
+        ${isOpen ? activityDetailHtml(p) : ''}
       </div>
     </div>`;
   }).join('');
+}
+
+function activityDetailHtml(p) {
+  const ev = activityByProfile[p.id] || [];
+  if (!ev.length) return '<div class="act-box"><h4>📈 Actividad</h4><div class="row-meta">Sin actividad registrada todavía.</div></div>';
+  const count = (arr, key) => Object.entries(arr.reduce((m, e) => { const k = (e[key] || '').trim(); if (k) m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const chips = list => list.length ? list.map(([k, n]) => `<span class="chip">${escH(k)}<b>${n}</b></span>`).join('') : '<span class="row-meta">—</span>';
+  const searches = ev.filter(e => /^Busqueda/.test(e.evento_tipo));
+  const clicks = ev.filter(e => /^Click_(Llamar|WhatsApp)$/.test(e.evento_tipo) || e.evento_tipo === 'Pedido_WhatsApp');
+  const cats = ev.filter(e => e.evento_tipo === 'Click_Categoria').map(e => ({ categoria: e.categoria }));
+  return `<div class="act-box">
+    <h4>🔎 Qué busca</h4>${chips(count(searches, 'valor_busqueda'))}
+    <h4 style="margin-top:10px">📞 Negocios en los que hace clic</h4>${chips(count(clicks, 'negocio_nombre'))}
+    <h4 style="margin-top:10px">🗂️ Categorías que abre</h4>${chips(count(cats, 'categoria'))}
+    <h4 style="margin-top:10px">🕐 Cronología (últimas ${Math.min(ev.length, 40)} de ${ev.length})</h4>
+    <div class="act-tl">${ev.slice(0, 40).map(e => `<div class="activity-item"><div><span class="activity-type">${escH(EVENT_LABELS[e.evento_tipo] || e.evento_tipo)}</span><span class="activity-detail">${(e.valor_busqueda || e.negocio_nombre || e.categoria) ? ' — ' + escH(e.valor_busqueda || e.negocio_nombre || e.categoria) : ''}</span></div><div class="activity-time">${fmtDT(e.created_at)}</div></div>`).join('')}</div>
+  </div>`;
 }
 
 window.toggleUser = function(id) {
@@ -743,74 +816,120 @@ const EVENT_LABELS = {
   'Click_WhatsApp': '💬 Clic en WhatsApp',
   'Edicion_Perfil_Exitoso': '✏️ Edición de perfil',
   'Solicitud_Recuperacion_Clave': '🔁 Solicitud de recuperación',
+  'Pedido_WhatsApp': '🧾 Pedido por WhatsApp',
+  'Agregar_Carrito': '🛒 Agregó al carrito',
+  'Ver_Productos': '🛍️ Vio productos',
+  'Click_Categoria': '🗂️ Abrió categoría',
+  'Visita': '👀 Visita',
 };
+const TYPE_GROUPS = {
+  all:   { label: 'Todo', types: null },
+  search:{ label: '🔎 Búsquedas', types: ['Busqueda_Palabra','Busqueda_Boton'] },
+  click: { label: '📞 Clics en negocios', types: ['Click_Llamar','Click_WhatsApp'] },
+  order: { label: '🛒 Carrito y pedidos', types: ['Agregar_Carrito','Pedido_WhatsApp'] },
+  browse:{ label: '🗂️ Navegación', types: ['Click_Categoria','Ver_Productos'] },
+  visit: { label: '👀 Visitas', types: ['Visita'] },
+  session:{ label: '🔑 Sesiones', types: ['Login_Exitoso','Cierre_Sesion'] },
+};
+const TZ = 'America/El_Salvador';
+const escH = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDT = d => new Date(d).toLocaleString('es-SV', { timeZone: TZ, day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+let statsType = 'all', statsView = 'hour', activityByProfile = {}, activityLoaded = false;
 
-window.loadStats = async function loadStats() {
-  document.getElementById('statCards').innerHTML = '<div class="loading">Cargando estadísticas...</div>';
-  document.getElementById('topSearches').innerHTML = '';
-  document.getElementById('topBusinessClicks').innerHTML = '';
-  document.getElementById('activityFeed').innerHTML = '';
+async function fetchEvents(sinceISO) {
+  const out = [];
+  for (let from = 0; from < 20000; from += 1000) {
+    let q = supabase.from('events_log').select('*').order('created_at', { ascending: false }).range(from, from + 999);
+    if (sinceISO) q = q.gte('created_at', sinceISO);
+    const { data, error } = await q;
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+
+async function loadActivity() {
+  try {
+    const ev = await fetchEvents(null);
+    activityByProfile = {};
+    ev.forEach(e => { if (e.profile_id) (activityByProfile[e.profile_id] ||= []).push(e); });
+    activityLoaded = true;
+    renderProfiles();
+  } catch (err) { console.warn('activity', err); }
+}
+
+window.setStatsType = function(t) { statsType = t; loadStats(true); };
+window.setStatsView = function(v) { statsView = v; loadStats(true); };
+let statsCache = null;
+
+window.loadStats = async function loadStats(useCache) {
+  const sel = document.getElementById('statsUser');
+  if (!sel.options.length) {
+    sel.innerHTML = '<option value="all">Todos los usuarios</option><option value="anon">Solo visitantes (sin cuenta)</option><option value="reg">Solo vecinos registrados</option>' +
+      profiles.map(p => `<option value="${p.id}">${escH((p.nombre || '') + ' ' + (p.apellido || ''))} (${escH(p.email || '')})</option>`).join('');
+  }
+  document.getElementById('typeSeg').innerHTML = Object.entries(TYPE_GROUPS).map(([k, g]) => `<button class="${k === statsType ? 'on' : ''}" onclick="setStatsType('${k}')">${g.label}</button>`).join('');
+  document.querySelectorAll('#viewSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === statsView));
 
   const rangeDays = parseInt(document.getElementById('statsRange').value);
-  let query = supabase.from('events_log').select('*').order('created_at', { ascending: false }).limit(5000);
-  if (rangeDays > 0) {
-    const since = new Date(Date.now() - rangeDays * 86400000).toISOString();
-    query = query.gte('created_at', since);
-  }
-  const { data, error } = await query;
-
-  if (error) {
-    document.getElementById('statCards').innerHTML = `<div class="empty-note">Error cargando estadísticas: ${error.message}</div>`;
-    return;
+  const since = rangeDays > 0 ? new Date(Date.now() - rangeDays * 86400000).toISOString() : null;
+  if (!(useCache === true && statsCache && statsCache.since === since)) {
+    document.getElementById('statCards').innerHTML = '<div class="loading">Cargando estadísticas...</div>';
+    try { statsCache = { since, events: await fetchEvents(since) }; }
+    catch (error) { document.getElementById('statCards').innerHTML = `<div class="empty-note">Error cargando estadísticas: ${escH(error.message)}</div>`; return; }
   }
 
-  const events = data || [];
+  // who filter
+  const who = sel.value;
+  let events = statsCache.events.filter(e => who === 'all' ? true : who === 'anon' ? !e.profile_id : who === 'reg' ? !!e.profile_id : e.profile_id === who);
+  const grp = TYPE_GROUPS[statsType].types;
+  const typed = grp ? events.filter(e => grp.includes(e.evento_tipo)) : events;
 
-  const searches = events.filter(e => e.evento_tipo === 'Busqueda_Palabra' || e.evento_tipo === 'Busqueda_Boton');
-  const logins = events.filter(e => e.evento_tipo === 'Login_Exitoso');
-  const logouts = events.filter(e => e.evento_tipo === 'Cierre_Sesion');
-  const bizClicks = events.filter(e => e.evento_tipo === 'Click_Llamar' || e.evento_tipo === 'Click_WhatsApp');
-
+  const cnt = g => events.filter(e => TYPE_GROUPS[g].types.includes(e.evento_tipo)).length;
+  const visitors = new Set(events.map(e => e.profile_id || e.session_id).filter(Boolean)).size;
   document.getElementById('statCards').innerHTML = `
-    <div class="stat-card"><div class="stat-card-num">${searches.length}</div><div class="stat-card-label">Búsquedas</div></div>
-    <div class="stat-card"><div class="stat-card-num">${logins.length}</div><div class="stat-card-label">Inicios de sesión</div></div>
-    <div class="stat-card"><div class="stat-card-num">${logouts.length}</div><div class="stat-card-label">Cierres de sesión</div></div>
-    <div class="stat-card"><div class="stat-card-num">${bizClicks.length}</div><div class="stat-card-label">Clics en negocios</div></div>
-    <div class="stat-card"><div class="stat-card-num">${events.length}</div><div class="stat-card-label">Eventos totales</div></div>
-  `;
+    <div class="stat-card"><div class="stat-card-num">${visitors}</div><div class="stat-card-label">Usuarios únicos</div></div>
+    <div class="stat-card"><div class="stat-card-num">${cnt('search')}</div><div class="stat-card-label">Búsquedas</div></div>
+    <div class="stat-card"><div class="stat-card-num">${cnt('click')}</div><div class="stat-card-label">Clics en negocios</div></div>
+    <div class="stat-card"><div class="stat-card-num">${cnt('order')}</div><div class="stat-card-label">Carrito y pedidos</div></div>
+    <div class="stat-card"><div class="stat-card-num">${events.filter(e => e.evento_tipo === 'Login_Exitoso').length}</div><div class="stat-card-label">Inicios de sesión</div></div>
+    <div class="stat-card"><div class="stat-card-num">${events.length}</div><div class="stat-card-label">Eventos totales</div></div>`;
 
-  // Top search terms
-  const searchCounts = {};
-  searches.forEach(e => {
-    const term = (e.valor_busqueda || '').trim();
-    if (!term) return;
-    searchCounts[term] = (searchCounts[term] || 0) + 1;
+  // Chart: hour of day / day of week, El Salvador time
+  const hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hourCycle: 'h23' });
+  const dowFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' });
+  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], DOW_ES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const nBuckets = statsView === 'hour' ? 24 : 7;
+  const buckets = new Array(nBuckets).fill(0);
+  typed.forEach(e => {
+    const d = new Date(e.created_at);
+    const k = statsView === 'hour' ? parseInt(hourFmt.format(d)) % 24 : DOW.indexOf(dowFmt.format(d));
+    if (k >= 0) buckets[k]++;
   });
-  const topSearchList = Object.entries(searchCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  document.getElementById('topSearches').innerHTML = topSearchList.length
-    ? topSearchList.map(([term, count]) => `<div class="rank-item"><span>${term}</span><span class="rank-count">${count}</span></div>`).join('')
-    : '<div class="rank-item"><span style="color:var(--ink-muted)">Sin búsquedas registradas en este período.</span></div>';
+  const max = Math.max(...buckets), peak = buckets.indexOf(max);
+  const lbl = k => statsView === 'hour' ? String(k).padStart(2, '0') : DOW_ES[k];
+  document.getElementById('statsChart').innerHTML = max === 0 ? '<div class="empty-note">Sin datos para estos filtros.</div>' : `
+    <div class="bars">${buckets.map((n, k) => `<div class="bar-col" title="${lbl(k)}${statsView === 'hour' ? ':00' : ''} — ${n} evento${n !== 1 ? 's' : ''}"><div class="bar-num">${n || ''}</div><div class="bar ${k === peak ? 'peak' : ''}" style="height:${Math.max(2, n / max * 150)}px"></div></div>`).join('')}</div>
+    <div class="bar-lbl">${buckets.map((_, k) => `<span>${lbl(k)}</span>`).join('')}</div>`;
+  document.getElementById('chartNote').textContent = max === 0 ? '' :
+    `Pico: ${statsView === 'hour' ? lbl(peak) + ':00–' + lbl(peak) + ':59' : lbl(peak)} (${max} de ${typed.length} eventos) · Hora de El Salvador (UTC−6)`;
 
-  // Top clicked businesses
-  const bizCounts = {};
-  bizClicks.forEach(e => {
-    const name = (e.negocio_nombre || 'Desconocido').trim();
-    bizCounts[name] = (bizCounts[name] || 0) + 1;
-  });
-  const topBizList = Object.entries(bizCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  document.getElementById('topBusinessClicks').innerHTML = topBizList.length
-    ? topBizList.map(([name, count]) => `<div class="rank-item"><span>${name}</span><span class="rank-count">${count}</span></div>`).join('')
-    : '<div class="rank-item"><span style="color:var(--ink-muted)">Sin clics registrados en este período.</span></div>';
+  // Top lists (follow the type filter)
+  const top = (arr, key) => Object.entries(arr.reduce((m, e) => { const k = (e[key] || '').trim(); if (k) m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const rank = (list, empty) => list.length ? list.map(([t, n]) => `<div class="rank-item"><span>${escH(t)}</span><span class="rank-count">${n}</span></div>`).join('') : `<div class="rank-item"><span style="color:var(--ink-muted)">${empty}</span></div>`;
+  document.getElementById('topSearches').innerHTML = rank(top(events.filter(e => TYPE_GROUPS.search.types.includes(e.evento_tipo)), 'valor_busqueda'), 'Sin búsquedas registradas en este período.');
+  document.getElementById('topBusinessClicks').innerHTML = rank(top(events.filter(e => TYPE_GROUPS.click.types.includes(e.evento_tipo)), 'negocio_nombre'), 'Sin clics registrados en este período.');
 
-  // Recent activity feed (most recent 50)
-  const recent = events.slice(0, 50);
+  // Feed with who + exact time
+  const nameOf = id => { const p = profiles.find(x => x.id === id); return p ? `${p.nombre || ''} ${p.apellido || ''}`.trim() || p.email : 'Visitante'; };
+  const recent = typed.slice(0, 60);
   document.getElementById('activityFeed').innerHTML = recent.length
     ? recent.map(e => {
-        const label = EVENT_LABELS[e.evento_tipo] || e.evento_tipo;
-        const detail = e.valor_busqueda || e.negocio_nombre || '';
+        const detail = e.valor_busqueda || e.negocio_nombre || e.categoria || '';
         return `<div class="activity-item">
-          <div><span class="activity-type">${label}</span>${detail ? `<span class="activity-detail"> — ${detail}</span>` : ''}</div>
-          <div class="activity-time">${timeAgo(e.created_at)}</div>
+          <div><span class="activity-type">${escH(EVENT_LABELS[e.evento_tipo] || e.evento_tipo)}</span>${detail ? `<span class="activity-detail"> — ${escH(detail)}</span>` : ''}<span class="activity-detail"> · ${escH(e.profile_id ? nameOf(e.profile_id) : 'Visitante')}</span></div>
+          <div class="activity-time">${fmtDT(e.created_at)} · ${timeAgo(e.created_at)}</div>
         </div>`;
       }).join('')
     : '<div class="activity-item"><span style="color:var(--ink-muted)">Sin actividad registrada en este período.</span></div>';
