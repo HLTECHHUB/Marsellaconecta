@@ -1,6 +1,6 @@
 :root{
-  --blue:#0d67a7; --nav:#1c74b3; --green:#159957; --orange:#e48727; --gold:#c9a84c;
-  --bg:#f4f6f9; --ink:#101828; --muted:#667085; --border:#e3e7ee;
+  --blue:#c65d3b; --nav:#a84a2f; --green:#1b6b4a; --orange:#d4a574; --gold:#d4a574;
+  --bg:#faf7f2; --ink:#2d2622; --muted:#6b6560; --border:#e8e2db;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}

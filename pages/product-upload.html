@@ -7,14 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --primary: #0d67a7;
-    --success: #159957;
+    --primary: #c65d3b;
+    --success: #1b6b4a;
     --error: #dc2626;
-    --bg: #f9fafb;
+    --bg: #faf7f2;
     --surface: #ffffff;
-    --text: #101828;
-    --text-muted: #667085;
-    --border: #e5e7eb;
+    --text: #2d2622;
+    --text-muted: #6b6560;
+    --border: #e8e2db;
     --radius: 12px;
   }
   
@@ -69,7 +69,7 @@
   
   input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--primary);
-    background: #f0f7ff;
+    background: #f5e6e0;
   }
   
   textarea { resize: vertical; min-height: 100px; }
@@ -90,12 +90,12 @@
   
   .image-upload-area:hover {
     border-color: var(--primary);
-    background: #f0f7ff;
+    background: #f5e6e0;
   }
   
   .image-upload-area.active {
     border-color: var(--success);
-    background: #f0fdf4;
+    background: #e2f1ed;
   }
   
   .upload-icon { font-size: 2.5rem; margin-bottom: 8px; }
@@ -127,7 +127,7 @@
   
   /* SPEC BOX */
   .spec-box {
-    background: #f0fdf4; border: 1.5px solid var(--success);
+    background: #e2f1ed; border: 1.5px solid var(--success);
     border-radius: var(--radius); padding: 16px;
     margin-top: 12px;
   }
@@ -176,7 +176,7 @@
     border-radius: var(--radius); padding: 16px; text-align: center;
   }
   
-  .step.active { border-color: var(--primary); background: #f0f7ff; }
+  .step.active { border-color: var(--primary); background: #f5e6e0; }
   
   .step-num {
     font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
@@ -192,8 +192,8 @@
   }
   
   .alert.success {
-    background: #f0fdf4; border: 1px solid var(--success);
-    color: #166534;
+    background: #e2f1ed; border: 1px solid var(--success);
+    color: #1b6b4a;
   }
   
   .alert.error {
@@ -202,8 +202,8 @@
   }
   
   .alert.info {
-    background: #f0f7ff; border: 1px solid var(--primary);
-    color: #1e3a8a;
+    background: #f5e6e0; border: 1px solid var(--primary);
+    color: #a84a2f;
   }
   
   @media (max-width: 600px) {
