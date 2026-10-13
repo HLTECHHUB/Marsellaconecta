@@ -1,5 +1,6 @@
 // Marsella Conecta — push notifications for order requests.
 //   event "new":      the neighbor who made the order notifies the business owner.
+//   event "message":  a chat message; goes to the other person in the order.
 //   event "response": the business owner (or an admin) notifies the neighbor of accept/reject.
 // Secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (same as send-push).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
     const uid = u?.user?.id;
     if (!uid) return json({ error: 'No autenticado' }, 401);
     const { order_id, event } = await req.json();
-    if (!order_id || !['new', 'response'].includes(event)) return json({ error: 'Datos inválidos' }, 400);
+    if (!order_id || !['new', 'response', 'message'].includes(event)) return json({ error: 'Datos inválidos' }, 400);
 
     const db = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: order } = await db.from('orders').select('*').eq('id', order_id).maybeSingle();
@@ -30,7 +31,17 @@ Deno.serve(async (req) => {
 
     let target: string | null | undefined, payload: Record<string, string>;
     const count = Array.isArray(order.items) ? order.items.reduce((s: number, i: any) => s + (Number(i.qty) || 0), 0) : 0;
-    if (event === 'new') {
+    if (event === 'message') {
+      const fromCust = cust?.auth_user_id === uid, fromOwner = owner?.auth_user_id === uid;
+      if (!fromCust && !fromOwner) return json({ error: 'No permitido' }, 403);
+      const { data: last } = await db.from('order_messages').select('body,created_at').eq('order_id', order.id).eq('sender_auth_id', uid).order('created_at', { ascending: false }).limit(2);
+      if (!last || !last.length) return json({ notified: 0, reason: 'sin mensaje' });
+      // Don't spam: skip the push if the same person already wrote within the last 45 seconds.
+      if (last.length > 1 && new Date(last[0].created_at).getTime() - new Date(last[1].created_at).getTime() < 45000) return json({ notified: 0, skipped: true });
+      target = fromCust ? owner?.auth_user_id : cust?.auth_user_id;
+      const who = fromCust ? (order.customer_name || 'Un vecino') : (biz?.nombre || 'El negocio');
+      payload = { title: '💬 ' + who, body: String(last[0].body).slice(0, 100), url: fromCust ? SITE + 'pages/pedidos.html?order=' + order.id : SITE + '?pedido=' + order.id + '&chat=1', tag: 'chat-' + order.id };
+    } else if (event === 'new') {
       if (cust?.auth_user_id !== uid || order.status !== 'pendiente') return json({ error: 'No permitido' }, 403);
       target = owner?.auth_user_id;
       payload = { title: '🛒 Nuevo pedido para ti', body: `${order.customer_name || 'Un vecino'} pidió ${count} producto(s) por ${money(order.total)}. Toca para aceptar o rechazar.`, url: SITE + 'pages/pedidos.html', tag: 'order-' + order.id };

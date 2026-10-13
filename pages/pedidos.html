@@ -53,6 +53,7 @@
 <script type="module">
 import { supabase } from '../assets/js/supabase.js';
 import { pushState, enablePush, disablePush, relinkPush } from '../assets/js/push.js';
+import { openOrderChat, unreadCount } from '../assets/js/chat.js';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => '$' + Number(n || 0).toFixed(2);
@@ -95,7 +96,8 @@ function orderCard(o) {
   const acts = o.status === 'pendiente' ? `<div class="actions"><button class="btn btn-ok" onclick="respond('${o.id}','aceptado')">✅ Aceptar</button><button class="btn btn-no" onclick="respond('${o.id}','rechazado')">✖ Rechazar</button></div>` : '';
   return `<div class="card"><div class="row"><b>${esc(o.customer_name || 'Vecino')}</b><span class="pill p-${o.status}">${o.status}</span></div>
     <div class="muted">${esc(bizNames[o.business_id] || '')} · ${fmt(o.created_at)}</div><div class="items">${items}</div>
-    <div class="row"><b>Total ${money(o.total)}</b></div>${acts}</div>`;
+    <div class="row"><b>Total ${money(o.total)}</b></div>${acts}
+    ${o.status !== 'rechazado' ? `<div class="actions"><button class="btn btn-ghost" onclick="openChat('${o.id}','${esc(o.customer_name || 'Vecino').replace(/'/g, '')}')">💬 Chat <span id="unr-${o.id}"></span></button></div>` : ''}</div>`;
 }
 async function loadOrders() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
@@ -103,7 +105,14 @@ async function loadOrders() {
   const pend = (data || []).filter((o) => o.status === 'pendiente'), done = (data || []).filter((o) => o.status !== 'pendiente');
   document.getElementById('pending').innerHTML = pend.length ? '<h2>⏳ Por responder (' + pend.length + ')</h2>' + pend.map(orderCard).join('') : '<div class="card muted">No tienes pedidos por responder.</div>';
   document.getElementById('history').innerHTML = done.length ? done.map(orderCard).join('') : '<div class="muted">Aún no hay historial.</div>';
+  const { data: { session } } = await supabase.auth.getSession();
+  for (const o of (data || []).filter((x) => x.status !== 'rechazado').slice(0, 20)) {
+    unreadCount(o.id, session.user.id).then((n) => { const el = document.getElementById('unr-' + o.id); if (el && n) el.innerHTML = '<span class="pill p-pendiente">' + n + ' nuevo(s)</span>'; }).catch(() => {});
+  }
+  const want = new URLSearchParams(location.search).get('order');
+  if (want && !window._chatOpened && (data || []).some((o) => o.id === want)) { window._chatOpened = true; const o = data.find((x) => x.id === want); openOrderChat(want, o.customer_name || 'Vecino'); }
 }
+window.openChat = (id, name) => openOrderChat(id, name);
 window.respond = async (id, status) => {
   if (!confirm(status === 'aceptado' ? '¿Aceptar este pedido?' : '¿Rechazar este pedido?')) return;
   const { error } = await supabase.rpc('respond_order', { p_order_id: id, p_status: status });

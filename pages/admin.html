@@ -336,6 +336,8 @@
           </select></div>
         <div style="display:flex;gap:8px;align-items:center"><button class="btn btn-add" id="pushSendBtn" onclick="sendPush()">📣 Enviar notificación</button><span class="row-meta" id="pushMsg"></span></div>
       </div>
+      <div class="panel-title" style="margin:20px 0 8px;font-size:1rem">💬 Mensajes de chat reportados</div>
+      <div id="chatReports" class="row-meta">—</div>
       <div class="panel-title" style="margin:20px 0 8px;font-size:1rem">Enviadas</div>
       <div id="pushLog" class="row-meta">—</div>
     </div>
@@ -777,6 +779,9 @@ async function loadNotif() {
     supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }),
     supabase.from('push_log').select('*').order('created_at', { ascending: false }).limit(30)
   ]);
+  supabase.from('order_messages').select('id,body,sender_role,created_at,order_id,orders(customer_name,total)').eq('reported', true).order('created_at', { ascending: false }).limit(50).then(({ data: rep }) => {
+    document.getElementById('chatReports').innerHTML = (rep || []).length ? rep.map(m => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(m.sender_role)}</b> (pedido de ${escH(m.orders?.customer_name || '—')}): “${escH(m.body)}”<br><span class="row-meta">${fmtDT(m.created_at)}</span></div>`).join('') : 'Sin reportes.';
+  });
   document.getElementById('pushCount').textContent = (total ?? 0) + ' dispositivo(s) con notificaciones activadas';
   document.getElementById('pushLog').innerHTML = (logs || []).length ? logs.map(l => `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${escH(l.title)}</b> — ${escH(l.body)}<br><span class="row-meta">${fmtDT(l.created_at)} · ${escH(l.audience || '')} · ✅ ${l.sent} enviadas${l.failed ? ' · ⚠️ ' + l.failed + ' fallidas' : ''}</span></div>`).join('') : 'Aún no has enviado notificaciones.';
 }
