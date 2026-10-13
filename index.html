@@ -53,11 +53,12 @@
   /* AUTH COMPONENT NAVIGATION CONTAINER */
   .nav-actions { display: flex; align-items: center; gap: 10px; }
   .nav-install { border: 1.5px solid #1b6b4a; background: #fff; color: #1b6b4a; border-radius: 20px; padding: 7px 14px; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-  .app-strip { display: flex; justify-content: flex-end; gap: 8px; padding: 0 24px; background: #fff; }
-  .app-strip .nav-install { margin: 8px 0; }
+  /* Desktop: small floating pills bottom-left. Phones: full-width row under the nav (see media query). */
+  .app-strip { position: fixed; left: 18px; bottom: 18px; z-index: 90; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .app-strip .nav-install { box-shadow: 0 4px 14px rgba(0,0,0,.18); padding: 10px 16px; }
   .nav-install.on { background: #e7f4ec; }
   .nav-install:hover { background: #1b6b4a; color: #fff; }
-  @media (max-width: 640px) { .app-strip { padding: 0 12px; } .app-strip .nav-install { flex: 1; padding: 9px 8px; font-size: 0.8rem; text-align: center; } }
+  @media (max-width: 640px) { .app-strip { position: static; flex-direction: row; align-items: stretch; padding: 0 12px; background: #fff; } .app-strip .nav-install { flex: 1; margin: 8px 0; box-shadow: none; padding: 9px 8px; font-size: 0.8rem; text-align: center; } }
   .install-steps { padding: 16px 20px 24px; font-size: 1rem; line-height: 1.5; }
   .install-steps ol { list-style: none; counter-reset: st; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
   .install-steps li { counter-increment: st; display: flex; gap: 12px; align-items: flex-start; background: #f4f8f5; border-radius: 14px; padding: 12px 14px; }
